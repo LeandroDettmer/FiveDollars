@@ -10,12 +10,15 @@ export interface KeyValue {
   enabled?: boolean;
 }
 
+/** Cor do indicador do ambiente (hex ou nome) - estilo Postman */
 export interface Environment {
   id: UUID;
   name: string;
   variables: Record<string, string>;
+  color?: string;
 }
 
+/** Auth preservada na importação (Postman): valores podem usar {{var}} e são resolvidos no envio */
 export interface RequestConfig {
   id: UUID;
   name: string;
@@ -25,6 +28,13 @@ export interface RequestConfig {
   queryParams: KeyValue[];
   bodyType: "none" | "json" | "form" | "raw";
   body?: string;
+  /** Basic Auth: usuário e senha (ex: {{1pay_username}}, {{1pay_password}}) resolvidos no envio */
+  authType?: "basic" | "bearer" | "apikey" | null;
+  authBasicUsername?: string;
+  authBasicPassword?: string;
+  authBearerToken?: string;
+  authApiKeyKey?: string;
+  authApiKeyValue?: string;
 }
 
 export interface RequestResponse {

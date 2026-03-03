@@ -28,6 +28,65 @@ function toKeyValues(arr: Array<{ key?: string; value?: string }> | undefined): 
   }));
 }
 
+/** Extrai auth do Postman e retorna (1) headers a adicionar e (2) campos de auth para RequestConfig (com {{vars}} preservados) */
+function postmanAuthToRequestAuth(auth: Record<string, unknown> | undefined): {
+  authHeaders: KeyValue[];
+  authConfig: Partial<Pick<RequestConfig, "authType" | "authBasicUsername" | "authBasicPassword" | "authBearerToken" | "authApiKeyKey" | "authApiKeyValue">>;
+} {
+  const out = { authHeaders: [] as KeyValue[], authConfig: {} as Partial<RequestConfig> };
+  if (!auth || typeof auth !== "object") return out;
+  const type = String(auth.type ?? "").toLowerCase();
+  if (type === "noauth" || type === "inherit") return out;
+
+  if (type === "bearer") {
+    const bearer = auth.bearer as Array<{ key?: string; value?: string }> | undefined;
+    const token = Array.isArray(bearer)
+      ? bearer.find((b) => String(b?.key ?? "").toLowerCase() === "token")?.value
+      : undefined;
+    if (token != null) {
+      out.authConfig.authType = "bearer";
+      out.authConfig.authBearerToken = String(token);
+    }
+    return out;
+  }
+
+  if (type === "basic") {
+    const basic = auth.basic as Array<{ key?: string; value?: string }> | undefined;
+    const username =
+      Array.isArray(basic) ? basic.find((b) => String(b?.key ?? "").toLowerCase() === "username")?.value ?? "" : "";
+    const password =
+      Array.isArray(basic) ? basic.find((b) => String(b?.key ?? "").toLowerCase() === "password")?.value ?? "" : "";
+    out.authConfig.authType = "basic";
+    out.authConfig.authBasicUsername = String(username ?? "");
+    out.authConfig.authBasicPassword = String(password ?? "");
+    return out;
+  }
+
+  if (type === "apikey") {
+    const apikey = auth.apikey as Array<{ key?: string; value?: string }> | undefined;
+    if (Array.isArray(apikey)) {
+      const keyName = apikey.find((a) => String(a?.key ?? "").toLowerCase() === "key")?.value ?? "Authorization";
+      const value = apikey.find((a) => String(a?.key ?? "").toLowerCase() === "value")?.value ?? "";
+      const inWhere = String(apikey.find((a) => String(a?.key ?? "").toLowerCase() === "in")?.value ?? "header").toLowerCase();
+      if (value && inWhere === "header") {
+        out.authConfig.authType = "apikey";
+        out.authConfig.authApiKeyKey = String(keyName);
+        out.authConfig.authApiKeyValue = String(value);
+      }
+    }
+    return out;
+  }
+
+  return out;
+}
+
+/** Mescla headers de auth com os headers da request (auth tem prioridade para evitar duplicata) */
+function mergeAuthHeaders(authHeaders: KeyValue[], requestHeaders: KeyValue[]): KeyValue[] {
+  const authKeys = new Set(authHeaders.map((h) => h.key.toLowerCase()));
+  const fromRequest = requestHeaders.filter((h) => !authKeys.has(h.key.toLowerCase()));
+  return [...authHeaders, ...fromRequest];
+}
+
 interface PostmanUrl {
   raw?: string;
   host?: string[];
@@ -50,24 +109,35 @@ function urlToString(url: string | PostmanUrl | undefined): string {
   return q ? `${base}?${q}` : base;
 }
 
-function postmanItemToRequest(postmanItem: {
-  name?: string;
-  id?: string;
-  request?: {
-    method?: string;
-    url?: string | PostmanUrl;
-    header?: Array<{ key?: string; value?: string; disabled?: boolean }>;
-    body?: { mode?: string; raw?: string };
-  };
-}): RequestConfig {
+function postmanItemToRequest(
+  postmanItem: {
+    name?: string;
+    id?: string;
+    request?: {
+      method?: string;
+      url?: string | PostmanUrl;
+      header?: Array<{ key?: string; value?: string; disabled?: boolean }>;
+      body?: { mode?: string; raw?: string };
+      auth?: Record<string, unknown>;
+    };
+  },
+  collectionAuth?: Record<string, unknown>
+): RequestConfig {
   const req = postmanItem.request ?? {};
   const url = urlToString(req.url);
-  const headers = toKeyValues(
+  const requestHeaders = toKeyValues(
     (req.header ?? []).map((h) => ({
       key: h.key,
       value: h.value,
     }))
   );
+  const reqAuth = req.auth as Record<string, unknown> | undefined;
+  const effectiveAuth =
+    reqAuth && String(reqAuth.type ?? "").toLowerCase() !== "inherit"
+      ? reqAuth
+      : collectionAuth;
+  const { authHeaders, authConfig } = postmanAuthToRequestAuth(effectiveAuth);
+  const headers = mergeAuthHeaders(authHeaders, requestHeaders);
   if (headers.length === 0) headers.push({ id: genId(), key: "", value: "", enabled: true });
 
   let queryParams: KeyValue[] = [{ id: genId(), key: "", value: "", enabled: true }];
@@ -92,34 +162,39 @@ function postmanItemToRequest(postmanItem: {
     queryParams,
     bodyType,
     body: bodyText || undefined,
+    ...authConfig,
   };
 }
 
-function parsePostmanItems(items: unknown[]): CollectionNode[] {
+function parsePostmanItems(items: unknown[], parentAuth?: Record<string, unknown>): CollectionNode[] {
   if (!Array.isArray(items)) return [];
   const nodes: CollectionNode[] = [];
   for (const it of items) {
     const obj = it as Record<string, unknown>;
     const name = String(obj?.name ?? "Item");
     const id = (obj?.id && typeof obj.id === "string" ? obj.id : genId()) as string;
+    const folderAuth = (obj.auth && typeof obj.auth === "object" ? obj.auth : parentAuth) as Record<string, unknown> | undefined;
 
     if (Array.isArray(obj.item)) {
       nodes.push({
         id,
         name,
         type: "folder",
-        children: parsePostmanItems(obj.item),
+        children: parsePostmanItems(obj.item, folderAuth),
       });
     } else if (obj.request && typeof obj.request === "object") {
       nodes.push({
         id,
         name,
         type: "request",
-        request: postmanItemToRequest({
-          name,
-          id,
-          request: obj.request as Parameters<typeof postmanItemToRequest>[0]["request"],
-        }),
+        request: postmanItemToRequest(
+          {
+            name,
+            id,
+            request: obj.request as Parameters<typeof postmanItemToRequest>[0]["request"],
+          },
+          folderAuth
+        ),
       });
     }
   }
@@ -129,6 +204,7 @@ function parsePostmanItems(items: unknown[]): CollectionNode[] {
 export interface PostmanCollectionV21 {
   info?: { name?: string; _postman_id?: string };
   item?: unknown[];
+  auth?: Record<string, unknown>;
 }
 
 /**
@@ -142,9 +218,10 @@ export function parsePostmanCollectionV21(json: unknown): Collection {
     ? info._postman_id
     : genId()) as string;
 
+  const collectionAuth = root.auth && typeof root.auth === "object" ? root.auth : undefined;
   return {
     id: collectionId,
     name: String(info.name ?? "Collection"),
-    items: parsePostmanItems(items),
+    items: parsePostmanItems(items, collectionAuth),
   };
 }

@@ -18,7 +18,7 @@ function toMethod(s: unknown): HttpMethod {
 }
 
 function toKeyValues(
-  arr: Array<{ name?: string; value?: string; disabled?: boolean }> | undefined
+  arr: Array<{ name?: string; key?: string; value?: string; disabled?: boolean }> | undefined
 ): KeyValue[] {
   if (!Array.isArray(arr) || arr.length === 0) {
     return [{ id: genId(), key: "", value: "", enabled: true }];

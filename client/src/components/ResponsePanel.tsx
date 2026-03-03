@@ -1,4 +1,5 @@
 import { useAppStore } from "@/store/useAppStore";
+import { ResponseBodyView } from "./ResponseBodyView";
 
 export function ResponsePanel() {
   const { lastResponse } = useAppStore();
@@ -12,15 +13,6 @@ export function ResponsePanel() {
   }
 
   const isJson = lastResponse.headers["content-type"]?.includes("application/json");
-  let bodyPreview = lastResponse.body;
-  if (isJson && bodyPreview.length > 0) {
-    try {
-      bodyPreview = JSON.stringify(JSON.parse(bodyPreview), null, 2);
-    } catch {
-      // mantém raw
-    }
-  }
-
   const statusClass =
     lastResponse.status >= 200 && lastResponse.status < 300
       ? "status-ok"
@@ -38,7 +30,11 @@ export function ResponsePanel() {
         <span className="meta-item">Tamanho: {lastResponse.sizeBytes} bytes</span>
       </div>
       <div className="response-body-wrap">
-        <pre className="response-body">{bodyPreview || "(vazio)"}</pre>
+        <ResponseBodyView
+          content={lastResponse.body}
+          isJson={isJson}
+          className="response-body-view"
+        />
       </div>
     </div>
   );
