@@ -1,0 +1,8 @@
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/serde_with_macros-707e6832e2316178.d: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/apply.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/lazy_bool.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/utils.rs
+
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/libserde_with_macros-707e6832e2316178.dylib: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/apply.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/lazy_bool.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/utils.rs
+
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/lib.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/apply.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/lazy_bool.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_with_macros-3.17.0/src/utils.rs:

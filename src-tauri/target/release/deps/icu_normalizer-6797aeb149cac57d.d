@@ -1,0 +1,10 @@
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/icu_normalizer-6797aeb149cac57d.d: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/properties.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/provider.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/uts46.rs
+
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/libicu_normalizer-6797aeb149cac57d.rlib: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/properties.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/provider.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/uts46.rs
+
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/libicu_normalizer-6797aeb149cac57d.rmeta: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/properties.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/provider.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/uts46.rs
+
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/lib.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/properties.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/provider.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.1.1/src/uts46.rs:

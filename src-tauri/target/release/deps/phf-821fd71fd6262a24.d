@@ -1,0 +1,11 @@
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/phf-821fd71fd6262a24.d: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/map.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_map.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_set.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/set.rs
+
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/libphf-821fd71fd6262a24.rlib: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/map.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_map.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_set.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/set.rs
+
+/Users/leandrodettmar/Documents/repo/FiveDollarPost/client/src-tauri/target/release/deps/libphf-821fd71fd6262a24.rmeta: /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/lib.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/map.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_map.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_set.rs /Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/set.rs
+
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/lib.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/map.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_map.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/ordered_set.rs:
+/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/phf-0.10.1/src/set.rs:
