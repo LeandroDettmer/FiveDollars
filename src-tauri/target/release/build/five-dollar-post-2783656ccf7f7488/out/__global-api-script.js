@@ -1,1 +1,0 @@
-["/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-2.10.2/scripts/bundle.global.js","/Users/leandrodettmar/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tauri-plugin-http-2.5.7/api-iife.js"]
