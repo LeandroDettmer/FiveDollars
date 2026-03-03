@@ -1,0 +1,15 @@
+{
+  "identifier": "default",
+  "description": "Permissões padrão do Five Dollar Post",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "http://**" },
+        { "url": "https://**" }
+      ]
+    }
+  ]
+}
