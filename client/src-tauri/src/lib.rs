@@ -1,4 +1,4 @@
-//! Backend Tauri - Five Dollar Post
+//! Backend Tauri - FiveDollars
 //! Requisições HTTP são feitas pelo frontend via tauri-plugin-http (evita CORS).
 //! Persistência: comandos load_app_data / save_app_data gravam em app_data_dir.
 
@@ -38,5 +38,5 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![load_app_data, save_app_data])
         .run(tauri::generate_context!())
-        .expect("erro ao iniciar Five Dollar Post");
+        .expect("erro ao iniciar FiveDollars");
 }

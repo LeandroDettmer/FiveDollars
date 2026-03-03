@@ -32,13 +32,27 @@ export function Sidebar() {
   } | null>(null);
   const [runnerState, setRunnerState] = useState<{
     requests: RequestConfig[];
+    folderName: string;
     variablesOverride?: Record<string, string>[];
     delayMs: number;
+    includeResponseBody: boolean;
   } | null>(null);
   const [collapsedCollections, setCollapsedCollections] = useState(false);
   const [collapsedEnvs, setCollapsedEnvs] = useState(false);
   const [collectionSearch, setCollectionSearch] = useState("");
   const [collectionToRemove, setCollectionToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [folderViewKey, setFolderViewKey] = useState(0);
+  const [foldersExpanded, setFoldersExpanded] = useState(false);
+  const [collapsedCollectionIds, setCollapsedCollectionIds] = useState<Set<string>>(new Set());
+
+  const toggleCollectionCollapsed = (id: string) => {
+    setCollapsedCollectionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleImportClick = () => {
     setImportError(null);
@@ -91,7 +105,8 @@ export function Sidebar() {
             onClick={() => setCollapsedCollections(!collapsedCollections)}
             aria-expanded={!collapsedCollections}
           >
-            {collapsedCollections ? "▶" : "▼"} Collections
+            <span className="section-toggle-icon">{collapsedCollections ? "▶" : "▼"}</span>
+            Collections
           </button>
           {!collapsedCollections && (
             <button type="button" className="import-btn" onClick={handleImportClick}>
@@ -111,14 +126,55 @@ export function Sidebar() {
           <>
             {importError && <p className="sidebar-error">{importError}</p>}
             {collections.length > 0 && (
-              <input
-                type="search"
-                className="sidebar-search-input"
-                placeholder="Buscar rotas..."
-                value={collectionSearch}
-                onChange={(e) => setCollectionSearch(e.target.value)}
-                aria-label="Buscar rotas na collection"
-              />
+              <>
+                <div className="sidebar-search-wrap">
+                  <input
+                    type="search"
+                    className="sidebar-search-input"
+                    placeholder="Buscar rotas..."
+                    value={collectionSearch}
+                    onChange={(e) => setCollectionSearch(e.target.value)}
+                    aria-label="Buscar rotas na collection"
+                  />
+                  {collectionSearch.length > 0 && (
+                    <button
+                      type="button"
+                      className="sidebar-search-clear"
+                      onClick={() => setCollectionSearch("")}
+                      aria-label="Limpar busca"
+                      title="Limpar busca"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+                <div className="sidebar-folder-actions">
+                  <button
+                    type="button"
+                    className="sidebar-folder-action-btn"
+                    onClick={() => {
+                      setFoldersExpanded(false);
+                      setFolderViewKey((k) => k + 1);
+                    }}
+                    title="Recolher todas as pastas"
+                  >
+                    ▼ Recolher todas
+                  </button>
+                  <button
+                    type="button"
+                    className="sidebar-folder-action-btn"
+                    onClick={() => {
+                      setFoldersExpanded(true);
+                      setCollapsedCollectionIds(new Set());
+                      setCollapsedCollections(false);
+                      setFolderViewKey((k) => k + 1);
+                    }}
+                    title="Expandir todas as pastas"
+                  >
+                    ▶ Expandir todas
+                  </button>
+                </div>
+              </>
             )}
             {collections.length === 0 ? (
               <p className="sidebar-hint">
@@ -126,33 +182,49 @@ export function Sidebar() {
               </p>
             ) : (
               <div className="collections-list">
-                {collections.map((coll) => (
-                  <div key={coll.id} className="collection-block">
-                    <div className="collection-header">
-                      <span className="collection-name" title={coll.name}>
-                        {coll.name}
-                      </span>
-                      <button
-                        type="button"
-                        className="remove-collection-btn"
-                        onClick={() => setCollectionToRemove({ id: coll.id, name: coll.name })}
-                        title="Remover collection"
-                      >
-                        ×
-                      </button>
+                {collections.map((coll) => {
+                  const isCollapsed = collapsedCollectionIds.has(coll.id);
+                  return (
+                    <div key={coll.id} className={`collection-block ${isCollapsed ? "collection-block--collapsed" : ""}`}>
+                      <div className="collection-header">
+                        <button
+                          type="button"
+                          className="collection-header-toggle"
+                          onClick={() => toggleCollectionCollapsed(coll.id)}
+                          title={isCollapsed ? "Expandir collection" : "Recolher collection"}
+                          aria-expanded={!isCollapsed}
+                        >
+                          <span className="collection-toggle-icon">{isCollapsed ? "▶" : "▼"}</span>
+                          <span className="collection-name" title={coll.name}>
+                            {coll.name}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="remove-collection-btn"
+                          onClick={() => setCollectionToRemove({ id: coll.id, name: coll.name })}
+                          title="Remover collection"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      {!isCollapsed && (
+                        <CollectionTree
+                          key={`tree-${coll.id}-${folderViewKey}`}
+                          collectionId={coll.id}
+                          nodes={coll.items}
+                          onSelectRequest={(req) => setCurrentRequest(req)}
+                          searchQuery={collectionSearch}
+                          onUpdateItems={(items) => updateCollection(coll.id, { items })}
+                          defaultFolderOpen={foldersExpanded}
+                          onRunFolder={(requests, folderName) => {
+                            if (requests.length > 0) setRunnerConfig({ requests, folderName });
+                          }}
+                        />
+                      )}
                     </div>
-                    <CollectionTree
-                      collectionId={coll.id}
-                      nodes={coll.items}
-                      onSelectRequest={(req) => setCurrentRequest(req)}
-                      searchQuery={collectionSearch}
-                      onUpdateItems={(items) => updateCollection(coll.id, { items })}
-                      onRunFolder={(requests, folderName) => {
-                if (requests.length > 0) setRunnerConfig({ requests, folderName });
-              }}
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
@@ -167,7 +239,8 @@ export function Sidebar() {
             onClick={() => setCollapsedEnvs(!collapsedEnvs)}
             aria-expanded={!collapsedEnvs}
           >
-            {collapsedEnvs ? "▶" : "▼"} Environments
+            <span className="section-toggle-icon">{collapsedEnvs ? "▶" : "▼"}</span>
+            Environments
           </button>
           {!collapsedEnvs && (
             <button
@@ -250,9 +323,11 @@ export function Sidebar() {
           onRun={(opts) => {
             setRunnerConfig(null);
             setRunnerState({
-              requests: runnerConfig.requests,
+              requests: opts.selectedRequests,
+              folderName: runnerConfig.folderName,
               variablesOverride: opts.variablesOverride,
               delayMs: opts.delayMs,
+              includeResponseBody: opts.includeResponseBody,
             });
           }}
           onClose={() => setRunnerConfig(null)}
@@ -261,10 +336,12 @@ export function Sidebar() {
 
       {runnerState && (
         <RunnerModal
+          folderName={runnerState.folderName}
           requests={runnerState.requests}
           variables={getResolvedVariables()}
           variablesOverride={runnerState.variablesOverride}
           delayMs={runnerState.delayMs}
+          includeResponseBody={runnerState.includeResponseBody}
           onClose={() => setRunnerState(null)}
         />
       )}

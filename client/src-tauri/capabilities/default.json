@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Permissões padrão do Five Dollar Post",
+  "description": "Permissões padrão do FiveDollars",
   "windows": ["main"],
   "permissions": [
     "core:default",

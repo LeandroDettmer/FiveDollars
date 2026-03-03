@@ -1,4 +1,4 @@
-# Five Dollar Post
+# FiveDollars
 
 Cliente HTTP desktop (alternativa ao Postman/Insomnia) com React e Tauri, usando **CSS normal** (sem Tailwind).
 

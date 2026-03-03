@@ -64,3 +64,23 @@ export interface Collection {
   name: string;
   items: CollectionNode[];
 }
+
+/** Um resultado no histórico do Runner (status sempre; body opcional). */
+export interface RunnerHistoryResult {
+  name: string;
+  method: HttpMethod;
+  status: number;
+  statusText: string;
+  timeMs: number;
+  body?: string;
+  error?: string;
+}
+
+/** Uma execução salva no histórico do Runner. */
+export interface RunnerHistoryEntry {
+  id: UUID;
+  date: number;
+  folderName: string;
+  includeBody: boolean;
+  results: RunnerHistoryResult[];
+}

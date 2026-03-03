@@ -202,3 +202,23 @@ export function getRequestsFromFolder(node: CollectionNode): RequestConfig[] {
   }
   return out;
 }
+
+/** Atualiza uma requisição por request.id na árvore; retorna nova árvore (ou a mesma se não encontrado). */
+export function updateRequestInNodes(
+  nodes: CollectionNode[],
+  requestId: string,
+  patch: RequestConfig
+): CollectionNode[] {
+  return nodes.map((node) => {
+    if (node.type === "request") {
+      if (node.request.id === requestId) {
+        return { ...node, request: patch };
+      }
+      return node;
+    }
+    return {
+      ...node,
+      children: updateRequestInNodes(node.children, requestId, patch),
+    };
+  });
+}

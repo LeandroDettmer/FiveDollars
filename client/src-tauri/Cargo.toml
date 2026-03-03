@@ -1,5 +1,5 @@
 [package]
-name = "five-dollar-post"
+name = "five-dollars"
 version = "0.1.0"
 description = "Cliente HTTP desktop - alternativa ao Postman/Insomnia"
 authors = ["you"]

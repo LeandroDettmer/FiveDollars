@@ -33,6 +33,7 @@ function NodeItem({
   onDropOnFolder,
   editingNodeId,
   onRename,
+  defaultFolderOpen = false,
 }: {
   node: CollectionNode;
   depth: number;
@@ -43,8 +44,9 @@ function NodeItem({
   onDropOnFolder?: (sourceNodeId: string, targetFolderId: string) => void;
   editingNodeId: string | null;
   onRename: (nodeId: string, newName: string) => void;
+  defaultFolderOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultFolderOpen);
   const [dragOver, setDragOver] = useState(false);
   const isEditing = editingNodeId === node.id;
   const [editValue, setEditValue] = useState(node.name);
@@ -132,6 +134,7 @@ function NodeItem({
                 onDropOnFolder={onDropOnFolder}
                 editingNodeId={editingNodeId}
                 onRename={onRename}
+                defaultFolderOpen={defaultFolderOpen}
               />
             ))}
           </div>
@@ -180,6 +183,7 @@ export function CollectionTree({
   searchQuery = "",
   onUpdateItems,
   onRunFolder,
+  defaultFolderOpen = false,
 }: {
   collectionId: string;
   nodes: CollectionNode[];
@@ -187,6 +191,7 @@ export function CollectionTree({
   searchQuery?: string;
   onUpdateItems?: (items: CollectionNode[]) => void;
   onRunFolder?: (requests: RequestConfig[], folderName: string) => void;
+  defaultFolderOpen?: boolean;
 }) {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -293,6 +298,7 @@ export function CollectionTree({
           onDropOnFolder={onUpdateItems ? handleDropOnFolder : undefined}
           editingNodeId={editingNodeId}
           onRename={handleRename}
+          defaultFolderOpen={defaultFolderOpen}
         />
       ))}
       {contextMenu && (

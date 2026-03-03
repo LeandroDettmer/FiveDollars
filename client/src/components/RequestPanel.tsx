@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { sendRequest } from "@/lib/http";
 import { BodyEditor } from "@/components/BodyEditor";
@@ -22,18 +22,43 @@ const defaultRequest: RequestConfig = {
 };
 
 export function RequestPanel() {
-  const { currentRequest, setCurrentRequest, setLastResponse, getResolvedVariables, addToHistory, currentEnv} = useAppStore();
+  const {
+    currentRequest,
+    setCurrentRequest,
+    setLastResponse,
+    getResolvedVariables,
+    addToHistory,
+    currentEnv,
+    updateRequestInCollection,
+  } = useAppStore();
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
   const [sending, setSending] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const variables = currentEnv?.variables ?? {};
+  const reqRef = useRef(req);
+  reqRef.current = req;
   const toggleShowPassword = (id: string) => setShowPasswords((s) => ({ ...s, [id]: !s[id] }));
 
   useEffect(() => {
-    if (currentRequest && currentRequest.id !== req.id) {
+    if (!currentRequest) {
+      return;
+    }
+    if (currentRequest.id !== req.id) {
+      if (req.id) {
+        updateRequestInCollection(req.id, req);
+      }
       setReq(currentRequest);
     }
   }, [currentRequest?.id]);
+
+  useEffect(() => {
+    if (!req.id) return;
+    const t = setTimeout(() => {
+      const latest = reqRef.current;
+      if (latest.id) updateRequestInCollection(latest.id, latest);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.bodyType, req.body]);
 
   const update = (patch: Partial<RequestConfig>) => setReq((r) => ({ ...r, ...patch }));
 
@@ -55,6 +80,7 @@ export function RequestPanel() {
 
   const handleSend = async () => {
     setCurrentRequest(req);
+    updateRequestInCollection(req.id, req);
     setSending(true);
     setLastResponse(null);
     try {

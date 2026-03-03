@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 
-const STORAGE_KEY = "fivedollarpost-sidebar-width";
+const STORAGE_KEY = "fivedollars-sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
-const MAX_WIDTH = 520;
+const MAX_WIDTH = 880;
 
 function getStoredWidth(): number {
   if (typeof window === "undefined") return DEFAULT_WIDTH;

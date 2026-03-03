@@ -5,9 +5,11 @@ interface RunnerConfigModalProps {
   folderName: string;
   requests: RequestConfig[];
   onRun: (options: {
+    selectedRequests: RequestConfig[];
     variablesOverride?: Record<string, string>[];
     iterations: number;
     delayMs: number;
+    includeResponseBody: boolean;
   }) => void;
   onClose: () => void;
 }
@@ -53,6 +55,8 @@ export function RunnerConfigModal({
   const [dataFileRows, setDataFileRows] = useState<Record<string, string>[] | null>(null);
   const [dataFileName, setDataFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [includeResponseBody, setIncludeResponseBody] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleSelectFile = () => {
     setFileError(null);
@@ -83,12 +87,27 @@ export function RunnerConfigModal({
     reader.readAsText(file, "utf-8");
   };
 
+  const selectedRequests = requests.filter((r) => selectedIds.has(r.id));
+  const toggleRequest = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const selectAll = () => setSelectedIds(new Set(requests.map((r) => r.id)));
+  const deselectAll = () => setSelectedIds(new Set());
+
   const handleRun = () => {
+    if (selectedRequests.length === 0) return;
     const varsOverride = dataFileRows && dataFileRows.length > 0 ? dataFileRows : undefined;
     onRun({
+      selectedRequests,
       variablesOverride: varsOverride,
       iterations: varsOverride ? varsOverride.length : Math.max(1, iterations),
       delayMs: Math.max(0, delayMs),
+      includeResponseBody,
     });
   };
 
@@ -110,17 +129,40 @@ export function RunnerConfigModal({
         </div>
         <div className="runner-config-body">
           <section className="runner-config-section">
-            <h3 className="runner-config-section-title">Sequência</h3>
+            <div className="runner-config-sequence-header">
+              <h3 className="runner-config-section-title">Selecionar requisições</h3>
+              <div className="runner-config-sequence-actions">
+                <button type="button" className="runner-config-select-all-btn" onClick={selectAll}>
+                  Marcar todos
+                </button>
+                <button type="button" className="runner-config-select-all-btn" onClick={deselectAll}>
+                  Desmarcar todos
+                </button>
+              </div>
+            </div>
+            <p className="runner-config-hint">
+              Só as requisições marcadas serão executadas. Selecione ao menos uma.
+            </p>
             <ul className="runner-config-sequence">
               {requests.map((r) => (
-                <li key={r.id} className="runner-config-sequence-item">
-                  <span className="runner-item-method">{r.method}</span>
-                  <span className="runner-item-name" title={r.url}>
-                    {r.name}
-                  </span>
+                <li key={r.id} className="runner-config-sequence-item runner-config-sequence-item--checkbox">
+                  <label className="runner-config-request-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleRequest(r.id)}
+                    />
+                    <span className="runner-item-method">{r.method}</span>
+                    <span className="runner-item-name" title={r.url}>
+                      {r.name}
+                    </span>
+                  </label>
                 </li>
               ))}
             </ul>
+            {selectedRequests.length === 0 && (
+              <p className="runner-config-error">Selecione ao menos uma requisição para executar.</p>
+            )}
           </section>
 
           <section className="runner-config-section">
@@ -175,6 +217,19 @@ export function RunnerConfigModal({
               )}
               {fileError && <p className="runner-config-error">{fileError}</p>}
             </div>
+            <div className="runner-config-row runner-config-checkbox-row">
+              <label className="runner-config-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={includeResponseBody}
+                  onChange={(e) => setIncludeResponseBody(e.target.checked)}
+                />
+                Incluir corpo da resposta no histórico
+              </label>
+              <p className="runner-config-hint">
+                Se desmarcado, só o status (código e tempo) é salvo. O retorno (payload) sempre aparece na execução atual.
+              </p>
+            </div>
           </section>
         </div>
         <div className="modal-footer">
@@ -182,8 +237,13 @@ export function RunnerConfigModal({
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancelar
             </button>
-            <button type="button" className="btn-primary runner-run-btn" onClick={handleRun}>
-              Executar
+            <button
+              type="button"
+              className="btn-primary runner-run-btn"
+              onClick={handleRun}
+              disabled={selectedRequests.length === 0}
+            >
+              Executar {selectedRequests.length > 0 ? `(${selectedRequests.length})` : ""}
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-/* Five Dollar Post - Tema dark (estilo VS Code / Obsidian) */
+/* FiveDollars - Tema dark (estilo VS Code / Obsidian) */
 
 :root {
   --bg-primary: #1e1e1e;
@@ -60,12 +60,47 @@ body {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
+  display: flex;
+  flex-direction: row;
 }
 
-.app-main-area > * {
+.app-main-request {
+  flex: 1;
+  min-width: 200px;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-resize-handle {
+  width: 6px;
+  flex-shrink: 0;
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 0.15s;
+}
+
+.main-resize-handle:hover,
+.main-resize-handle--active {
+  background: var(--accent);
+}
+
+.main-resize-handle--active {
+  width: 4px;
+  margin: 0 1px;
+}
+
+.app-main-response {
+  flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main-response > * {
+  flex: 1;
   min-height: 0;
 }
 
@@ -113,6 +148,33 @@ body {
   margin: 0;
 }
 
+.section-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  margin: -2px -8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.section-toggle:hover {
+  color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+.section-toggle .section-toggle-icon {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform 0.15s;
+}
+
 .import-btn {
   padding: 4px 10px;
   font-size: 11px;
@@ -141,22 +203,84 @@ body {
   margin: 0 0 8px 0;
 }
 
+.sidebar-search-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
 .sidebar-search-input {
   width: 100%;
-  margin-bottom: 8px;
-  padding: 6px 8px 6px 28px;
+  padding: 6px 32px 6px 8px;
   font-size: 12px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
+  box-sizing: border-box;
 }
+
+.sidebar-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .sidebar-search-input::placeholder {
   color: var(--text-muted);
 }
+
 .sidebar-search-input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.sidebar-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.sidebar-search-clear:hover {
+  color: var(--text);
+  background: var(--bg-tertiary);
+  border-color: var(--text-muted);
+}
+
+.sidebar-folder-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sidebar-folder-action-btn {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sidebar-folder-action-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
 }
 
 .collections-list {
@@ -175,15 +299,47 @@ body {
 .collection-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 4px;
   padding: 6px 8px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
 }
 
-.collection-name {
+.collection-block--collapsed .collection-header {
+  border-bottom: none;
+}
+
+.collection-header-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px;
+  margin: -6px -8px;
   font-size: 12px;
   font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.collection-header-toggle:hover {
+  background: var(--bg-tertiary);
+}
+
+.collection-header-toggle .collection-toggle-icon {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.collection-header-toggle .collection-name {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -499,7 +655,7 @@ body {
 }
 
 .variable-preview-var.undefined {
-  color: var(--error);
+  color: red;
   font-weight: 500;
 }
 
@@ -641,6 +797,13 @@ body {
 .body-editor-wrap .cm-gutters {
   border-right: 1px solid var(--border);
   background: var(--bg-secondary);
+}
+
+/* Variáveis {{var}} no body JSON: itálico como no Postman, sem sublinhado de erro */
+.cm-lintRange.cm-json-variable {
+  background-image: none !important;
+  font-style: italic;
+  color: var(--text-muted);
 }
 
 /* Painel de resposta */
@@ -1342,6 +1505,120 @@ body {
   font-size: 11px;
 }
 
+.runner-section-label {
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.runner-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.runner-toggle-body {
+  flex-basis: 100%;
+  margin-left: 28px;
+  padding: 2px 0;
+  font-size: 11px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  text-align: left;
+}
+
+.runner-toggle-body:hover {
+  text-decoration: underline;
+}
+
+.runner-response-body {
+  flex-basis: 100%;
+  margin: 4px 0 4px 28px;
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.runner-response-body pre,
+.runner-response-body--small pre {
+  margin: 0;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.runner-response-body--small {
+  max-height: 80px;
+}
+
+.runner-history-wrap {
+  padding: 12px 16px 0;
+  border-top: 1px solid var(--border);
+}
+
+.runner-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.runner-history-item {
+  margin-bottom: 6px;
+}
+
+.runner-history-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  text-align: left;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.runner-history-header:hover {
+  border-color: var(--text-muted);
+}
+
+.runner-history-date {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.runner-history-folder {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.runner-history-summary {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.runner-history-results {
+  margin-top: 4px;
+  margin-left: 12px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+}
+
 /* Modal de configuração do Runner (selecionar JSON, etc.) */
 .modal-content.runner-config-modal {
   max-width: 480px;
@@ -1363,6 +1640,58 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-muted);
+}
+
+.runner-config-sequence-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.runner-config-sequence-header .runner-config-section-title {
+  margin: 0;
+}
+
+.runner-config-sequence-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.runner-config-select-all-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.runner-config-select-all-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.runner-config-request-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.runner-config-request-label input {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.runner-config-sequence-item--checkbox {
+  padding: 4px 10px;
 }
 
 .runner-config-sequence {
@@ -1435,6 +1764,24 @@ body {
   font-size: 12px;
   color: var(--error);
   margin: 4px 0 0 0;
+}
+
+.runner-config-checkbox-row {
+  margin-top: 16px;
+}
+
+.runner-config-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.runner-config-checkbox-label input {
+  width: auto;
+  margin: 0;
 }
 
 .runner-run-btn {

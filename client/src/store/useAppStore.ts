@@ -1,7 +1,15 @@
 import { create } from "zustand";
-import type { Environment, RequestConfig, RequestResponse, HistoryEntry, Collection } from "@/types";
+import type {
+  Environment,
+  RequestConfig,
+  RequestResponse,
+  HistoryEntry,
+  Collection,
+  RunnerHistoryEntry,
+} from "@/types";
 import type { PersistedData } from "@/types/persisted";
 import { saveAppData } from "@/lib/persistence";
+import { updateRequestInNodes } from "@/lib/collectionTreeUtils";
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -29,12 +37,15 @@ interface AppState {
   currentRequest: RequestConfig | null;
   lastResponse: RequestResponse | null;
   history: HistoryEntry[];
+  runnerHistory: RunnerHistoryEntry[];
+  addRunnerRun: (entry: Omit<RunnerHistoryEntry, "id" | "date">) => void;
   setStateFromPersisted: (data: PersistedData) => void;
   setCurrentEnv: (env: Environment | null) => void;
   setEnvironments: (envs: Environment[]) => void;
   addCollection: (coll: Collection) => void;
   removeCollection: (id: string) => void;
   updateCollection: (id: string, patch: Partial<Pick<Collection, "name" | "items">>) => void;
+  updateRequestInCollection: (requestId: string, request: RequestConfig) => void;
   addEnvironment: (env: Omit<Environment, "id">) => Environment;
   updateEnvironment: (id: string, patch: Partial<Environment>) => void;
   removeEnvironment: (id: string) => void;
@@ -52,6 +63,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentRequest: null,
   lastResponse: null,
   history: [],
+  runnerHistory: [],
+
+  addRunnerRun: (entry) => {
+    set((state) => ({
+      runnerHistory: [
+        {
+          ...entry,
+          id: generateId(),
+          date: Date.now(),
+        },
+        ...state.runnerHistory.slice(0, 49),
+      ],
+    }));
+  },
 
   setStateFromPersisted: (data) =>
     set({
@@ -87,6 +112,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       collections: state.collections.map((c) =>
         c.id === id ? { ...c, ...patch } : c
       ),
+    }));
+    persist(get());
+  },
+
+  updateRequestInCollection: (requestId, request) => {
+    set((state) => ({
+      collections: state.collections.map((c) => {
+        const newItems = updateRequestInNodes(c.items, requestId, request);
+        return newItems !== c.items ? { ...c, items: newItems } : c;
+      }),
     }));
     persist(get());
   },
