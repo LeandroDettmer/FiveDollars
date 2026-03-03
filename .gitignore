@@ -1,4 +1,4 @@
 node_modules
 scripts
-client/dist
-client/src-tauri/target
+dist
+src-tauri/target
