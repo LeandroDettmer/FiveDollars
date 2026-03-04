@@ -33,11 +33,16 @@ function getRequestUrlAndOptions(
   return { url: DEV_PROXY_PATH, options: proxyOptions };
 }
 
-function keyValueToRecord(items: KeyValue[]): Record<string, string> {
+function keyValueToRecord(
+  items: KeyValue[],
+  variables?: Record<string, string>
+): Record<string, string> {
   const out: Record<string, string> = {};
   for (const { key, value, enabled } of items) {
     if (!key.trim() || enabled === false) continue;
-    out[key.trim()] = value;
+    const resolvedValue =
+      variables != null ? resolveEnvInString(value, variables) : value;
+    out[key.trim()] = resolvedValue;
   }
   return out;
 }
@@ -67,17 +72,41 @@ function buildAuthHeaders(
   return out;
 }
 
+/** Substitui :paramName na URL pelos valores de pathParams (e variáveis). */
+function replacePathParams(
+  url: string,
+  pathParams: KeyValue[],
+  variables: Record<string, string>
+): string {
+  const map: Record<string, string> = { ...variables };
+  for (const p of pathParams) {
+    if (p.key.trim() && p.enabled !== false) {
+      map[p.key.trim()] = resolveEnvInString(p.value, variables);
+    }
+  }
+  return url.replace(/:([a-zA-Z_][a-zA-Z0-9_]*)/g, (_, name) => {
+    return map[name] ?? `:${name}`;
+  });
+}
+
 export async function sendRequest(
   config: RequestConfig,
   variables: Record<string, string>
 ): Promise<RequestResponse> {
-  const urlResolved = resolveEnvInString(config.url, variables);
-  const headersFromConfig = keyValueToRecord(config.headers);
+  const urlWithPath = replacePathParams(
+    config.url,
+    config.pathParams ?? [],
+    variables
+  );
+  const urlResolved = resolveEnvInString(urlWithPath, variables);
+  const headersFromConfig = keyValueToRecord(config.headers, variables);
   const authHeaders = buildAuthHeaders(config, variables);
   const headers = { ...headersFromConfig, ...authHeaders };
   const queryParams = config.queryParams.filter((q) => q.key.trim() && q.enabled !== false);
   const url = new URL(urlResolved);
-  queryParams.forEach((q) => url.searchParams.append(q.key.trim(), q.value));
+  queryParams.forEach((q) =>
+    url.searchParams.set(q.key.trim(), resolveEnvInString(q.value, variables))
+  );
   const finalUrl = url.toString();
 
   const start = performance.now();

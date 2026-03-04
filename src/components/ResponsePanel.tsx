@@ -33,16 +33,11 @@ export function ResponsePanel() {
     scriptLogs,
     history,
     selectedHistoryEntryId,
-    currentEnv,
-    currentRequest,
-    getCollectionForRequest,
   } = useAppStore();
   const [logsHeight, setLogsHeight] = useState(getStoredLogsHeight);
   const [draggingLogs, setDraggingLogs] = useState(false);
   const startY = useRef(0);
   const startH = useRef(DEFAULT_LOGS_HEIGHT);
-
-  console.log(currentEnv)
 
   useEffect(() => {
     setLogsHeight(getStoredLogsHeight());
@@ -92,14 +87,6 @@ export function ResponsePanel() {
     ? `Logs — ${selectedEntry.method} ${selectedEntry.url}`
     : "Logs (última requisição)";
   const hasLogsToShow = logsToShow.length > 0 || selectedEntry != null;
-
-  const collection =
-    currentRequest?.id != null ? getCollectionForRequest(currentRequest.id) : null;
-  const envVars = currentEnv?.variables ?? {};
-  const collVars = collection?.variables ?? {};
-  const hasEnvVars = Object.keys(envVars).length > 0;
-  const hasCollVars = Object.keys(collVars).length > 0;
-  const hasAnyVars = hasEnvVars || hasCollVars;
 
   if (!lastResponse && !selectedEntry) {
     return (

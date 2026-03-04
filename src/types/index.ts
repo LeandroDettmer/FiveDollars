@@ -39,6 +39,8 @@ export interface RequestConfig {
   preRequestScript?: string;
   /** Script executado após a resposta. Use fv.response.json() e fv.environment.set("nome", valor). */
   postResponseScript?: string;
+  /** Parâmetros de path (ex.: :id na URL). Preencha aqui para substituir na requisição. */
+  pathParams?: KeyValue[];
 }
 
 export interface RequestResponse {

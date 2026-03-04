@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { CollectionTree } from "./CollectionTree";
 import { EnvironmentEditor, ENV_COLORS } from "./EnvironmentEditor";
@@ -6,7 +6,8 @@ import { ConfirmModal } from "./ConfirmModal";
 import { RunnerConfigModal } from "./RunnerConfigModal";
 import { RunnerModal } from "./RunnerModal";
 import { importCollectionFromText } from "@/lib/importCollection";
-import type { Environment, RequestConfig } from "@/types";
+import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
+import type { Collection, Environment, RequestConfig } from "@/types";
 
 export function Sidebar() {
   const {
@@ -46,6 +47,20 @@ export function Sidebar() {
   const [folderViewKey, setFolderViewKey] = useState(0);
   const [foldersExpanded, setFoldersExpanded] = useState(false);
   const [collapsedCollectionIds, setCollapsedCollectionIds] = useState<Set<string>>(new Set());
+  const [collectionMenuOpenId, setCollectionMenuOpenId] = useState<string | null>(null);
+  const [renamingCollectionId, setRenamingCollectionId] = useState<string | null>(null);
+  const [renamingCollectionName, setRenamingCollectionName] = useState("");
+  const collectionMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!collectionMenuOpenId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (collectionMenuRef.current?.contains(e.target as Node)) return;
+      setCollectionMenuOpenId(null);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [collectionMenuOpenId]);
 
   const toggleCollectionCollapsed = (id: string) => {
     setCollapsedCollectionIds((prev) => {
@@ -54,6 +69,84 @@ export function Sidebar() {
       else next.add(id);
       return next;
     });
+  };
+
+  const createNewRequest = (): RequestConfig => ({
+    id: crypto.randomUUID(),
+    name: "Nova requisição",
+    method: "GET",
+    url: "",
+    headers: [],
+    queryParams: [],
+    bodyType: "none",
+  });
+
+  const handleAddRequestToCollection = (coll: Collection) => {
+    setCollectionMenuOpenId(null);
+    const newRequest = createNewRequest();
+    const newItems = addRequestToNodes(coll.items, [], newRequest);
+    updateCollection(coll.id, { items: newItems });
+    setCurrentRequest(newRequest);
+    setCollapsedCollectionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(coll.id);
+      return next;
+    });
+  };
+
+  const handleAddFolderToCollection = (coll: Collection) => {
+    setCollectionMenuOpenId(null);
+    const newItems = addFolderToNodes(coll.items, [], "Nova pasta");
+    updateCollection(coll.id, { items: newItems });
+    setCollapsedCollectionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(coll.id);
+      return next;
+    });
+  };
+
+  const handleRenameCollection = (coll: Collection) => {
+    setCollectionMenuOpenId(null);
+    setRenamingCollectionId(coll.id);
+    setRenamingCollectionName(coll.name);
+  };
+
+  const submitRenameCollection = (collectionId: string) => {
+    const name = renamingCollectionName.trim();
+    if (name) updateCollection(collectionId, { name });
+    setRenamingCollectionId(null);
+    setRenamingCollectionName("");
+  };
+
+  const handleDuplicateCollection = (coll: Collection) => {
+    setCollectionMenuOpenId(null);
+    const copy = duplicateCollection(coll);
+    addCollection(copy);
+    setCollapsedCollectionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(copy.id);
+      return next;
+    });
+  };
+
+  const handleRemoveCollection = (coll: Collection) => {
+    setCollectionMenuOpenId(null);
+    setCollectionToRemove({ id: coll.id, name: coll.name });
+  };
+
+  const handleCreateCollection = () => {
+    const newCollection: Collection = {
+      id: crypto.randomUUID(),
+      name: "Nova collection",
+      items: [],
+    };
+    addCollection(newCollection);
+    setCollapsedCollectionIds((prev) => {
+      const next = new Set(prev);
+      next.delete(newCollection.id);
+      return next;
+    });
+    if (collapsedCollections) setCollapsedCollections(false);
   };
 
   const handleImportClick = () => {
@@ -111,9 +204,19 @@ export function Sidebar() {
             Collections
           </button>
           {!collapsedCollections && (
-            <button type="button" className="import-btn" onClick={handleImportClick}>
-              Importar
-            </button>
+            <div className="sidebar-collection-actions">
+              <button
+                type="button"
+                className="new-collection-btn"
+                onClick={handleCreateCollection}
+                title="Nova collection"
+              >
+                Nova collection
+              </button>
+              <button type="button" className="import-btn" onClick={handleImportClick}>
+                Importar
+              </button>
+            </div>
           )}
         </div>
         <input
@@ -195,20 +298,66 @@ export function Sidebar() {
                           onClick={() => toggleCollectionCollapsed(coll.id)}
                           title={isCollapsed ? "Expandir collection" : "Recolher collection"}
                           aria-expanded={!isCollapsed}
+                          disabled={renamingCollectionId === coll.id}
                         >
                           <span className="collection-toggle-icon">{isCollapsed ? "▶" : "▼"}</span>
-                          <span className="collection-name" title={coll.name}>
-                            {coll.name}
-                          </span>
+                          {renamingCollectionId === coll.id ? (
+                            <input
+                              className="collection-header-rename-input"
+                              value={renamingCollectionName}
+                              onChange={(e) => setRenamingCollectionName(e.target.value)}
+                              onBlur={() => submitRenameCollection(coll.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") submitRenameCollection(coll.id);
+                                if (e.key === "Escape") {
+                                  setRenamingCollectionId(null);
+                                  setRenamingCollectionName("");
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="collection-name" title={coll.name}>
+                              {coll.name}
+                            </span>
+                          )}
                         </button>
-                        <button
-                          type="button"
-                          className="remove-collection-btn"
-                          onClick={() => setCollectionToRemove({ id: coll.id, name: coll.name })}
-                          title="Remover collection"
-                        >
-                          ×
-                        </button>
+                        <div className="collection-header-actions" ref={collectionMenuOpenId === coll.id ? collectionMenuRef : null}>
+                          <button
+                            type="button"
+                            className="collection-menu-trigger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCollectionMenuOpenId((id) => (id === coll.id ? null : coll.id));
+                            }}
+                            title="Opções da collection"
+                            aria-expanded={collectionMenuOpenId === coll.id}
+                          >
+                            ⋯
+                          </button>
+                          {collectionMenuOpenId === coll.id && (
+                            <div className="collection-dropdown">
+                              <button type="button" onClick={() => handleAddRequestToCollection(coll)}>
+                                Nova requisição
+                              </button>
+                              <button type="button" onClick={() => handleAddFolderToCollection(coll)}>
+                                Nova pasta
+                              </button>
+                              <hr />
+                              <button type="button" onClick={() => handleRenameCollection(coll)}>
+                                Renomear
+                              </button>
+                              <button type="button" onClick={() => handleDuplicateCollection(coll)}>
+                                Duplicar
+                              </button>
+                              <hr />
+                              <button type="button" className="collection-dropdown-danger" onClick={() => handleRemoveCollection(coll)}>
+                                Remover
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {!isCollapsed && (
                         <CollectionTree
@@ -284,23 +433,6 @@ export function Sidebar() {
                   </li>
                 ))}
               </ul>
-            )}
-            {currentEnv && Object.keys(currentEnv.variables ?? {}).length > 0 && (
-              <div className="sidebar-env-vars">
-                <div className="sidebar-env-vars-title">
-                  Variáveis de &quot;{currentEnv.name}&quot;
-                </div>
-                <ul className="sidebar-env-vars-list">
-                  {Object.entries(currentEnv.variables ?? {}).map(([key, value]) => (
-                    <li key={key} className="sidebar-env-vars-item">
-                      <code className="sidebar-env-vars-key">{key}</code>
-                      <span className="sidebar-env-vars-value" title={value}>
-                        {value}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             )}
           </>
         )}

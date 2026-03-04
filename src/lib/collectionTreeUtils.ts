@@ -120,6 +120,28 @@ function cloneNodes(nodes: CollectionNode[]): CollectionNode[] {
   );
 }
 
+/** Insere uma nova requisição. parentPath = [] para raiz, senão path da pasta pai. */
+export function addRequestToNodes(
+  nodes: CollectionNode[],
+  parentPath: NodePath,
+  request: RequestConfig
+): CollectionNode[] {
+  const root = cloneNodes(nodes);
+  const newNode: CollectionNode = {
+    id: request.id,
+    name: request.name,
+    type: "request",
+    request,
+  };
+  if (parentPath.length === 0) {
+    return [newNode, ...root];
+  }
+  const parent = getNodeAtPath(root, parentPath);
+  if (!parent || parent.type !== "folder") return nodes;
+  parent.children = [newNode, ...parent.children];
+  return root;
+}
+
 /** Insere uma nova pasta. parentPath = [] para raiz, senão path da pasta pai. */
 export function addFolderToNodes(nodes: CollectionNode[], parentPath: NodePath, name: string): CollectionNode[] {
   const root = cloneNodes(nodes);
@@ -241,4 +263,36 @@ export function updateRequestInNodes(
       children: updateRequestInNodes(node.children, requestId, patch),
     };
   });
+}
+
+/** Clona um nó (pasta ou request) atribuindo novos IDs. */
+function cloneNodeWithNewIds(node: CollectionNode): CollectionNode {
+  if (node.type === "folder") {
+    return {
+      id: genId(),
+      name: node.name,
+      type: "folder",
+      children: node.children.map(cloneNodeWithNewIds),
+    };
+  }
+  const newRequest: RequestConfig = {
+    ...node.request,
+    id: genId(),
+  };
+  return {
+    id: newRequest.id,
+    name: node.name,
+    type: "request",
+    request: newRequest,
+  };
+}
+
+/** Duplica uma collection com novos IDs (collection e todos os nós/requisições). */
+export function duplicateCollection(collection: Collection): Collection {
+  return {
+    id: genId(),
+    name: `${collection.name} (cópia)`,
+    items: collection.items.map(cloneNodeWithNewIds),
+    variables: collection.variables ? { ...collection.variables } : undefined,
+  };
 }

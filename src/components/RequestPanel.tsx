@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { sendRequest } from "@/lib/http";
 import { runPreRequestScript, runPostResponseScript } from "@/lib/runPostResponseScript";
+import {
+  getBaseUrl,
+  buildUrlWithQuery,
+  parseUrlQueryParams,
+  extractPathParamNames,
+} from "@/lib/urlUtils";
 import { BodyEditor } from "@/components/BodyEditor";
 import { VariablePreview } from "@/components/VariablePreview";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
@@ -66,24 +72,72 @@ export function RequestPanel() {
       if (latest.id) updateRequestInCollection(latest.id, latest);
     }, 800);
     return () => clearTimeout(t);
-  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.bodyType, req.body, req.preRequestScript, req.postResponseScript]);
+  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.pathParams, req.bodyType, req.body, req.preRequestScript, req.postResponseScript]);
+
+  // Sincronizar Query Params -> URL: ao editar params, atualizar a URL exibida
+  useEffect(() => {
+    const base = getBaseUrl(req.url);
+    if (base == null) return;
+    const newUrl = buildUrlWithQuery(base, req.queryParams);
+    if (newUrl !== req.url) setReq((r) => ({ ...r, url: newUrl }));
+  }, [req.queryParams]);
+
+  // Ao alterar a URL, garantir que pathParams tenha linhas para cada :param
+  useEffect(() => {
+    const names = extractPathParamNames(req.url);
+    if (names.length === 0) return;
+    const current = req.pathParams ?? [];
+    const missing = names.filter((n) => !current.some((p) => p.key.trim() === n));
+    if (missing.length === 0) return;
+    setReq((r) => ({
+      ...r,
+      pathParams: [
+        ...(r.pathParams ?? []),
+        ...missing.map((key) => ({ id: generateId(), key, value: "", enabled: true })),
+      ],
+    }));
+  }, [req.url]);
 
   const update = (patch: Partial<RequestConfig>) => setReq((r) => ({ ...r, ...patch }));
 
-  const addRow = (kind: "headers" | "queryParams") => {
+  const addRow = (kind: "headers" | "queryParams" | "pathParams") => {
     const row: KeyValue = { id: generateId(), key: "", value: "", enabled: true };
-    setReq((r) => ({ ...r, [kind]: [...r[kind], row] }));
+    if (kind === "pathParams") {
+      setReq((r) => ({ ...r, pathParams: [...(r.pathParams ?? []), row] }));
+    } else {
+      setReq((r) => ({ ...r, [kind]: [...r[kind], row] }));
+    }
   };
 
-  const updateRow = (kind: "headers" | "queryParams", id: string, patch: Partial<KeyValue>) => {
-    setReq((r) => ({
-      ...r,
-      [kind]: r[kind].map((x) => (x.id === id ? { ...x, ...patch } : x)),
-    }));
+  const updateRow = (
+    kind: "headers" | "queryParams" | "pathParams",
+    id: string,
+    patch: Partial<KeyValue>
+  ) => {
+    if (kind === "pathParams") {
+      setReq((r) => ({
+        ...r,
+        pathParams: (r.pathParams ?? []).map((x) =>
+          x.id === id ? { ...x, ...patch } : x
+        ),
+      }));
+    } else {
+      setReq((r) => ({
+        ...r,
+        [kind]: r[kind].map((x) => (x.id === id ? { ...x, ...patch } : x)),
+      }));
+    }
   };
 
-  const removeRow = (kind: "headers" | "queryParams", id: string) => {
-    setReq((r) => ({ ...r, [kind]: r[kind].filter((x) => x.id !== id) }));
+  const removeRow = (kind: "headers" | "queryParams" | "pathParams", id: string) => {
+    if (kind === "pathParams") {
+      setReq((r) => ({
+        ...r,
+        pathParams: (r.pathParams ?? []).filter((x) => x.id !== id),
+      }));
+    } else {
+      setReq((r) => ({ ...r, [kind]: r[kind].filter((x) => x.id !== id) }));
+    }
   };
 
   const handleSend = async () => {
@@ -172,9 +226,19 @@ export function RequestPanel() {
         <input
           type="text"
           className="url-input"
-          placeholder="URL (use {{baseUrl}} para variáveis)"
+          placeholder="URL (use {{baseUrl}} e :id para path params)"
           value={req.url}
           onChange={(e) => update({ url: e.target.value })}
+          onBlur={() => {
+            const parsed = parseUrlQueryParams(req.url);
+            if (parsed == null) return;
+            const { params } = parsed;
+            const newParams: KeyValue[] =
+              params.length > 0
+                ? [...params.map((p) => ({ id: generateId(), key: p.key, value: p.value, enabled: true })), { id: generateId(), key: "", value: "", enabled: true }]
+                : [{ id: generateId(), key: "", value: "", enabled: true }];
+            setReq((r) => ({ ...r, queryParams: newParams }));
+          }}
         />
         <button type="button" className="send-btn" onClick={handleSend} disabled={sending}>
           {sending ? "Enviando…" : "Enviar"}
@@ -207,6 +271,39 @@ export function RequestPanel() {
           + Parâmetro
         </button>
       </div>
+
+      {extractPathParamNames(req.url).length > 0 && (
+        <div className="request-section">
+          <h4>Path Params</h4>
+          <p className="request-section-hint">
+            Substitui :nome na URL pelo valor (ex.: :id → 123). Use {"{{var}}"} para variáveis.
+          </p>
+          {(req.pathParams ?? [])
+            .filter(
+              (p) =>
+                !p.key.trim() ||
+                extractPathParamNames(req.url).includes(p.key.trim())
+            )
+            .map((row) => (
+              <div key={row.id} className="key-value-row">
+                <input
+                  placeholder="Nome"
+                  value={row.key}
+                  onChange={(e) => updateRow("pathParams", row.id, { key: e.target.value })}
+                />
+                <input
+                  placeholder="Valor"
+                  value={row.value}
+                  onChange={(e) => updateRow("pathParams", row.id, { value: e.target.value })}
+                />
+                <button type="button" onClick={() => removeRow("pathParams", row.id)}>−</button>
+              </div>
+            ))}
+          <button type="button" className="add-row-btn" onClick={() => addRow("pathParams")}>
+            + Path param
+          </button>
+        </div>
+      )}
 
       {(req.authType === "basic" || req.authType === "bearer" || req.authType === "apikey") && (
         <div className="request-section">
@@ -340,18 +437,27 @@ export function RequestPanel() {
       <div className="request-section">
         <h4>Headers</h4>
         {req.headers.map((row) => (
-          <div key={row.id} className="key-value-row">
-            <input
-              placeholder="Header"
-              value={row.key}
-              onChange={(e) => updateRow("headers", row.id, { key: e.target.value })}
-            />
-            <input
-              placeholder="Value"
-              value={row.value}
-              onChange={(e) => updateRow("headers", row.id, { value: e.target.value })}
-            />
-            <button type="button" onClick={() => removeRow("headers", row.id)}>−</button>
+          <div key={row.id} className="header-row-wrap">
+            <div className="key-value-row">
+              <input
+                placeholder="Header"
+                value={row.key}
+                onChange={(e) => updateRow("headers", row.id, { key: e.target.value })}
+              />
+              <input
+                placeholder="Value"
+                value={row.value}
+                onChange={(e) => updateRow("headers", row.id, { value: e.target.value })}
+              />
+              <button type="button" onClick={() => removeRow("headers", row.id)}>−</button>
+            </div>
+            {(row.value ?? "").includes("{{") && (
+              <VariablePreview
+                className="auth-variable-preview"
+                text={row.value ?? ""}
+                variables={variables}
+              />
+            )}
           </div>
         ))}
         <button type="button" className="add-row-btn" onClick={() => addRow("headers")}>

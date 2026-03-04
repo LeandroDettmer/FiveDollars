@@ -27,11 +27,15 @@ function devProxyPlugin() {
             headers,
             body,
           });
-          console.log(proxyRes);
           res.statusCode = proxyRes.status;
           res.statusMessage = proxyRes.statusText;
-          proxyRes.headers.forEach((v, k) => res.setHeader(k, v));
           const text = await proxyRes.text();
+          // Não repassar Content-Encoding: o body já foi decodificado por .text()
+          proxyRes.headers.forEach((v, k) => {
+            const key = k.toLowerCase();
+            if (key !== "content-encoding" && key !== "transfer-encoding") res.setHeader(k, v);
+          });
+          res.setHeader("Content-Length", Buffer.byteLength(text, "utf8"));
           res.end(text);
         } catch (err) {
           res.statusCode = 502;
