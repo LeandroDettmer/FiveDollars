@@ -28,7 +28,7 @@ export interface RequestConfig {
   queryParams: KeyValue[];
   bodyType: "none" | "json" | "form" | "raw";
   body?: string;
-  /** Basic Auth: usuário e senha (ex: {{1pay_username}}, {{1pay_password}}) resolvidos no envio */
+  /** Basic Auth: usuário e senha (ex: {{username}}, {{password}}) resolvidos no envio */
   authType?: "basic" | "bearer" | "apikey" | null;
   authBasicUsername?: string;
   authBasicPassword?: string;

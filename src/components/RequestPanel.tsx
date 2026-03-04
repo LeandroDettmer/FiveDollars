@@ -316,7 +316,7 @@ export function RequestPanel() {
                   type="text"
                   value={req.authBasicUsername ?? ""}
                   onChange={(e) => update({ authBasicUsername: e.target.value })}
-                  placeholder="{{1pay_username}}"
+                  placeholder="{{username}}"
                 />
                 {(req.authBasicUsername ?? "").includes("{{") && (
                   <VariablePreview
@@ -333,7 +333,7 @@ export function RequestPanel() {
                     type={showPasswords["basicPassword"] ? "text" : "password"}
                     value={req.authBasicPassword ?? ""}
                     onChange={(e) => update({ authBasicPassword: e.target.value })}
-                    placeholder="{{1pay_password}}"
+                    placeholder="{{password}}"
                   />
                   <button
                     type="button"
