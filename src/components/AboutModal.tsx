@@ -1,14 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import type { PersistedData } from "@/types/persisted";
 import { collectionToPostmanV21 } from "@/lib/exportPostmanV21";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import type { Collection } from "@/types";
-
-function isTauri(): boolean {
-  return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
-}
+import { isTauri, getAppVersion, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
 
 const APP_AUTHOR = "Leandro Dettmer";
 
@@ -30,9 +27,19 @@ function downloadJson(obj: object, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function AboutModal({ onClose, version = "0.1.0" }: AboutModalProps) {
+export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>("author");
+  const [version, setVersion] = useState(versionProp ?? "0.1.0");
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: "idle" });
   const { collections, environments, currentEnv, history } = useAppStore();
+
+  useEffect(() => {
+    if (isTauri()) {
+      getAppVersion().then(setVersion);
+    } else if (versionProp) {
+      setVersion(versionProp);
+    }
+  }, [versionProp]);
 
   const handleExportBackup = async () => {
     const data: PersistedData & { _exportVersion?: number } = {
@@ -63,6 +70,11 @@ export function AboutModal({ onClose, version = "0.1.0" }: AboutModalProps) {
     }
 
     downloadJson(data, defaultFilename);
+  };
+
+  const handleCheckUpdate = () => {
+    setUpdateStatus({ status: "idle" });
+    checkAndInstallUpdate(setUpdateStatus);
   };
 
   const handleExportPostman = async () => {
@@ -144,6 +156,43 @@ export function AboutModal({ onClose, version = "0.1.0" }: AboutModalProps) {
                 <p className="about-version">
                   FiveDollars <strong>v{version}</strong>
                 </p>
+                {isTauri() && (
+                  <div className="about-update-section">
+                    <button
+                      type="button"
+                      className="btn-primary about-update-btn"
+                      onClick={handleCheckUpdate}
+                      disabled={
+                        updateStatus.status === "checking" || updateStatus.status === "downloading"
+                      }
+                    >
+                      {updateStatus.status === "checking" && "Verificando…"}
+                      {updateStatus.status === "downloading" &&
+                        `Baixando… ${updateStatus.progress ?? 0}%`}
+                      {updateStatus.status === "idle" && "Verificar atualizações"}
+                      {updateStatus.status === "ready" && "Reiniciando…"}
+                      {(updateStatus.status === "none" ||
+                        updateStatus.status === "available" ||
+                        updateStatus.status === "error") &&
+                        "Verificar atualizações"}
+                    </button>
+                    {updateStatus.status === "available" && (
+                      <p className="about-update-available">
+                        Nova versão <strong>{updateStatus.version}</strong> disponível.
+                        {updateStatus.body && ` ${updateStatus.body}`} O download e a instalação
+                        começaram automaticamente.
+                      </p>
+                    )}
+                    {updateStatus.status === "none" && (
+                      <p className="about-update-none">Você está na versão mais recente.</p>
+                    )}
+                    {updateStatus.status === "error" && (
+                      <p className="about-update-error" role="alert">
+                        {updateStatus.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             {activeTab === "export" && (
