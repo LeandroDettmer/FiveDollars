@@ -71,7 +71,7 @@ O repositório tem um workflow que **gera o app para macOS, Windows e Linux** e 
 5. **Onde baixar**  
    No repositório: **Releases** → escolha a tag → baixe o arquivo do seu sistema.
 
-- **macOS:** abra o `.dmg`, arraste o app para Aplicativos. Na primeira abertura, se aparecer aviso de segurança: **Ajustes** → **Privacidade e segurança** → **Abrir assim mesmo**.
+- **macOS:** abra o `.dmg`, arraste o app para Aplicativos. Se aparecer *"FiveDollars is damaged"* (o app não é assinado com certificado Apple), use **botão direito no app** → **Abrir** → **Abrir** na confirmação. Alternativa no Terminal: `xattr -cr /Applications/FiveDollars.app`.
 - **Windows:** execute o `.msi` ou o `.exe` do instalador.
 - **Linux:** use o `.AppImage` (dar permissão de execução se precisar) ou instale o `.deb`.
 
