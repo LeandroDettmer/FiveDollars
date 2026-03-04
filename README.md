@@ -10,6 +10,25 @@ API Client | Desktop | Web (alternativa ao Postman/Insomnia) com **React** e **T
 - **Rust** (para o Tauri): [rustup.rs](https://rustup.rs)
 - **npm** ou outro gerenciador de pacotes
 
+### Linux (Ubuntu/Debian): dependências de sistema
+
+Antes de `npm run tauri dev` ou `npm run tauri build`, instale as bibliotecas que o Tauri/WebKit usa:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  libwebkit2gtk-4.1-dev \
+  libglib2.0-dev \
+  build-essential \
+  curl \
+  wget \
+  file \
+  libxdo-dev \
+  libssl-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev
+```
+
 ---
 
 ## Como rodar
