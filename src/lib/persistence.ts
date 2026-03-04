@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { PersistedData } from "@/types/persisted";
 
-const SESSION_STORAGE_KEY = "FiveDollars_app_data";
+const WEB_STORAGE_KEY = "FiveDollars_app_data";
 
 function isTauri(): boolean {
   return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
@@ -33,11 +33,11 @@ export async function loadAppData(): Promise<PersistedData> {
       return { collections: [], environments: [], currentEnvId: null, history: [] };
     }
   }
-  // Web: carregar do sessionStorage
-  if (typeof sessionStorage === "undefined") {
+  // Web: carregar do localStorage (persiste ao recarregar/reiniciar o servidor)
+  if (typeof localStorage === "undefined") {
     return { collections: [], environments: [], currentEnvId: null, history: [] };
   }
-  return parsePersistedData(sessionStorage.getItem(SESSION_STORAGE_KEY));
+  return parsePersistedData(localStorage.getItem(WEB_STORAGE_KEY));
 }
 
 export async function saveAppData(data: PersistedData): Promise<void> {
@@ -49,11 +49,11 @@ export async function saveAppData(data: PersistedData): Promise<void> {
     }
     return;
   }
-  // Web: salvar no sessionStorage
-  if (typeof sessionStorage === "undefined") return;
+  // Web: salvar no localStorage (persiste ao recarregar/reiniciar o servidor)
+  if (typeof localStorage === "undefined") return;
   try {
-    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(WEB_STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
-    console.error("Erro ao salvar dados (sessionStorage):", e);
+    console.error("Erro ao salvar dados (localStorage):", e);
   }
 }
