@@ -8,15 +8,12 @@ import {
   parseUrlQueryParams,
   extractPathParamNames,
 } from "@/lib/urlUtils";
+import { generateId } from "@/lib/id";
 import { BodyEditor } from "@/components/BodyEditor";
 import { VariablePreview } from "@/components/VariablePreview";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
-
-function generateId() {
-  return crypto.randomUUID();
-}
 
 const defaultRequest: RequestConfig = {
   id: generateId(),

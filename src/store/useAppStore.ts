@@ -11,10 +11,7 @@ import type {
 import type { PersistedData } from "@/types/persisted";
 import { saveAppData } from "@/lib/persistence";
 import { updateRequestInNodes, getCollectionContainingRequest } from "@/lib/collectionTreeUtils";
-
-function generateId(): string {
-  return crypto.randomUUID();
-}
+import { generateId } from "@/lib/id";
 
 function persist(state: {
   collections: Collection[];
@@ -41,6 +38,24 @@ interface AppState {
   selectedHistoryEntryId: string | null;
   history: HistoryEntry[];
   runnerHistory: RunnerHistoryEntry[];
+  /** Config pendente (tela de configurar run); quando setado, painel mostra o formulário. */
+  runnerPanelPendingConfig: { folderName: string; requests: RequestConfig[] } | null;
+  setRunnerPanelPendingConfig: (config: { folderName: string; requests: RequestConfig[] } | null) => void;
+  /** Config da execução atual no painel Runner (null = não executando). */
+  runnerPanelRun: {
+    folderName: string;
+    requests: RequestConfig[];
+    variablesOverride?: Record<string, string>[];
+    delayMs: number;
+    includeResponseBody: boolean;
+  } | null;
+  setRunnerPanelRun: (run: {
+    folderName: string;
+    requests: RequestConfig[];
+    variablesOverride?: Record<string, string>[];
+    delayMs: number;
+    includeResponseBody: boolean;
+  } | null) => void;
   clearScriptLogs: () => void;
   appendScriptLog: (entry: ScriptLogEntry) => void;
   setSelectedHistoryEntryId: (id: string | null) => void;
@@ -73,6 +88,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedHistoryEntryId: null,
   history: [],
   runnerHistory: [],
+  runnerPanelPendingConfig: null,
+  runnerPanelRun: null,
+
+  setRunnerPanelPendingConfig: (runnerPanelPendingConfig) => set({ runnerPanelPendingConfig }),
+  setRunnerPanelRun: (runnerPanelRun) => set({ runnerPanelRun }),
 
   clearScriptLogs: () => set({ scriptLogs: [] }),
   appendScriptLog: (entry) =>

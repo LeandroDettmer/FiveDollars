@@ -220,6 +220,7 @@ export function RunnerConfigModal({
             <div className="runner-config-row runner-config-checkbox-row">
               <label className="runner-config-checkbox-label">
                 <input
+                  style={{ width: "auto", marginRight: "8px" }}
                   type="checkbox"
                   checked={includeResponseBody}
                   onChange={(e) => setIncludeResponseBody(e.target.checked)}

@@ -1,15 +1,15 @@
 /**
- * Parser para Insomnia Collection (formato exportado pelo script export-insomnia-clinicorp.js).
- * Tipo: collection.insomnia.rest/5.0 (YAML ou JSON).
- * Estrutura: type, name, meta, collection (array de grupos ou requests).
+ * Parser para Insomnia Collection (YAML ou JSON).
+ * Estrutura esperada: type, name, meta, collection (array de grupos ou requests).
  */
 
 import type { Collection, CollectionNode, RequestConfig, KeyValue, HttpMethod } from "@/types";
+import { generateId } from "@/lib/id";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
 function genId(): string {
-  return crypto.randomUUID();
+  return generateId();
 }
 
 function toMethod(s: unknown): HttpMethod {
@@ -31,7 +31,7 @@ function toKeyValues(
   }));
 }
 
-/** Item de request no formato Insomnia 5.0 (como no YAML gerado pelo script) */
+/** Item de request no formato Insomnia */
 interface InsomniaRequestItem {
   name?: string;
   meta?: { id?: string };
@@ -42,7 +42,7 @@ interface InsomniaRequestItem {
   parameters?: Array<{ name?: string; value?: string; disabled?: boolean }>;
 }
 
-/** Item de grupo/pasta no formato Insomnia 5.0 */
+/** Item de grupo/pasta no formato Insomnia */
 interface InsomniaGroupItem {
   name?: string;
   meta?: { id?: string };

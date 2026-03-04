@@ -1,10 +1,11 @@
 import type { Collection, CollectionNode, RequestConfig } from "@/types";
+import { generateId } from "@/lib/id";
 
 /** Caminho no tree: índices desde a raiz. Ex: [0, 2] = terceiro filho do primeiro nó raiz. */
 export type NodePath = number[];
 
 function genId(): string {
-  return crypto.randomUUID();
+  return generateId();
 }
 
 /** Texto pesquisável do nó (nome + URL se for request). */

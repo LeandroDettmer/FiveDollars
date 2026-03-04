@@ -3,10 +3,9 @@ import { useAppStore } from "@/store/useAppStore";
 import { CollectionTree } from "./CollectionTree";
 import { EnvironmentEditor, ENV_COLORS } from "./EnvironmentEditor";
 import { ConfirmModal } from "./ConfirmModal";
-import { RunnerConfigModal } from "./RunnerConfigModal";
-import { RunnerModal } from "./RunnerModal";
 import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
+import { generateId } from "@/lib/id";
 import type { Collection, Environment, RequestConfig } from "@/types";
 
 export function Sidebar() {
@@ -20,7 +19,7 @@ export function Sidebar() {
     updateCollection,
     addEnvironment,
     setCurrentRequest,
-    getResolvedVariables,
+    setRunnerPanelPendingConfig,
     history,
     clearHistory,
     setSelectedHistoryEntryId,
@@ -29,17 +28,6 @@ export function Sidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [editingEnv, setEditingEnv] = useState<Environment | null>(null);
-  const [runnerConfig, setRunnerConfig] = useState<{
-    requests: RequestConfig[];
-    folderName: string;
-  } | null>(null);
-  const [runnerState, setRunnerState] = useState<{
-    requests: RequestConfig[];
-    folderName: string;
-    variablesOverride?: Record<string, string>[];
-    delayMs: number;
-    includeResponseBody: boolean;
-  } | null>(null);
   const [collapsedCollections, setCollapsedCollections] = useState(false);
   const [collapsedEnvs, setCollapsedEnvs] = useState(false);
   const [collectionSearch, setCollectionSearch] = useState("");
@@ -72,7 +60,7 @@ export function Sidebar() {
   };
 
   const createNewRequest = (): RequestConfig => ({
-    id: crypto.randomUUID(),
+    id: generateId(),
     name: "Nova requisição",
     method: "GET",
     url: "",
@@ -136,7 +124,7 @@ export function Sidebar() {
 
   const handleCreateCollection = () => {
     const newCollection: Collection = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name: "Nova collection",
       items: [],
     };
@@ -283,7 +271,7 @@ export function Sidebar() {
             )}
             {collections.length === 0 ? (
               <p className="sidebar-hint">
-                Importe um JSON (Postman v2.1) ou YAML/JSON (Insomnia 5.0).
+                Importe um JSON (Postman) ou YAML/JSON (Insomnia).
               </p>
             ) : (
               <div className="collections-list">
@@ -369,7 +357,7 @@ export function Sidebar() {
                           onUpdateItems={(items) => updateCollection(coll.id, { items })}
                           defaultFolderOpen={foldersExpanded}
                           onRunFolder={(requests, folderName) => {
-                            if (requests.length > 0) setRunnerConfig({ requests, folderName });
+                            if (requests.length > 0) setRunnerPanelPendingConfig({ requests, folderName });
                           }}
                         />
                       )}
@@ -482,36 +470,6 @@ export function Sidebar() {
         <EnvironmentEditor
           env={editingEnv}
           onClose={() => setEditingEnv(null)}
-        />
-      )}
-
-      {runnerConfig && (
-        <RunnerConfigModal
-          folderName={runnerConfig.folderName}
-          requests={runnerConfig.requests}
-          onRun={(opts) => {
-            setRunnerConfig(null);
-            setRunnerState({
-              requests: opts.selectedRequests,
-              folderName: runnerConfig.folderName,
-              variablesOverride: opts.variablesOverride,
-              delayMs: opts.delayMs,
-              includeResponseBody: opts.includeResponseBody,
-            });
-          }}
-          onClose={() => setRunnerConfig(null)}
-        />
-      )}
-
-      {runnerState && (
-        <RunnerModal
-          folderName={runnerState.folderName}
-          requests={runnerState.requests}
-          variables={getResolvedVariables()}
-          variablesOverride={runnerState.variablesOverride}
-          delayMs={runnerState.delayMs}
-          includeResponseBody={runnerState.includeResponseBody}
-          onClose={() => setRunnerState(null)}
         />
       )}
 

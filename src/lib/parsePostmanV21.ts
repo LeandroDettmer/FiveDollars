@@ -4,11 +4,12 @@
  */
 
 import type { Collection, CollectionNode, RequestConfig, KeyValue, HttpMethod } from "@/types";
+import { generateId } from "@/lib/id";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
 function genId(): string {
-  return crypto.randomUUID();
+  return generateId();
 }
 
 function toMethod(s: unknown): HttpMethod {

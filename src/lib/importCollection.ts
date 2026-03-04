@@ -1,5 +1,5 @@
 /**
- * Detecta formato e importa collection (Postman v2.1 ou Insomnia 5.0).
+ * Detecta formato e importa collection (Postman ou Insomnia).
  */
 
 import yaml from "js-yaml";
@@ -23,7 +23,7 @@ function isInsomniaDoc(obj: unknown): obj is InsomniaCollectionDoc {
 /**
  * Importa a partir do texto do arquivo e do nome do arquivo.
  * - .json: tenta Postman v2.1, depois Insomnia
- * - .yaml / .yml: parse YAML e usa parser Insomnia (formato do export-insomnia-clinicorp.js)
+ * - .yaml / .yml: parse YAML e usa parser Insomnia
  */
 export function importCollectionFromText(
   text: string,
@@ -56,5 +56,5 @@ export function importCollectionFromText(
     return { collection: parseInsomniaCollection(obj), format: "insomnia-5.0" };
   }
 
-  throw new Error("Formato não reconhecido. Use Postman v2.1 (JSON) ou Insomnia 5.0 (JSON/YAML).");
+  throw new Error("Formato não reconhecido. Use Postman (JSON) ou Insomnia (JSON/YAML).");
 }
