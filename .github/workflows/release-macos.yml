@@ -1,9 +1,6 @@
 name: Release macOS
 
 on:
-  push:
-    tags:
-      - 'v*'
   release:
     types: [published]
   workflow_dispatch:
@@ -58,8 +55,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: FiveDollars-macos.dmg
-          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.tag_name) || github.ref_name }}
+          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
           draft: false
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
