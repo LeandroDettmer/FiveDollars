@@ -1,6 +1,6 @@
 # FiveDollars
 
-Cliente HTTP desktop (alternativa ao Postman/Insomnia) com **React** e **Tauri**, usando CSS puro (sem Tailwind). Requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
+API Client | Desktop | Web (alternativa ao Postman/Insomnia) com **React** e **Tauri**, usando CSS puro (sem Tailwind). Requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
 
 ---
 

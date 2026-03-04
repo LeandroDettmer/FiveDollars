@@ -32,11 +32,21 @@ fn save_app_data(app: AppHandle, payload: String) -> Result<(), String> {
     fs::write(&path, payload).map_err(|e| e.to_string())
 }
 
+/// Grava o backup no caminho escolhido pelo usuário (diálogo "Salvar como").
+#[tauri::command]
+fn write_backup_file(path: String, payload: String) -> Result<(), String> {
+    if let Some(parent) = PathBuf::from(&path).parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    fs::write(&path, payload).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_http::init())
-        .invoke_handler(tauri::generate_handler![load_app_data, save_app_data])
+        .invoke_handler(tauri::generate_handler![load_app_data, save_app_data, write_backup_file])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar FiveDollars");
 }

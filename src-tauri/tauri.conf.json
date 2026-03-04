@@ -45,8 +45,8 @@
     "android": {
       "minSdkVersion": 21
     },
-    "longDescription": "Cliente HTTP desktop open-source focado em performance e privacidade.",
-    "shortDescription": "Cliente HTTP desktop",
+    "longDescription": "API Client | Desktop | Web open-source focado em performance e privacidade.",
+    "shortDescription": "API Client | Desktop | Web",
     "category": "DeveloperTool"
   }
 }

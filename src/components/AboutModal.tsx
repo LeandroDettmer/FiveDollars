@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import type { PersistedData } from "@/types/persisted";
 import { collectionToPostmanV21 } from "@/lib/exportPostmanV21";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
 import type { Collection } from "@/types";
+
+function isTauri(): boolean {
+  return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
+}
 
 const APP_AUTHOR = "Leandro Dettmer";
 
@@ -28,7 +34,7 @@ export function AboutModal({ onClose, version = "0.1.0" }: AboutModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const { collections, environments, currentEnv, history } = useAppStore();
 
-  const handleExportBackup = () => {
+  const handleExportBackup = async () => {
     const data: PersistedData & { _exportVersion?: number } = {
       collections,
       environments,
@@ -36,16 +42,55 @@ export function AboutModal({ onClose, version = "0.1.0" }: AboutModalProps) {
       history,
       _exportVersion: 1,
     };
-    downloadJson(data, `FiveDollars-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    const defaultFilename = `FiveDollars-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+    if (isTauri()) {
+      try {
+        const path = await save({
+          defaultPath: defaultFilename,
+          filters: [{ name: "JSON", extensions: ["json"] }],
+        });
+        if (path) {
+          await invoke("write_backup_file", {
+            path,
+            payload: JSON.stringify(data, null, 2),
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao exportar backup:", e);
+      }
+      return;
+    }
+
+    downloadJson(data, defaultFilename);
   };
 
-  const handleExportPostman = () => {
+  const handleExportPostman = async () => {
     const collection: Collection =
       collections.length > 0
         ? collections[0]
         : { id: "empty", name: "Empty", items: [] };
     const postman = collectionToPostmanV21(collection);
-    const name = collection.name.replace(/[^a-zA-Z0-9-_]/g, "_") || "collection";
+    const name = "FiveDollars-collection";
+
+    if (isTauri()) {
+      try {
+        const path = await save({
+          defaultPath: `${name}-postman-v2.1.json`,
+          filters: [{ name: "JSON", extensions: ["json"] }],
+        });
+        if (path) {
+          await invoke("write_backup_file", {
+            path,
+            payload: JSON.stringify(postman, null, 2),
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao exportar Postman:", e);
+      }
+      return;
+    }
+    
     downloadJson(postman, `${name}-postman-v2.1.json`);
   };
 

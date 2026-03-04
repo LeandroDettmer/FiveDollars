@@ -21,7 +21,7 @@ function App() {
   return (
     <>
       <header className="app-header">
-        FiveDollars <span>— Cliente HTTP desktop</span>
+        FiveDollars <span>— API Client | Desktop | Web</span>
       </header>
       <div className="app-layout">
         <ResizableSidebar className="sidebar">
