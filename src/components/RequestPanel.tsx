@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { sendRequest } from "@/lib/http";
+import { runPreRequestScript, runPostResponseScript } from "@/lib/runPostResponseScript";
 import { BodyEditor } from "@/components/BodyEditor";
 import { VariablePreview } from "@/components/VariablePreview";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
@@ -27,14 +28,21 @@ export function RequestPanel() {
     setCurrentRequest,
     setLastResponse,
     getResolvedVariables,
+    getCollectionForRequest,
     addToHistory,
     currentEnv,
     updateRequestInCollection,
+    updateCollection,
+    updateEnvironment,
+    clearScriptLogs,
+    appendScriptLog,
+    setSelectedHistoryEntryId,
   } = useAppStore();
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
   const [sending, setSending] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
-  const variables = currentEnv?.variables ?? {};
+  const [scriptsTab, setScriptsTab] = useState<"pre" | "post">("post");
+  const variables = getResolvedVariables(req.id);
   const reqRef = useRef(req);
   reqRef.current = req;
   const toggleShowPassword = (id: string) => setShowPasswords((s) => ({ ...s, [id]: !s[id] }));
@@ -58,7 +66,7 @@ export function RequestPanel() {
       if (latest.id) updateRequestInCollection(latest.id, latest);
     }, 800);
     return () => clearTimeout(t);
-  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.bodyType, req.body]);
+  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.bodyType, req.body, req.preRequestScript, req.postResponseScript]);
 
   const update = (patch: Partial<RequestConfig>) => setReq((r) => ({ ...r, ...patch }));
 
@@ -83,10 +91,55 @@ export function RequestPanel() {
     updateRequestInCollection(req.id, req);
     setSending(true);
     setLastResponse(null);
+    setSelectedHistoryEntryId(null);
+    clearScriptLogs();
     try {
-      const variables = getResolvedVariables();
+      let variables = getResolvedVariables(req.id);
+      const collection = getCollectionForRequest(req.id);
+      const collectionVars = collection?.variables ?? {};
+      const collectionVariablesContext =
+        collection ?
+          {
+            get: (key: string) => collectionVars[key] ?? "",
+            set: (key: string, value: unknown) => {
+              const coll = getCollectionForRequest(req.id);
+              if (coll)
+                updateCollection(coll.id, {
+                  variables: { ...(coll.variables ?? {}), [key]: value != null ? String(value) : "" },
+                });
+            },
+          }
+        : undefined;
+
+      if (req.preRequestScript?.trim()) {
+        const newVars = runPreRequestScript(
+          req.preRequestScript,
+          variables,
+          appendScriptLog,
+          collectionVariablesContext
+        );
+        if (currentEnv && Object.keys(newVars).length > 0) {
+          updateEnvironment(currentEnv.id, {
+            variables: { ...currentEnv.variables, ...newVars },
+          });
+          variables = { ...variables, ...newVars };
+        }
+      }
       const res = await sendRequest(req, variables);
       setLastResponse(res);
+      if (req.postResponseScript?.trim()) {
+        const newVars = runPostResponseScript(
+          req.postResponseScript,
+          res,
+          appendScriptLog,
+          collectionVariablesContext
+        );
+        if (currentEnv && Object.keys(newVars).length > 0) {
+          updateEnvironment(currentEnv.id, {
+            variables: { ...currentEnv.variables, ...newVars },
+          });
+        }
+      }
       addToHistory({ method: req.method, url: req.url, timestamp: Date.now() });
     } catch (err) {
       setLastResponse({
@@ -329,6 +382,56 @@ export function RequestPanel() {
           )}
         </div>
       )}
+
+      <div className="request-section">
+        <h4>Scripts</h4>
+        <div className="script-tabs">
+          <button
+            type="button"
+            className={`script-tab ${scriptsTab === "pre" ? "script-tab-active" : ""}`}
+            onClick={() => setScriptsTab("pre")}
+          >
+            Pre-request
+          </button>
+          <button
+            type="button"
+            className={`script-tab ${scriptsTab === "post" ? "script-tab-active" : ""}`}
+            onClick={() => setScriptsTab("post")}
+          >
+            Post-response
+          </button>
+        </div>
+        {scriptsTab === "pre" && (
+          <>
+            <p className="request-section-hint">
+              Executado antes do envio. fv.environment.get/set (ambiente); se a requisição for de uma collection, use fv.collectionVariables.get/set para gravar na collection.
+            </p>
+            <textarea
+              className="script-textarea"
+              value={req.preRequestScript ?? ""}
+              onChange={(e) => update({ preRequestScript: e.target.value })}
+              placeholder={`// Exemplo: definir timestamp\nfv.environment.set("timestamp", Date.now());`}
+              spellCheck={false}
+              rows={6}
+            />
+          </>
+        )}
+        {scriptsTab === "post" && (
+          <>
+            <p className="request-section-hint">
+              Executado após a resposta. fv.response.json(); fv.environment.set (ambiente); fv.collectionVariables.set (variáveis da collection, quando a requisição pertence a uma).
+            </p>
+            <textarea
+              className="script-textarea"
+              value={req.postResponseScript ?? ""}
+              onChange={(e) => update({ postResponseScript: e.target.value })}
+              placeholder={`const responseJson = fv.response.json();\nif (responseJson?.access_token) {\n  fv.environment.set("access_token", responseJson.access_token);\n}`}
+              spellCheck={false}
+              rows={6}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }

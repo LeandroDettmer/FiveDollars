@@ -22,6 +22,8 @@ export function Sidebar() {
     getResolvedVariables,
     history,
     clearHistory,
+    setSelectedHistoryEntryId,
+    selectedHistoryEntryId,
   } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -283,6 +285,23 @@ export function Sidebar() {
                 ))}
               </ul>
             )}
+            {currentEnv && Object.keys(currentEnv.variables ?? {}).length > 0 && (
+              <div className="sidebar-env-vars">
+                <div className="sidebar-env-vars-title">
+                  Variáveis de &quot;{currentEnv.name}&quot;
+                </div>
+                <ul className="sidebar-env-vars-list">
+                  {Object.entries(currentEnv.variables ?? {}).map(([key, value]) => (
+                    <li key={key} className="sidebar-env-vars-item">
+                      <code className="sidebar-env-vars-key">{key}</code>
+                      <span className="sidebar-env-vars-value" title={value}>
+                        {value}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -296,11 +315,29 @@ export function Sidebar() {
         </div>
         <ul className="history-list">
           {history.slice(0, 20).map((entry) => (
-            <li key={entry.id} className="history-item">
+            <li
+              key={entry.id}
+              className={`history-item ${selectedHistoryEntryId === entry.id ? "history-item-selected" : ""}`}
+              onClick={() => setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id);
+                }
+              }}
+              title={entry.scriptLogs?.length ? "Clique para ver os logs desta requisição" : "Clique para ver os logs"}
+            >
               <span className="history-method">{entry.method}</span>
               <span className="history-url" title={entry.url}>
                 {entry.url}
               </span>
+              {entry.scriptLogs?.length ? (
+                <span className="history-logs-badge" title={`${entry.scriptLogs.length} log(s)`}>
+                  {entry.scriptLogs.length}
+                </span>
+              ) : null}
             </li>
           ))}
           {history.length === 0 && (

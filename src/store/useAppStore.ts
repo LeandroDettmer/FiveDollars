@@ -6,10 +6,11 @@ import type {
   HistoryEntry,
   Collection,
   RunnerHistoryEntry,
+  ScriptLogEntry,
 } from "@/types";
 import type { PersistedData } from "@/types/persisted";
 import { saveAppData } from "@/lib/persistence";
-import { updateRequestInNodes } from "@/lib/collectionTreeUtils";
+import { updateRequestInNodes, getCollectionContainingRequest } from "@/lib/collectionTreeUtils";
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -36,15 +37,20 @@ interface AppState {
   collections: Collection[];
   currentRequest: RequestConfig | null;
   lastResponse: RequestResponse | null;
+  scriptLogs: ScriptLogEntry[];
+  selectedHistoryEntryId: string | null;
   history: HistoryEntry[];
   runnerHistory: RunnerHistoryEntry[];
+  clearScriptLogs: () => void;
+  appendScriptLog: (entry: ScriptLogEntry) => void;
+  setSelectedHistoryEntryId: (id: string | null) => void;
   addRunnerRun: (entry: Omit<RunnerHistoryEntry, "id" | "date">) => void;
   setStateFromPersisted: (data: PersistedData) => void;
   setCurrentEnv: (env: Environment | null) => void;
   setEnvironments: (envs: Environment[]) => void;
   addCollection: (coll: Collection) => void;
   removeCollection: (id: string) => void;
-  updateCollection: (id: string, patch: Partial<Pick<Collection, "name" | "items">>) => void;
+  updateCollection: (id: string, patch: Partial<Pick<Collection, "name" | "items" | "variables">>) => void;
   updateRequestInCollection: (requestId: string, request: RequestConfig) => void;
   addEnvironment: (env: Omit<Environment, "id">) => Environment;
   updateEnvironment: (id: string, patch: Partial<Environment>) => void;
@@ -53,7 +59,8 @@ interface AppState {
   setLastResponse: (res: RequestResponse | null) => void;
   addToHistory: (entry: Omit<HistoryEntry, "id">) => void;
   clearHistory: () => void;
-  getResolvedVariables: () => Record<string, string>;
+  getResolvedVariables: (requestId?: string) => Record<string, string>;
+  getCollectionForRequest: (requestId: string) => Collection | null;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -62,8 +69,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   collections: [],
   currentRequest: null,
   lastResponse: null,
+  scriptLogs: [],
+  selectedHistoryEntryId: null,
   history: [],
   runnerHistory: [],
+
+  clearScriptLogs: () => set({ scriptLogs: [] }),
+  appendScriptLog: (entry) =>
+    set((state) => ({ scriptLogs: [...state.scriptLogs, entry] })),
 
   addRunnerRun: (entry) => {
     set((state) => ({
@@ -116,6 +129,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     persist(get());
   },
 
+  getCollectionForRequest: (requestId) =>
+    getCollectionContainingRequest(get().collections, requestId),
+
+  getResolvedVariables: (requestId) => {
+    const { collections, currentEnv } = get();
+    const envVars = currentEnv?.variables ?? {};
+    if (!requestId) return envVars;
+    const coll = getCollectionContainingRequest(collections, requestId);
+    const collVars = coll?.variables ?? {};
+    return { ...collVars, ...envVars };
+  },
+
   updateRequestInCollection: (requestId, request) => {
     set((state) => ({
       collections: state.collections.map((c) => {
@@ -156,13 +181,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setCurrentRequest: (currentRequest) => set({ currentRequest }),
   setLastResponse: (lastResponse) => set({ lastResponse }),
+  setSelectedHistoryEntryId: (id) => set({ selectedHistoryEntryId: id }),
 
   addToHistory: (entry) => {
-    set((state) => ({
-      history: [
-        { ...entry, id: generateId() },
-        ...state.history.slice(0, 99),
-      ],
+    const state = get();
+    const newEntry: HistoryEntry = {
+      ...entry,
+      id: generateId(),
+      scriptLogs: state.scriptLogs.length > 0 ? [...state.scriptLogs] : undefined,
+    };
+    set((s) => ({
+      history: [newEntry, ...s.history.slice(0, 99)],
     }));
     persist(get());
   },
@@ -170,10 +199,5 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearHistory: () => {
     set({ history: [] });
     persist(get());
-  },
-
-  getResolvedVariables: () => {
-    const { currentEnv } = get();
-    return currentEnv?.variables ?? {};
   },
 }));

@@ -1,4 +1,4 @@
-import type { CollectionNode, RequestConfig } from "@/types";
+import type { Collection, CollectionNode, RequestConfig } from "@/types";
 
 /** Caminho no tree: índices desde a raiz. Ex: [0, 2] = terceiro filho do primeiro nó raiz. */
 export type NodePath = number[];
@@ -52,6 +52,26 @@ export function filterNodesBySearch(nodes: CollectionNode[], query: string): Col
     return result;
   }
   return go(nodes);
+}
+
+/** Verifica se a árvore contém uma request com o id dado. */
+function treeContainsRequestId(nodes: CollectionNode[], requestId: string): boolean {
+  for (const node of nodes) {
+    if (node.type === "request" && node.request?.id === requestId) return true;
+    if (node.type === "folder" && treeContainsRequestId(node.children, requestId)) return true;
+  }
+  return false;
+}
+
+/** Retorna a collection que contém a request com o id dado, ou null. */
+export function getCollectionContainingRequest(
+  collections: Collection[],
+  requestId: string
+): Collection | null {
+  for (const coll of collections) {
+    if (treeContainsRequestId(coll.items, requestId)) return coll;
+  }
+  return null;
 }
 
 /** Retorna o path (índices) até o nó com o id dado, ou null. */

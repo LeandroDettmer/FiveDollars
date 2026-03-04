@@ -27,6 +27,7 @@ function devProxyPlugin() {
             headers,
             body,
           });
+          console.log(proxyRes);
           res.statusCode = proxyRes.status;
           res.statusMessage = proxyRes.statusText;
           proxyRes.headers.forEach((v, k) => res.setHeader(k, v));

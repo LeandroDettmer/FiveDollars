@@ -109,6 +109,17 @@ function urlToString(url: string | PostmanUrl | undefined): string {
   return q ? `${base}?${q}` : base;
 }
 
+function getScriptFromEvents(events: unknown[] | undefined, listen: string): string | undefined {
+  if (!Array.isArray(events)) return undefined;
+  const event = events.find(
+    (e) => e && typeof e === "object" && String((e as { listen?: string }).listen ?? "") === listen
+  ) as { script?: { exec?: string[] } } | undefined;
+  const exec = event?.script?.exec;
+  if (!Array.isArray(exec) || exec.length === 0) return undefined;
+  const script = exec.join("\n").trim() || undefined;
+  return script?.replace(/\bpm\./g, "fv.") ?? undefined;
+}
+
 function postmanItemToRequest(
   postmanItem: {
     name?: string;
@@ -120,6 +131,7 @@ function postmanItemToRequest(
       body?: { mode?: string; raw?: string };
       auth?: Record<string, unknown>;
     };
+    event?: unknown[];
   },
   collectionAuth?: Record<string, unknown>
 ): RequestConfig {
@@ -153,6 +165,9 @@ function postmanItemToRequest(
     bodyText = String(body.raw);
   }
 
+  const preRequestScript = getScriptFromEvents(postmanItem.event, "prerequest");
+  const postResponseScript = getScriptFromEvents(postmanItem.event, "test");
+
   return {
     id: postmanItem.id && typeof postmanItem.id === "string" ? postmanItem.id : genId(),
     name: String(postmanItem.name ?? "Request"),
@@ -163,6 +178,8 @@ function postmanItemToRequest(
     bodyType,
     body: bodyText || undefined,
     ...authConfig,
+    preRequestScript,
+    postResponseScript,
   };
 }
 
@@ -205,6 +222,22 @@ export interface PostmanCollectionV21 {
   info?: { name?: string; _postman_id?: string };
   item?: unknown[];
   auth?: Record<string, unknown>;
+  variable?: Array<{ key?: string; value?: string }>;
+}
+
+function parsePostmanVariables(variable: unknown[] | undefined): Record<string, string> {
+  if (!Array.isArray(variable) || variable.length === 0) return {};
+  const out: Record<string, string> = {};
+  for (const v of variable) {
+    const key = v && typeof v === "object" && typeof (v as { key?: string }).key === "string"
+      ? (v as { key: string }).key
+      : "";
+    if (key) {
+      const val = (v as { value?: string }).value;
+      out[key] = val != null ? String(val) : "";
+    }
+  }
+  return out;
 }
 
 /**
@@ -219,9 +252,12 @@ export function parsePostmanCollectionV21(json: unknown): Collection {
     : genId()) as string;
 
   const collectionAuth = root.auth && typeof root.auth === "object" ? root.auth : undefined;
+  const variables = parsePostmanVariables(root.variable);
+
   return {
     id: collectionId,
     name: String(info.name ?? "Collection"),
     items: parsePostmanItems(items, collectionAuth),
+    variables: Object.keys(variables).length > 0 ? variables : undefined,
   };
 }

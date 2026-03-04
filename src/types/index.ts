@@ -35,6 +35,10 @@ export interface RequestConfig {
   authBearerToken?: string;
   authApiKeyKey?: string;
   authApiKeyValue?: string;
+  /** Script executado antes do envio. Use fv.environment.get/set("nome", valor). */
+  preRequestScript?: string;
+  /** Script executado após a resposta. Use fv.response.json() e fv.environment.set("nome", valor). */
+  postResponseScript?: string;
 }
 
 export interface RequestResponse {
@@ -51,6 +55,8 @@ export interface HistoryEntry {
   method: HttpMethod;
   url: string;
   timestamp: number;
+  /** Logs dos scripts (Pre-request / Post-response) dessa execução */
+  scriptLogs?: ScriptLogEntry[];
 }
 
 /** Nó da árvore de uma collection: pasta ou requisição */
@@ -63,6 +69,8 @@ export interface Collection {
   id: UUID;
   name: string;
   items: CollectionNode[];
+  /** Variáveis da collection (como no Postman). Scripts podem usar fv.collectionVariables.set/get. */
+  variables?: Record<string, string>;
 }
 
 /** Um resultado no histórico do Runner (status sempre; body opcional). */
@@ -83,4 +91,10 @@ export interface RunnerHistoryEntry {
   folderName: string;
   includeBody: boolean;
   results: RunnerHistoryResult[];
+}
+
+/** Entrada de log dos scripts (Pre-request / Post-response). */
+export interface ScriptLogEntry {
+  type: "log" | "warn" | "error" | "info" | "debug";
+  args: unknown[];
 }
