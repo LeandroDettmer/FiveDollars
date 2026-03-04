@@ -50,9 +50,9 @@ npm run tauri build
 
 ---
 
-## Release no GitHub (download para Mac)
+## Release no GitHub (download: Mac, Windows, Linux)
 
-O repositório tem um workflow que **gera o app para macOS** e **anexa ao Release** quando você publica uma tag.
+O repositório tem um workflow que **gera o app para macOS, Windows e Linux** e **anexa ao Release** quando você publica um release.
 
 1. **Versão**  
    Atualize a versão em `package.json` e em `src-tauri/tauri.conf.json` (ex.: `0.1.0`).
@@ -60,22 +60,20 @@ O repositório tem um workflow que **gera o app para macOS** e **anexa ao Releas
 2. **Commit e push**  
    Faça commit das alterações e dê push para o `main` (ou o branch que usar).
 
-3. **Criar a tag e publicar**  
-   Use uma tag no formato `v*` (ex.: `v0.1.0`):
-
-   ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
+3. **Publicar o release**  
+   No GitHub: **Releases** → **Create a new release** → escolha ou crie uma tag (ex.: `v0.1.0`) → **Publish release**.  
+   Ou use **Actions** → **Release** → **Run workflow** e informe a tag (ex.: `v0.1.0`).
 
 4. **O que acontece**  
-   O GitHub Actions roda o job **Release macOS** (runner `macos-latest`, Apple Silicon).  
-   Ao terminar, é criado um **Release** com a tag (ex. `v0.1.0`) e o arquivo **FiveDollars-macos.dmg** anexado para download.
+   O GitHub Actions roda o job **Release** em paralelo para **macOS**, **Linux** e **Windows**.  
+   Ao terminar, o release da tag recebe os instaladores: **FiveDollars-macos.dmg**, **FiveDollars-windows.msi** (e/ou **.exe**), **FiveDollars-linux.AppImage** (e/ou **.deb**).
 
 5. **Onde baixar**  
-   No repositório: **Releases** → escolha a tag → baixe `FiveDollars-macos.dmg`.
+   No repositório: **Releases** → escolha a tag → baixe o arquivo do seu sistema.
 
-O build é **apenas para macOS** (por enquanto). Em Mac com Apple Silicon, abra o `.dmg`, arraste o app para Aplicativos e, na primeira abertura, se aparecer aviso de segurança: **Ajustes** → **Privacidade e segurança** → **Abrir assim mesmo**.
+- **macOS:** abra o `.dmg`, arraste o app para Aplicativos. Na primeira abertura, se aparecer aviso de segurança: **Ajustes** → **Privacidade e segurança** → **Abrir assim mesmo**.
+- **Windows:** execute o `.msi` ou o `.exe` do instalador.
+- **Linux:** use o `.AppImage` (dar permissão de execução se precisar) ou instale o `.deb`.
 
 ---
 

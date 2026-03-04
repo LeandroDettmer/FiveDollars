@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag do release (ex.: v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            name: macos
+          - platform: ubuntu-latest
+            name: linux
+          - platform: windows-latest
+            name: windows
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.tag_name) || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri
+        run: npm run tauri build
+        env:
+          CARGO_TERM_COLOR: always
+
+      - name: Prepare and upload artifact (macOS)
+        if: matrix.name == 'macos'
+        run: |
+          DMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
+          if [ -z "$DMG" ]; then
+            echo "DMG não encontrado"
+            exit 1
+          fi
+          mkdir -p release-artifact
+          cp "$DMG" release-artifact/FiveDollars-macos.dmg
+
+      - name: Prepare and upload artifact (Linux)
+        if: matrix.name == 'linux'
+        run: |
+          mkdir -p release-artifact
+          if ls src-tauri/target/release/bundle/appimage/*.AppImage 1>/dev/null 2>&1; then
+            cp src-tauri/target/release/bundle/appimage/*.AppImage release-artifact/FiveDollars-linux.AppImage
+          fi
+          if ls src-tauri/target/release/bundle/deb/*.deb 1>/dev/null 2>&1; then
+            cp src-tauri/target/release/bundle/deb/*.deb release-artifact/
+          fi
+          if [ -z "$(ls -A release-artifact 2>/dev/null)" ]; then
+            echo "Nenhum artefato Linux encontrado"
+            exit 1
+          fi
+
+      - name: Prepare and upload artifact (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-artifact
+          $msi = Get-ChildItem -Path src-tauri/target/release/bundle/msi -Filter *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($msi) { Copy-Item $msi.FullName release-artifact/FiveDollars-windows.msi }
+          $exe = Get-ChildItem -Path src-tauri/target/release/bundle/nsis -Filter *.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($exe) { Copy-Item $exe.FullName release-artifact/FiveDollars-windows.exe }
+          if ((Get-ChildItem release-artifact).Count -eq 0) { throw "Nenhum artefato Windows encontrado" }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.name }}
+          path: release-artifact/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Gather release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f -exec cp {} release-assets/ \;
+          ls -la release-assets/
+
+      - name: Create Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
+          draft: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
