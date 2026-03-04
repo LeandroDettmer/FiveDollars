@@ -23,6 +23,7 @@ jobs:
           - platform: windows-latest
             name: windows
     runs-on: ${{ matrix.platform }}
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -106,15 +107,23 @@ jobs:
           path: artifacts
 
       - name: Gather release assets
+        id: gather
         run: |
           mkdir -p release-assets
           find artifacts -type f -exec cp {} release-assets/ \;
           ls -la release-assets/
+          if [ -z "$(ls -A release-assets 2>/dev/null)" ]; then
+            echo "Nenhum artefato para anexar ao release"
+            exit 1
+          fi
+          echo "paths<<EOF" >> $GITHUB_OUTPUT
+          find release-assets -type f >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
-          files: release-assets/*
+          files: ${{ steps.gather.outputs.paths }}
           tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
           draft: false
           generate_release_notes: false
