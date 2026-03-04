@@ -46,6 +46,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![load_app_data, save_app_data, write_backup_file])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar FiveDollars");

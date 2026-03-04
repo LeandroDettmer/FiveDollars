@@ -774,6 +774,15 @@ body {
   background: var(--bg-secondary);
 }
 
+.collection-request-btn--active {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.collection-request-btn--active:hover {
+  background: var(--bg-tertiary);
+}
+
 .collection-request-method {
   flex-shrink: 0;
   font-size: 10px;
@@ -2211,6 +2220,30 @@ body {
 
 .about-version strong {
   color: var(--text);
+}
+
+.about-update-section {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.about-update-btn {
+  align-self: flex-start;
+}
+
+.about-update-available,
+.about-update-none {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.about-update-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger, #c53030);
 }
 
 .about-export-panel {

@@ -34,6 +34,7 @@ function NodeItem({
   editingNodeId,
   onRename,
   defaultFolderOpen = false,
+  currentRequestId = null,
 }: {
   node: CollectionNode;
   depth: number;
@@ -45,6 +46,7 @@ function NodeItem({
   editingNodeId: string | null;
   onRename: (nodeId: string, newName: string) => void;
   defaultFolderOpen?: boolean;
+  currentRequestId?: string | null;
 }) {
   const [open, setOpen] = useState(defaultFolderOpen);
   const [dragOver, setDragOver] = useState(false);
@@ -137,6 +139,7 @@ function NodeItem({
                 editingNodeId={editingNodeId}
                 onRename={onRename}
                 defaultFolderOpen={defaultFolderOpen}
+                currentRequestId={currentRequestId}
               />
             ))}
           </div>
@@ -145,10 +148,12 @@ function NodeItem({
     );
   }
 
+  const isActive = currentRequestId != null && node.request.id === currentRequestId;
+
   return (
     <button
       type="button"
-      className="collection-request-btn"
+      className={`collection-request-btn ${isActive ? "collection-request-btn--active" : ""}`}
       style={{ paddingLeft: 12 + depth * 8 }}
       onClick={() => onSelectRequest(node.request)}
       onContextMenu={(e) => onContextMenu(e, path, node)}
@@ -186,6 +191,7 @@ export function CollectionTree({
   onUpdateItems,
   onRunFolder,
   defaultFolderOpen = false,
+  currentRequestId = null,
 }: {
   collectionId: string;
   nodes: CollectionNode[];
@@ -194,6 +200,7 @@ export function CollectionTree({
   onUpdateItems?: (items: CollectionNode[]) => void;
   onRunFolder?: (requests: RequestConfig[], folderName: string) => void;
   defaultFolderOpen?: boolean;
+  currentRequestId?: string | null;
 }) {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -301,6 +308,7 @@ export function CollectionTree({
           editingNodeId={editingNodeId}
           onRename={handleRename}
           defaultFolderOpen={defaultFolderOpen}
+          currentRequestId={currentRequestId}
         />
       ))}
       {contextMenu && (

@@ -19,6 +19,7 @@ export function Sidebar() {
     removeCollection,
     updateCollection,
     addEnvironment,
+    currentRequest,
     setCurrentRequest,
     setRunnerPanelPendingConfig,
     setRunnerPanelRun,
@@ -367,6 +368,7 @@ export function Sidebar() {
                             key={`tree-${coll.id}-${folderViewKey}`}
                             collectionId={coll.id}
                             nodes={coll.items}
+                            currentRequestId={currentRequest?.id ?? null}
                             onSelectRequest={(req) => {
                               setRunnerPanelPendingConfig(null);
                               setRunnerPanelRun(null);

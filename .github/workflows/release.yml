@@ -67,6 +67,7 @@ jobs:
         run: npm run tauri build
         env:
           CARGO_TERM_COLOR: always
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Prepare and upload artifact (macOS)
         if: matrix.name == 'macos'
@@ -83,6 +84,10 @@ jobs:
           echo "Encontrado: $DMG"
           mkdir -p release-artifact
           cp "$DMG" release-artifact/FiveDollars-macos.dmg
+          # Artefatos do updater (tar.gz + assinatura)
+          for f in src-tauri/target/release/bundle/macos/*.app.tar.gz; do
+            [ -f "$f" ] && cp "$f" release-artifact/ && cp "${f}.sig" release-artifact/ 2>/dev/null || true && break
+          done
 
       - name: Prepare and upload artifact (Linux)
         if: matrix.name == 'linux'
@@ -90,6 +95,8 @@ jobs:
           mkdir -p release-artifact
           if ls src-tauri/target/release/bundle/appimage/*.AppImage 1>/dev/null 2>&1; then
             cp src-tauri/target/release/bundle/appimage/*.AppImage release-artifact/FiveDollars-linux.AppImage
+            SIG="$(find src-tauri/target/release/bundle/appimage -name '*.AppImage.sig' -type f 2>/dev/null | head -1)"
+            if [ -n "$SIG" ]; then cp "$SIG" release-artifact/FiveDollars-linux.AppImage.sig; fi
           fi
           if ls src-tauri/target/release/bundle/deb/*.deb 1>/dev/null 2>&1; then
             cp src-tauri/target/release/bundle/deb/*.deb release-artifact/
@@ -105,9 +112,17 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path release-artifact
           $msi = Get-ChildItem -Path src-tauri/target/release/bundle/msi -Filter *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($msi) { Copy-Item $msi.FullName release-artifact/FiveDollars-windows.msi }
+          if ($msi) {
+            Copy-Item $msi.FullName release-artifact/FiveDollars-windows.msi
+            $sig = Join-Path (Split-Path $msi.FullName) ($msi.Name + ".sig")
+            if (Test-Path $sig) { Copy-Item $sig release-artifact/FiveDollars-windows.msi.sig }
+          }
           $exe = Get-ChildItem -Path src-tauri/target/release/bundle/nsis -Filter *.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($exe) { Copy-Item $exe.FullName release-artifact/FiveDollars-windows.exe }
+          if ($exe) {
+            Copy-Item $exe.FullName release-artifact/FiveDollars-windows.exe
+            $sig = Join-Path (Split-Path $exe.FullName) ($exe.Name + ".sig")
+            if (Test-Path $sig) { Copy-Item $sig release-artifact/FiveDollars-windows.exe.sig }
+          }
           if ((Get-ChildItem release-artifact).Count -eq 0) { throw "Nenhum artefato Windows encontrado" }
 
       - name: Upload artifact
@@ -137,6 +152,34 @@ jobs:
             echo "Nenhum artefato para anexar ao release"
             exit 1
           fi
+
+      - name: Create latest.json for updater
+        id: latest_json
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
+        run: |
+          TAG="${RELEASE_TAG}"
+          VERSION="${TAG#v}"
+          BASE="https://github.com/LeandroDettmer/FiveDollars/releases/download/${TAG}"
+          PLATFORMS="{}"
+          if [ -f release-assets/FiveDollars.app.tar.gz ] && [ -f release-assets/FiveDollars.app.tar.gz.sig ]; then
+            SIG=$(cat release-assets/FiveDollars.app.tar.gz.sig | tr -d '\n')
+            PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/FiveDollars.app.tar.gz" --arg sig "$SIG" '. + {"darwin-x86_64": {"url": $url, "signature": $sig}}')
+          fi
+          if [ -f release-assets/FiveDollars-linux.AppImage ] && [ -f release-assets/FiveDollars-linux.AppImage.sig ]; then
+            SIG=$(cat release-assets/FiveDollars-linux.AppImage.sig | tr -d '\n')
+            PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/FiveDollars-linux.AppImage" --arg sig "$SIG" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
+          fi
+          if [ -f release-assets/FiveDollars-windows.exe ] && [ -f release-assets/FiveDollars-windows.exe.sig ]; then
+            SIG=$(cat release-assets/FiveDollars-windows.exe.sig | tr -d '\n')
+            PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/FiveDollars-windows.exe" --arg sig "$SIG" '. + {"windows-x86_64": {"url": $url, "signature": $sig}}')
+          fi
+          echo "{\"version\": \"$VERSION\", \"platforms\": $PLATFORMS}" | jq . > release-assets/latest.json
+          cat release-assets/latest.json
+
+      - name: Set release asset paths
+        id: paths
+        run: |
           echo "paths<<EOF" >> $GITHUB_OUTPUT
           find release-assets -type f >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -144,7 +187,7 @@ jobs:
       - name: Create Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.gather.outputs.paths }}
+          files: ${{ steps.paths.outputs.paths }}
           tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
           draft: false
           generate_release_notes: false
