@@ -20,6 +20,7 @@ export function Sidebar() {
     addEnvironment,
     setCurrentRequest,
     setRunnerPanelPendingConfig,
+    setRunnerPanelRun,
     history,
     clearHistory,
     setSelectedHistoryEntryId,
@@ -352,7 +353,11 @@ export function Sidebar() {
                           key={`tree-${coll.id}-${folderViewKey}`}
                           collectionId={coll.id}
                           nodes={coll.items}
-                          onSelectRequest={(req) => setCurrentRequest(req)}
+                          onSelectRequest={(req) => {
+                            setRunnerPanelPendingConfig(null);
+                            setRunnerPanelRun(null);
+                            setCurrentRequest(req)
+                          }}
                           searchQuery={collectionSearch}
                           onUpdateItems={(items) => updateCollection(coll.id, { items })}
                           defaultFolderOpen={foldersExpanded}

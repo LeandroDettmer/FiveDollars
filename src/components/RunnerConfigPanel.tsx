@@ -222,9 +222,9 @@ export function RunnerConfigPanel({
             {fileError && <p className="runner-config-error">{fileError}</p>}
           </div>
           <div className="runner-config-row runner-config-checkbox-row">
-            <label className="runner-config-checkbox-label">
+            <label className="runner-config-checkbox-label" style={{ display: "flex", alignItems: "center" }}>
               <input
-                style={{ width: "auto", marginRight: "8px" }}
+                style={{ width: "auto", marginRight: "1px" }}
                 type="checkbox"
                 checked={includeResponseBody}
                 onChange={(e) => setIncludeResponseBody(e.target.checked)}

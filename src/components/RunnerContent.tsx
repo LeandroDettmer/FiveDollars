@@ -73,6 +73,12 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
       }))
     );
 
+    /** Dá tempo para o React repintar a UI entre cada execução (running → concluído/erro). */
+    const yieldToPaint = () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+
     (async () => {
       let runIndex = 0;
       for (let iter = 0; iter < rows.length; iter++) {
@@ -87,6 +93,7 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
               idx === runIndex ? { ...r, status: "running" as const } : r
             )
           );
+          await yieldToPaint();
 
           try {
             const response = await sendRequest(reqs[i], iterVars);
@@ -121,6 +128,7 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
               )
             );
           }
+          await yieldToPaint();
           runIndex++;
           if (delay > 0 && runIndex < total) await new Promise((r) => setTimeout(r, delay));
         }

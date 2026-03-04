@@ -2187,17 +2187,6 @@ body {
   opacity: 1;
 }
 
-/* Modal de configuração do Runner (legado) */
-.modal-content.runner-config-modal {
-  max-width: 480px;
-}
-
-.runner-config-body {
-  padding: 16px;
-  overflow-y: auto;
-  max-height: 60vh;
-}
-
 .runner-config-section {
   margin-bottom: 20px;
 }
