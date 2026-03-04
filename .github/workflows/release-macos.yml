@@ -1,0 +1,54 @@
+name: Release macOS
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'src-tauri -> target'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Tauri (macOS)
+        run: npm run tauri build
+        env:
+          CARGO_TERM_COLOR: always
+
+      - name: Prepare DMG for upload
+        run: |
+          DMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
+          if [ -z "$DMG" ]; then
+            echo "DMG não encontrado em src-tauri/target/release/bundle/dmg/"
+            exit 1
+          fi
+          cp "$DMG" FiveDollars-macos.dmg
+          echo "DMG_PATH=FiveDollars-macos.dmg" >> $GITHUB_ENV
+
+      - name: Create Release and upload DMG
+        uses: softprops/action-gh-release@v2
+        with:
+          files: FiveDollars-macos.dmg
+          draft: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
