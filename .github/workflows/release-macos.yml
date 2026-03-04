@@ -6,6 +6,12 @@ on:
       - 'v*'
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag do release (ex.: v0.1.0)'
+        required: true
+        default: 'v0.1.0'
 
 jobs:
   release-macos:
@@ -13,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.tag_name) || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -50,7 +58,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: FiveDollars-macos.dmg
-          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
+          tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || (github.event_name == 'workflow_dispatch' && inputs.tag_name) || github.ref_name }}
           draft: false
           generate_release_notes: true
         env:
