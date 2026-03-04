@@ -44,6 +44,22 @@ jobs:
         with:
           workspaces: 'src-tauri -> target'
 
+      - name: Install Linux dependencies (Tauri)
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libglib2.0-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
       - name: Install dependencies
         run: npm ci
 
@@ -55,11 +71,16 @@ jobs:
       - name: Prepare and upload artifact (macOS)
         if: matrix.name == 'macos'
         run: |
-          DMG=$(ls src-tauri/target/release/bundle/dmg/*.dmg 2>/dev/null | head -1)
+          echo "Procurando .dmg em src-tauri/target..."
+          find src-tauri/target -name "*.dmg" -type f 2>/dev/null || true
+          DMG=$(find src-tauri/target -name "*.dmg" -type f 2>/dev/null | head -1)
           if [ -z "$DMG" ]; then
-            echo "DMG não encontrado"
+            echo "DMG não encontrado. Conteúdo de src-tauri/target/release/bundle:"
+            ls -la src-tauri/target/release/bundle/ 2>/dev/null || true
+            ls -la src-tauri/target/release/bundle/dmg/ 2>/dev/null || true
             exit 1
           fi
+          echo "Encontrado: $DMG"
           mkdir -p release-artifact
           cp "$DMG" release-artifact/FiveDollars-macos.dmg
 
