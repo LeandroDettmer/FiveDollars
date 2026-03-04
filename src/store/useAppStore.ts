@@ -72,6 +72,9 @@ interface AppState {
   removeEnvironment: (id: string) => void;
   setCurrentRequest: (req: RequestConfig | null) => void;
   setLastResponse: (res: RequestResponse | null) => void;
+  /** true enquanto uma requisição está sendo enviada (para mostrar loading no painel de resposta). */
+  sendingRequest: boolean;
+  setSendingRequest: (v: boolean) => void;
   addToHistory: (entry: Omit<HistoryEntry, "id">) => void;
   clearHistory: () => void;
   getResolvedVariables: (requestId?: string) => Record<string, string>;
@@ -111,14 +114,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  setStateFromPersisted: (data) =>
+  setStateFromPersisted: (data) => {
     set({
       collections: data.collections,
       environments: data.environments,
       currentEnv:
         data.environments.find((e) => e.id === data.currentEnvId) ?? null,
       history: data.history,
-    }),
+    });
+    persist(get());
+  },
 
   setCurrentEnv: (currentEnv) => {
     set({ currentEnv });
@@ -201,6 +206,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setCurrentRequest: (currentRequest) => set({ currentRequest }),
   setLastResponse: (lastResponse) => set({ lastResponse }),
+  sendingRequest: false,
+  setSendingRequest: (sendingRequest) => set({ sendingRequest }),
   setSelectedHistoryEntryId: (id) => set({ selectedHistoryEntryId: id }),
 
   addToHistory: (entry) => {

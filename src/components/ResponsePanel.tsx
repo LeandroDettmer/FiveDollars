@@ -33,6 +33,7 @@ export function ResponsePanel() {
     scriptLogs,
     history,
     selectedHistoryEntryId,
+    sendingRequest,
   } = useAppStore();
   const [logsHeight, setLogsHeight] = useState(getStoredLogsHeight);
   const [draggingLogs, setDraggingLogs] = useState(false);
@@ -88,10 +89,19 @@ export function ResponsePanel() {
     : "Logs (última requisição)";
   const hasLogsToShow = logsToShow.length > 0 || selectedEntry != null;
 
-  if (!lastResponse && !selectedEntry) {
+  if (!lastResponse && !selectedEntry && !sendingRequest) {
     return (
       <div className="response-panel empty">
         <p>Envie uma requisição para ver a resposta aqui.</p>
+      </div>
+    );
+  }
+
+  if (sendingRequest && !lastResponse) {
+    return (
+      <div className="response-panel empty response-panel-loading">
+        <div className="response-loading-spinner" aria-hidden />
+        <p>Enviando…</p>
       </div>
     );
   }

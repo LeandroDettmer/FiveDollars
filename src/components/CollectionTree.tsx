@@ -102,7 +102,9 @@ function NodeItem({
           draggable
           onDragStart={handleDragStart}
         >
-          <span className="collection-folder-icon">{open ? "▼" : "▶"}</span>
+          <span style={{ fontSize: "1.3vh" }} className="collection-folder-icon material-symbols-outlined" aria-hidden>
+            {open ? "keyboard_arrow_down" : "keyboard_arrow_right"}
+          </span>
           {isEditing ? (
             <input
               className="collection-tree-rename-input"
@@ -161,7 +163,7 @@ function NodeItem({
           onBlur={() => submitRename(editValue)}
           onKeyDown={(e) => {
             if (e.key === "Enter") submitRename(editValue);
-                if (e.key === "Escape") onRename(node.id, node.name);
+            if (e.key === "Escape") onRename(node.id, node.name);
           }}
           onClick={(e) => e.stopPropagation()}
           autoFocus
@@ -294,7 +296,7 @@ export function CollectionTree({
           path={[idx]}
           onSelectRequest={onSelectRequest}
           onContextMenu={handleContextMenu}
-          onUpdateItems={onUpdateItems ?? (() => {})}
+          onUpdateItems={onUpdateItems ?? (() => { })}
           onDropOnFolder={onUpdateItems ? handleDropOnFolder : undefined}
           editingNodeId={editingNodeId}
           onRename={handleRename}

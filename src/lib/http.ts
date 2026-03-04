@@ -91,7 +91,8 @@ function replacePathParams(
 
 export async function sendRequest(
   config: RequestConfig,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  signal?: AbortSignal
 ): Promise<RequestResponse> {
   const urlWithPath = replacePathParams(
     config.url,
@@ -113,6 +114,7 @@ export async function sendRequest(
   const options: RequestInit = {
     method: config.method,
     headers: Object.keys(headers).length ? headers : undefined,
+    signal,
   };
 
   if (config.method !== "GET" && config.bodyType !== "none" && config.body?.trim()) {

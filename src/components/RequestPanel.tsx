@@ -40,14 +40,20 @@ export function RequestPanel() {
     clearScriptLogs,
     appendScriptLog,
     setSelectedHistoryEntryId,
+    sendingRequest: sending,
+    setSendingRequest,
   } = useAppStore();
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
-  const [sending, setSending] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [scriptsTab, setScriptsTab] = useState<"pre" | "post">("post");
+  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">("params");
   const variables = getResolvedVariables(req.id);
   const reqRef = useRef(req);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const handleSendRef = useRef<() => void>(() => { });
+  const sendingRef = useRef(sending);
   reqRef.current = req;
+  sendingRef.current = sending;
   const toggleShowPassword = (id: string) => setShowPasswords((s) => ({ ...s, [id]: !s[id] }));
 
   useEffect(() => {
@@ -61,6 +67,10 @@ export function RequestPanel() {
       setReq(currentRequest);
     }
   }, [currentRequest?.id]);
+
+  useEffect(() => {
+    if (req.method === "GET" && requestTab === "body") setRequestTab("params");
+  }, [req.method]);
 
   useEffect(() => {
     if (!req.id) return;
@@ -140,7 +150,8 @@ export function RequestPanel() {
   const handleSend = async () => {
     setCurrentRequest(req);
     updateRequestInCollection(req.id, req);
-    setSending(true);
+    abortControllerRef.current = new AbortController();
+    setSendingRequest(true);
     setLastResponse(null);
     setSelectedHistoryEntryId(null);
     clearScriptLogs();
@@ -160,7 +171,7 @@ export function RequestPanel() {
                 });
             },
           }
-        : undefined;
+          : undefined;
 
       if (req.preRequestScript?.trim()) {
         const newVars = runPreRequestScript(
@@ -176,7 +187,7 @@ export function RequestPanel() {
           variables = { ...variables, ...newVars };
         }
       }
-      const res = await sendRequest(req, variables);
+      const res = await sendRequest(req, variables, abortControllerRef.current.signal);
       setLastResponse(res);
       if (req.postResponseScript?.trim()) {
         const newVars = runPostResponseScript(
@@ -193,18 +204,58 @@ export function RequestPanel() {
       }
       addToHistory({ method: req.method, url: req.url, timestamp: Date.now() });
     } catch (err) {
-      setLastResponse({
-        status: 0,
-        statusText: "Erro",
-        headers: {},
-        body: String(err),
-        timeMs: 0,
-        sizeBytes: 0,
-      });
+      const isAborted = err instanceof Error && err.name === "AbortError";
+      if (!isAborted) {
+        setLastResponse({
+          status: 0,
+          statusText: "Erro",
+          headers: {},
+          body: String(err),
+          timeMs: 0,
+          sizeBytes: 0,
+        });
+      }
     } finally {
-      setSending(false);
+      abortControllerRef.current = null;
+      setSendingRequest(false);
     }
   };
+
+  const handleCancel = () => {
+    abortControllerRef.current?.abort();
+  };
+
+  const formatBodyJson = () => {
+    if (req.method === "GET" || req.bodyType !== "json") return;
+    const raw = (req.body ?? "").trim();
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      setReq((r) => ({ ...r, body: JSON.stringify(parsed, null, 2) }));
+    } catch {
+      /* body inválido, não alterar */
+    }
+  };
+
+  const formatBodyJsonRef = useRef(formatBodyJson);
+  formatBodyJsonRef.current = formatBodyJson;
+  handleSendRef.current = handleSend;
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        if (!sendingRef.current) handleSendRef.current();
+        return;
+      }
+      if ((e.key === "f" || e.key === "F") && e.shiftKey && e.ctrlKey) {
+        e.preventDefault();
+        formatBodyJsonRef.current();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <div className="request-panel">
@@ -237,9 +288,23 @@ export function RequestPanel() {
             setReq((r) => ({ ...r, queryParams: newParams }));
           }}
         />
-        <button type="button" className="send-btn" onClick={handleSend} disabled={sending}>
-          {sending ? "Enviando…" : "Enviar"}
-        </button>
+        {sending ? (
+          <button type="button" className="send-btn cancel-btn" onClick={handleCancel}>
+            Cancelar
+          </button>
+        ) : (
+          <span className="btn-with-tooltip">
+            <button
+              type="button"
+              className="send-btn"
+              onClick={handleSend}
+              title="Enviar (Ctrl+Enter ou ⌘+Enter)"
+            >
+              Enviar
+            </button>
+            <span className="btn-shortcut-tooltip" role="tooltip">Ctrl+Enter · ⌘+Enter</span>
+          </span>
+        )}
       </div>
       {req.url && (
         <div className="variable-preview-line">
@@ -247,292 +312,374 @@ export function RequestPanel() {
         </div>
       )}
 
-      <div className="request-section">
-        <h4>Query Params</h4>
-        {req.queryParams.map((row) => (
-          <div key={row.id} className="key-value-row">
-            <input
-              placeholder="Key"
-              value={row.key}
-              onChange={(e) => updateRow("queryParams", row.id, { key: e.target.value })}
-            />
-            <input
-              placeholder="Value"
-              value={row.value}
-              onChange={(e) => updateRow("queryParams", row.id, { value: e.target.value })}
-            />
-            <button type="button" onClick={() => removeRow("queryParams", row.id)}>−</button>
-          </div>
-        ))}
-        <button type="button" className="add-row-btn" onClick={() => addRow("queryParams")}>
-          + Parâmetro
+      <div className="request-tabs">
+        <button
+          type="button"
+          className={`request-tab ${requestTab === "params" ? "request-tab-active" : ""}`}
+          onClick={() => setRequestTab("params")}
+        >
+          Params
+        </button>
+        <button
+          type="button"
+          className={`request-tab ${requestTab === "auth" ? "request-tab-active" : ""}`}
+          onClick={() => setRequestTab("auth")}
+        >
+          Authorization
+        </button>
+        <button
+          type="button"
+          className={`request-tab ${requestTab === "headers" ? "request-tab-active" : ""}`}
+          onClick={() => setRequestTab("headers")}
+        >
+          Headers
+          {req.headers.filter((h) => h.key.trim()).length > 0 && (
+            <span className="request-tab-badge">{req.headers.filter((h) => h.key.trim()).length}</span>
+          )}
+        </button>
+        {req.method !== "GET" && (
+          <button
+            type="button"
+            className={`request-tab ${requestTab === "body" ? "request-tab-active" : ""}`}
+            onClick={() => setRequestTab("body")}
+          >
+            Body
+          </button>
+        )}
+        <button
+          type="button"
+          className={`request-tab ${requestTab === "scripts" ? "request-tab-active" : ""}`}
+          onClick={() => setRequestTab("scripts")}
+        >
+          Scripts
         </button>
       </div>
 
-      {extractPathParamNames(req.url).length > 0 && (
-        <div className="request-section">
-          <h4>Path Params</h4>
-          <p className="request-section-hint">
-            Substitui :nome na URL pelo valor (ex.: :id → 123). Use {"{{var}}"} para variáveis.
-          </p>
-          {(req.pathParams ?? [])
-            .filter(
-              (p) =>
-                !p.key.trim() ||
-                extractPathParamNames(req.url).includes(p.key.trim())
-            )
-            .map((row) => (
+      <div className="request-tab-content">
+        {requestTab === "params" && (
+          <div className="request-section">
+            <h4>Query Params</h4>
+            {req.queryParams.map((row) => (
               <div key={row.id} className="key-value-row">
                 <input
-                  placeholder="Nome"
+                  placeholder="Key"
                   value={row.key}
-                  onChange={(e) => updateRow("pathParams", row.id, { key: e.target.value })}
+                  onChange={(e) => updateRow("queryParams", row.id, { key: e.target.value })}
                 />
                 <input
-                  placeholder="Valor"
+                  placeholder="Value"
                   value={row.value}
-                  onChange={(e) => updateRow("pathParams", row.id, { value: e.target.value })}
+                  onChange={(e) => updateRow("queryParams", row.id, { value: e.target.value })}
                 />
-                <button type="button" onClick={() => removeRow("pathParams", row.id)}>−</button>
+                <button type="button" onClick={() => removeRow("queryParams", row.id)}>−</button>
               </div>
             ))}
-          <button type="button" className="add-row-btn" onClick={() => addRow("pathParams")}>
-            + Path param
-          </button>
-        </div>
-      )}
-
-      {(req.authType === "basic" || req.authType === "bearer" || req.authType === "apikey") && (
-        <div className="request-section">
-          <h4>Authorization</h4>
-          <p className="request-section-hint">
-            As variáveis {"{{nome}}"} são resolvidas pelo ambiente selecionado no envio.
-          </p>
-          {req.authType === "basic" && (
-            <div className="auth-fields">
-              <label className="auth-field">
-                <span>Username</span>
-                <input
-                  type="text"
-                  value={req.authBasicUsername ?? ""}
-                  onChange={(e) => update({ authBasicUsername: e.target.value })}
-                  placeholder="{{username}}"
-                />
-                {(req.authBasicUsername ?? "").includes("{{") && (
-                  <VariablePreview
-                    className="auth-variable-preview"
-                    text={req.authBasicUsername ?? ""}
-                    variables={variables}
-                  />
-                )}
-              </label>
-              <label className="auth-field auth-field-with-toggle">
-                <span>Password</span>
-                <div className="auth-input-row">
-                  <input
-                    type={showPasswords["basicPassword"] ? "text" : "password"}
-                    value={req.authBasicPassword ?? ""}
-                    onChange={(e) => update({ authBasicPassword: e.target.value })}
-                    placeholder="{{password}}"
-                  />
-                  <button
-                    type="button"
-                    className="auth-toggle-visibility"
-                    onClick={() => toggleShowPassword("basicPassword")}
-                    title={showPasswords["basicPassword"] ? "Ocultar senha" : "Exibir senha"}
-                  >
-                    {showPasswords["basicPassword"] ? "Ocultar" : "Exibir"}
-                  </button>
-                </div>
-                {(req.authBasicPassword ?? "").includes("{{") && (
-                  <VariablePreview
-                    className="auth-variable-preview"
-                    text={req.authBasicPassword ?? ""}
-                    variables={variables}
-                  />
-                )}
-              </label>
-            </div>
-          )}
-          {req.authType === "bearer" && (
-            <label className="auth-field auth-field-with-toggle">
-              <span>Token</span>
-              <div className="auth-input-row">
-                <input
-                  type={showPasswords["bearerToken"] ? "text" : "password"}
-                  value={req.authBearerToken ?? ""}
-                  onChange={(e) => update({ authBearerToken: e.target.value })}
-                  placeholder="{{token}}"
-                />
-                <button
-                  type="button"
-                  className="auth-toggle-visibility"
-                  onClick={() => toggleShowPassword("bearerToken")}
-                  title={showPasswords["bearerToken"] ? "Ocultar" : "Exibir"}
-                >
-                  {showPasswords["bearerToken"] ? "Ocultar" : "Exibir"}
+            <button type="button" className="add-row-btn" onClick={() => addRow("queryParams")}>
+              + Parâmetro
+            </button>
+            {extractPathParamNames(req.url).length > 0 && (
+              <>
+                <h4 className="request-section-sub">Path Params</h4>
+                <p className="request-section-hint">
+                  Substitui :nome na URL pelo valor (ex.: :id → 123). Use {"{{var}}"} para variáveis.
+                </p>
+                {(req.pathParams ?? [])
+                  .filter(
+                    (p) =>
+                      !p.key.trim() ||
+                      extractPathParamNames(req.url).includes(p.key.trim())
+                  )
+                  .map((row) => (
+                    <div key={row.id} className="key-value-row">
+                      <input
+                        placeholder="Nome"
+                        value={row.key}
+                        onChange={(e) => updateRow("pathParams", row.id, { key: e.target.value })}
+                      />
+                      <input
+                        placeholder="Valor"
+                        value={row.value}
+                        onChange={(e) => updateRow("pathParams", row.id, { value: e.target.value })}
+                      />
+                      <button type="button" onClick={() => removeRow("pathParams", row.id)}>−</button>
+                    </div>
+                  ))}
+                <button type="button" className="add-row-btn" onClick={() => addRow("pathParams")}>
+                  + Path param
                 </button>
-              </div>
-              {(req.authBearerToken ?? "").includes("{{") && (
-                <VariablePreview
-                  className="auth-variable-preview"
-                  text={req.authBearerToken ?? ""}
-                  variables={variables}
-                />
-              )}
+              </>
+            )}
+          </div>
+        )}
+
+        {requestTab === "auth" && (
+          <div className="request-section">
+            <h4>Authorization</h4>
+            <label className="auth-type-select-wrap">
+              <span className="auth-type-label">Tipo</span>
+              <select
+                value={req.authType ?? ""}
+                onChange={(e) => update({ authType: (e.target.value || null) as RequestConfig["authType"] })}
+                className="body-type-select"
+              >
+                <option value="">Nenhum</option>
+                <option value="basic">Basic Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="apikey">API Key</option>
+              </select>
             </label>
-          )}
-          {req.authType === "apikey" && (
-            <div className="auth-fields">
-              <label className="auth-field">
-                <span>Key (header name)</span>
-                <input
-                  type="text"
-                  value={req.authApiKeyKey ?? ""}
-                  onChange={(e) => update({ authApiKeyKey: e.target.value })}
-                  placeholder="Authorization"
-                />
-                {(req.authApiKeyKey ?? "").includes("{{") && (
+            <p className="request-section-hint">
+              As variáveis {"{{nome}}"} são resolvidas pelo ambiente selecionado no envio.
+            </p>
+            {(req.authType === "basic" || req.authType === "bearer" || req.authType === "apikey") && (
+              <>
+                {req.authType === "basic" && (
+                  <div className="auth-fields">
+                    <label className="auth-field">
+                      <span>Username</span>
+                      <input
+                        type="text"
+                        value={req.authBasicUsername ?? ""}
+                        onChange={(e) => update({ authBasicUsername: e.target.value })}
+                        placeholder="{{username}}"
+                      />
+                      {(req.authBasicUsername ?? "").includes("{{") && (
+                        <VariablePreview
+                          className="auth-variable-preview"
+                          text={req.authBasicUsername ?? ""}
+                          variables={variables}
+                        />
+                      )}
+                    </label>
+                    <label className="auth-field auth-field-with-toggle">
+                      <span>Password</span>
+                      <div className="auth-input-row">
+                        <input
+                          type={showPasswords["basicPassword"] ? "text" : "password"}
+                          value={req.authBasicPassword ?? ""}
+                          onChange={(e) => update({ authBasicPassword: e.target.value })}
+                          placeholder="{{password}}"
+                        />
+                        <button
+                          type="button"
+                          className="auth-toggle-visibility"
+                          onClick={() => toggleShowPassword("basicPassword")}
+                          title={showPasswords["basicPassword"] ? "Ocultar senha" : "Exibir senha"}
+                        >
+                          {showPasswords["basicPassword"] ? "Ocultar" : "Exibir"}
+                        </button>
+                      </div>
+                      {(req.authBasicPassword ?? "").includes("{{") && (
+                        <VariablePreview
+                          className="auth-variable-preview"
+                          text={req.authBasicPassword ?? ""}
+                          variables={variables}
+                        />
+                      )}
+                    </label>
+                  </div>
+                )}
+                {req.authType === "bearer" && (
+                  <label className="auth-field auth-field-with-toggle">
+                    <span>Token</span>
+                    <div className="auth-input-row">
+                      <input
+                        type={showPasswords["bearerToken"] ? "text" : "password"}
+                        value={req.authBearerToken ?? ""}
+                        onChange={(e) => update({ authBearerToken: e.target.value })}
+                        placeholder="{{token}}"
+                      />
+                      <button
+                        type="button"
+                        className="auth-toggle-visibility"
+                        onClick={() => toggleShowPassword("bearerToken")}
+                        title={showPasswords["bearerToken"] ? "Ocultar" : "Exibir"}
+                      >
+                        {showPasswords["bearerToken"] ? "Ocultar" : "Exibir"}
+                      </button>
+                    </div>
+                    {(req.authBearerToken ?? "").includes("{{") && (
+                      <VariablePreview
+                        className="auth-variable-preview"
+                        text={req.authBearerToken ?? ""}
+                        variables={variables}
+                      />
+                    )}
+                  </label>
+                )}
+                {req.authType === "apikey" && (
+                  <div className="auth-fields">
+                    <label className="auth-field">
+                      <span>Key (header name)</span>
+                      <input
+                        type="text"
+                        value={req.authApiKeyKey ?? ""}
+                        onChange={(e) => update({ authApiKeyKey: e.target.value })}
+                        placeholder="Authorization"
+                      />
+                      {(req.authApiKeyKey ?? "").includes("{{") && (
+                        <VariablePreview
+                          className="auth-variable-preview"
+                          text={req.authApiKeyKey ?? ""}
+                          variables={variables}
+                        />
+                      )}
+                    </label>
+                    <label className="auth-field auth-field-with-toggle">
+                      <span>Value</span>
+                      <div className="auth-input-row">
+                        <input
+                          type={showPasswords["apikeyValue"] ? "text" : "password"}
+                          value={req.authApiKeyValue ?? ""}
+                          onChange={(e) => update({ authApiKeyValue: e.target.value })}
+                          placeholder="{{api_key}}"
+                        />
+                        <button
+                          type="button"
+                          className="auth-toggle-visibility"
+                          onClick={() => toggleShowPassword("apikeyValue")}
+                          title={showPasswords["apikeyValue"] ? "Ocultar" : "Exibir"}
+                        >
+                          {showPasswords["apikeyValue"] ? "Ocultar" : "Exibir"}
+                        </button>
+                      </div>
+                      {(req.authApiKeyValue ?? "").includes("{{") && (
+                        <VariablePreview
+                          className="auth-variable-preview"
+                          text={req.authApiKeyValue ?? ""}
+                          variables={variables}
+                        />
+                      )}
+                    </label>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {requestTab === "headers" && (
+          <div className="request-section">
+            <h4>Headers</h4>
+            {req.headers.map((row) => (
+              <div key={row.id} className="header-row-wrap">
+                <div className="key-value-row">
+                  <input
+                    placeholder="Header"
+                    value={row.key}
+                    onChange={(e) => updateRow("headers", row.id, { key: e.target.value })}
+                  />
+                  <input
+                    placeholder="Value"
+                    value={row.value}
+                    onChange={(e) => updateRow("headers", row.id, { value: e.target.value })}
+                  />
+                  <button type="button" onClick={() => removeRow("headers", row.id)}>−</button>
+                </div>
+                {(row.value ?? "").includes("{{") && (
                   <VariablePreview
                     className="auth-variable-preview"
-                    text={req.authApiKeyKey ?? ""}
+                    text={row.value ?? ""}
                     variables={variables}
                   />
                 )}
-              </label>
-              <label className="auth-field auth-field-with-toggle">
-                <span>Value</span>
-                <div className="auth-input-row">
-                  <input
-                    type={showPasswords["apikeyValue"] ? "text" : "password"}
-                    value={req.authApiKeyValue ?? ""}
-                    onChange={(e) => update({ authApiKeyValue: e.target.value })}
-                    placeholder="{{api_key}}"
-                  />
+              </div>
+            ))}
+            <button type="button" className="add-row-btn" onClick={() => addRow("headers")}>
+              + Header
+            </button>
+          </div>
+        )}
+
+        {requestTab === "body" && req.method !== "GET" && (
+          <div className="request-section">
+            <div className="body-section-header">
+              <h4>Body</h4>
+              <select
+                value={req.bodyType}
+                onChange={(e) => update({ bodyType: e.target.value as RequestConfig["bodyType"] })}
+                className="body-type-select"
+              >
+                <option value="none">Nenhum</option>
+                <option value="json">JSON</option>
+                <option value="raw">Raw</option>
+              </select>
+              {req.bodyType === "json" && (
+                <span className="btn-with-tooltip">
                   <button
                     type="button"
-                    className="auth-toggle-visibility"
-                    onClick={() => toggleShowPassword("apikeyValue")}
-                    title={showPasswords["apikeyValue"] ? "Ocultar" : "Exibir"}
+                    className="body-format-btn"
+                    onClick={formatBodyJson}
+                    title="Identar JSON (Ctrl+Shift+F)"
                   >
-                    {showPasswords["apikeyValue"] ? "Ocultar" : "Exibir"}
+                    Formatar
                   </button>
-                </div>
-                {(req.authApiKeyValue ?? "").includes("{{") && (
-                  <VariablePreview
-                    className="auth-variable-preview"
-                    text={req.authApiKeyValue ?? ""}
-                    variables={variables}
-                  />
-                )}
-              </label>
+                  <span className="btn-shortcut-tooltip" role="tooltip">Ctrl+Shift+F</span>
+                </span>
+              )}
             </div>
-          )}
-        </div>
-      )}
-
-      <div className="request-section">
-        <h4>Headers</h4>
-        {req.headers.map((row) => (
-          <div key={row.id} className="header-row-wrap">
-            <div className="key-value-row">
-              <input
-                placeholder="Header"
-                value={row.key}
-                onChange={(e) => updateRow("headers", row.id, { key: e.target.value })}
-              />
-              <input
-                placeholder="Value"
-                value={row.value}
-                onChange={(e) => updateRow("headers", row.id, { value: e.target.value })}
-              />
-              <button type="button" onClick={() => removeRow("headers", row.id)}>−</button>
-            </div>
-            {(row.value ?? "").includes("{{") && (
-              <VariablePreview
-                className="auth-variable-preview"
-                text={row.value ?? ""}
-                variables={variables}
+            {(req.bodyType === "json" || req.bodyType === "raw") && (
+              <BodyEditor
+                className="body-editor-wrap"
+                value={req.body ?? ""}
+                onChange={(body) => update({ body })}
+                mode={req.bodyType === "json" ? "json" : "raw"}
+                placeholder={req.bodyType === "json" ? '{"key": "value"}' : "Texto"}
               />
             )}
           </div>
-        ))}
-        <button type="button" className="add-row-btn" onClick={() => addRow("headers")}>
-          + Header
-        </button>
-      </div>
-
-      {req.method !== "GET" && (
-        <div className="request-section">
-          <h4>Body</h4>
-          <select
-            value={req.bodyType}
-            onChange={(e) => update({ bodyType: e.target.value as RequestConfig["bodyType"] })}
-            className="body-type-select"
-          >
-            <option value="none">Nenhum</option>
-            <option value="json">JSON</option>
-            <option value="raw">Raw</option>
-          </select>
-          {(req.bodyType === "json" || req.bodyType === "raw") && (
-            <BodyEditor
-              className="body-editor-wrap"
-              value={req.body ?? ""}
-              onChange={(body) => update({ body })}
-              mode={req.bodyType === "json" ? "json" : "raw"}
-              placeholder={req.bodyType === "json" ? '{"key": "value"}' : "Texto"}
-            />
-          )}
-        </div>
-      )}
-
-      <div className="request-section">
-        <h4>Scripts</h4>
-        <div className="script-tabs">
-          <button
-            type="button"
-            className={`script-tab ${scriptsTab === "pre" ? "script-tab-active" : ""}`}
-            onClick={() => setScriptsTab("pre")}
-          >
-            Pre-request
-          </button>
-          <button
-            type="button"
-            className={`script-tab ${scriptsTab === "post" ? "script-tab-active" : ""}`}
-            onClick={() => setScriptsTab("post")}
-          >
-            Post-response
-          </button>
-        </div>
-        {scriptsTab === "pre" && (
-          <>
-            <p className="request-section-hint">
-              Executado antes do envio. fv.environment.get/set (ambiente); se a requisição for de uma collection, use fv.collectionVariables.get/set para gravar na collection.
-            </p>
-            <textarea
-              className="script-textarea"
-              value={req.preRequestScript ?? ""}
-              onChange={(e) => update({ preRequestScript: e.target.value })}
-              placeholder={`// Exemplo: definir timestamp\nfv.environment.set("timestamp", Date.now());`}
-              spellCheck={false}
-              rows={6}
-            />
-          </>
         )}
-        {scriptsTab === "post" && (
-          <>
-            <p className="request-section-hint">
-              Executado após a resposta. fv.response.json(); fv.environment.set (ambiente); fv.collectionVariables.set (variáveis da collection, quando a requisição pertence a uma).
-            </p>
-            <textarea
-              className="script-textarea"
-              value={req.postResponseScript ?? ""}
-              onChange={(e) => update({ postResponseScript: e.target.value })}
-              placeholder={`const responseJson = fv.response.json();\nif (responseJson?.access_token) {\n  fv.environment.set("access_token", responseJson.access_token);\n}`}
-              spellCheck={false}
-              rows={6}
-            />
-          </>
+
+        {requestTab === "scripts" && (
+          <div className="request-section">
+            <h4>Scripts</h4>
+            <div className="script-tabs">
+              <button
+                type="button"
+                className={`script-tab ${scriptsTab === "pre" ? "script-tab-active" : ""}`}
+                onClick={() => setScriptsTab("pre")}
+              >
+                Pre-request
+              </button>
+              <button
+                type="button"
+                className={`script-tab ${scriptsTab === "post" ? "script-tab-active" : ""}`}
+                onClick={() => setScriptsTab("post")}
+              >
+                Post-response
+              </button>
+            </div>
+            {scriptsTab === "pre" && (
+              <>
+                <p className="request-section-hint">
+                  Executado antes do envio. fv.environment.get/set (ambiente); se a requisição for de uma collection, use fv.collectionVariables.get/set para gravar na collection.
+                </p>
+                <textarea
+                  className="script-textarea"
+                  value={req.preRequestScript ?? ""}
+                  onChange={(e) => update({ preRequestScript: e.target.value })}
+                  placeholder={`// Exemplo: definir timestamp\nfv.environment.set("timestamp", Date.now());`}
+                  spellCheck={false}
+                  rows={6}
+                />
+              </>
+            )}
+            {scriptsTab === "post" && (
+              <>
+                <p className="request-section-hint">
+                  Executado após a resposta. fv.response.json(); fv.environment.set (ambiente); fv.collectionVariables.set (variáveis da collection, quando a requisição pertence a uma).
+                </p>
+                <textarea
+                  className="script-textarea"
+                  value={req.postResponseScript ?? ""}
+                  onChange={(e) => update({ postResponseScript: e.target.value })}
+                  placeholder={`const responseJson = fv.response.json();\nif (responseJson?.access_token) {\n  fv.environment.set("access_token", responseJson.access_token);\n}`}
+                  spellCheck={false}
+                  rows={6}
+                />
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
