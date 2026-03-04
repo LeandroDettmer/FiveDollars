@@ -23,6 +23,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "@tauri-apps/cli": "^2",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^18.2.0",
