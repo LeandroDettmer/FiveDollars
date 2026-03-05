@@ -6,6 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import type { Collection } from "@/types";
 import { isTauri, getAppVersion, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
+import { useKeyDown } from "@/lib/useKeyDown";
 
 const APP_AUTHOR = "Leandro Dettmer";
 
@@ -14,7 +15,7 @@ interface AboutModalProps {
   version?: string;
 }
 
-type TabId = "author" | "export";
+type TabId = "author" | "export" | "updateTab";
 
 function downloadJson(obj: object, filename: string) {
   const json = JSON.stringify(obj, null, 2);
@@ -102,9 +103,11 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       }
       return;
     }
-    
+
     downloadJson(postman, `${name}-postman-v2.1.json`);
   };
+
+  useKeyDown("Escape", onClose);
 
   return (
     <div
@@ -148,11 +151,69 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
             >
               Exportar dados
             </button>
+            {isTauri() && (
+              <button
+                type="button"
+                className={`about-modal-tab ${activeTab === "updateTab" ? "about-modal-tab-active" : ""}`}
+                onClick={() => setActiveTab("updateTab")}
+              >
+                Atualizações
+              </button>
+            )}
           </nav>
           <div className="about-modal-content">
             {activeTab === "author" && (
               <div className="about-author-panel">
-                <p className="about-author-name">{APP_AUTHOR}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <p className="about-author-name">{APP_AUTHOR}</p>
+                  <a className="about-author-github" href="https://github.com/LeandroDettmer" target="_blank" rel="noopener noreferrer">
+                    <img src="https://github.com/favicon.ico" alt="GitHub" />
+                  </a>
+                </div>
+
+                <p style={{ marginBottom: "20px" }} className="about-version">
+                  FiveDollars <strong>v{version}</strong>
+                </p>
+                <a href="https://github.com/LeandroDettmer/FiveDollars" target="_blank" rel="noopener noreferrer">
+                  <img src="https://img.shields.io/github/stars/LeandroDettmer/FiveDollars?style=social" alt="GitHub Stars" />
+                </a>
+              </div>
+            )}
+            {activeTab === "export" && (
+              <div className="about-export-panel">
+                <p className="about-export-desc">
+                  Para importar um backup FiveDollars de volta: use o botão <strong>Importar</strong> na sidebar (Collections).
+                </p>
+                <div className="about-export-options">
+                  <div className="about-export-option">
+                    <p className="about-export-option-desc">
+                      <strong>Backup FiveDollars</strong> — collections, ambientes e histórico. Use para backup ou para importar depois no app.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={handleExportBackup}
+                    >
+                      Exportar backup FiveDollars
+                    </button>
+                  </div>
+                  <div className="about-export-option">
+                    <p className="about-export-option-desc">
+                      <strong>Postman v2.1</strong> — exporta a primeira collection em formato Postman. Use no Postman ou em outras ferramentas.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={handleExportPostman}
+                    >
+                      Exportar Postman v2.1
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeTab === "updateTab" && isTauri() && (
+              <div className="about-author-panel">
                 <p className="about-version">
                   FiveDollars <strong>v{version}</strong>
                 </p>
@@ -193,39 +254,6 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                     )}
                   </div>
                 )}
-              </div>
-            )}
-            {activeTab === "export" && (
-              <div className="about-export-panel">
-                <p className="about-export-desc">
-                  Para importar um backup FiveDollars de volta: use o botão <strong>Importar</strong> na sidebar (Collections).
-                </p>
-                <div className="about-export-options">
-                  <div className="about-export-option">
-                    <p className="about-export-option-desc">
-                      <strong>Backup FiveDollars</strong> — collections, ambientes e histórico. Use para backup ou para importar depois no app.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={handleExportBackup}
-                    >
-                      Exportar backup FiveDollars
-                    </button>
-                  </div>
-                  <div className="about-export-option">
-                    <p className="about-export-option-desc">
-                      <strong>Postman v2.1</strong> — exporta a primeira collection em formato Postman. Use no Postman ou em outras ferramentas.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={handleExportPostman}
-                    >
-                      Exportar Postman v2.1
-                    </button>
-                  </div>
-                </div>
               </div>
             )}
           </div>

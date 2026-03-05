@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import type { RequestConfig } from "@/types";
+import { useRef, useState, useEffect } from "react";
+import type { RequestConfig, RunnerConfigFormState } from "@/types";
 
 /** Converte JSON do arquivo em array de objetos (variáveis por iteração). */
 function parseDataFile(text: string): Record<string, string>[] | null {
@@ -41,6 +41,10 @@ interface RunnerConfigPanelProps {
     includeResponseBody: boolean;
   }) => void;
   onClose: () => void;
+  /** Estado inicial (restaurado ao voltar na aba). */
+  initialFormState?: RunnerConfigFormState | null;
+  /** Persistir estado na aba ao alterar. */
+  onFormStateChange?: (state: RunnerConfigFormState) => void;
 }
 
 export function RunnerConfigPanel({
@@ -48,15 +52,39 @@ export function RunnerConfigPanel({
   requests,
   onRun,
   onClose,
+  initialFormState = null,
+  onFormStateChange,
 }: RunnerConfigPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [iterations, setIterations] = useState(1);
-  const [delayMs, setDelayMs] = useState(0);
-  const [dataFileRows, setDataFileRows] = useState<Record<string, string>[] | null>(null);
-  const [dataFileName, setDataFileName] = useState<string | null>(null);
+  const [iterations, setIterations] = useState(() => initialFormState?.iterations ?? 1);
+  const [delayMs, setDelayMs] = useState(() => initialFormState?.delayMs ?? 0);
+  const [dataFileRows, setDataFileRows] = useState<Record<string, string>[] | null>(
+    () => initialFormState?.dataFileRows ?? null
+  );
+  const [dataFileName, setDataFileName] = useState<string | null>(
+    () => initialFormState?.dataFileName ?? null
+  );
   const [fileError, setFileError] = useState<string | null>(null);
-  const [includeResponseBody, setIncludeResponseBody] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [includeResponseBody, setIncludeResponseBody] = useState(
+    () => initialFormState?.includeResponseBody ?? false
+  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() =>
+    initialFormState?.selectedIds?.length
+      ? new Set(initialFormState.selectedIds)
+      : new Set()
+  );
+
+  useEffect(() => {
+    if (!onFormStateChange) return;
+    onFormStateChange({
+      selectedIds: Array.from(selectedIds),
+      iterations,
+      delayMs,
+      dataFileRows,
+      dataFileName,
+      includeResponseBody,
+    });
+  }, [onFormStateChange, selectedIds, iterations, delayMs, dataFileRows, dataFileName, includeResponseBody]);
 
   const handleSelectFile = () => {
     setFileError(null);

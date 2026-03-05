@@ -1,15 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { sendRequest } from "@/lib/http";
 import { useAppStore } from "@/store/useAppStore";
-import type { RequestConfig, RequestResponse } from "@/types";
+import type { RequestConfig, RunnerTabResult } from "@/types";
 import type { HttpMethod } from "@/types";
-
-export interface RunnerResult {
-  request: RequestConfig;
-  status: "pending" | "running" | "done" | "error";
-  response?: RequestResponse;
-  error?: string;
-}
 
 export interface RunnerContentRun {
   folderName: string;
@@ -24,9 +17,22 @@ interface RunnerContentProps {
   run: RunnerContentRun | null;
   variables: Record<string, string>;
   onClose?: () => void;
+  /** Resultados persistidos na aba (para restaurar ao voltar). */
+  initialResults?: RunnerTabResult[] | null;
+  /** Se a execução estava rodando (para não re-executar ao restaurar). */
+  initialRunning?: boolean;
+  /** Persistir resultados na aba ao atualizar (para manter ao trocar de aba). */
+  onPersistResults?: (results: RunnerTabResult[], running: boolean) => void;
 }
 
-export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
+export function RunnerContent({
+  run,
+  variables,
+  onClose,
+  initialResults = null,
+  initialRunning = false,
+  onPersistResults,
+}: RunnerContentProps) {
   const addRunnerRun = useAppStore((s) => s.addRunnerRun);
   const runnerHistory = useAppStore((s) => s.runnerHistory);
   const [expandedResultIndex, setExpandedResultIndex] = useState<number | null>(null);
@@ -36,14 +42,22 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
     ? run.variablesOverride.length
     : 1;
   const totalRuns = (run?.requests.length ?? 0) * iterations;
-  const [results, setResults] = useState<RunnerResult[]>(() =>
-    run ? Array.from({ length: totalRuns }, (_, i) => ({
-      request: run.requests[i % run.requests.length],
-      status: "pending" as const,
-    })) : []
-  );
+  const [results, setResults] = useState<RunnerTabResult[]>(() => {
+    if (run && initialResults && initialResults.length === totalRuns && !initialRunning) {
+      return initialResults;
+    }
+    if (run) {
+      return Array.from({ length: totalRuns }, (_, i) => ({
+        request: run.requests[i % run.requests.length],
+        status: "pending" as const,
+      }));
+    }
+    return [];
+  });
   const [currentRunIndex, setCurrentRunIndex] = useState(0);
-  const [running, setRunning] = useState(!!run);
+  const [running, setRunning] = useState(() =>
+    run && initialResults && !initialRunning ? false : !!run
+  );
   const abortedRef = useRef(false);
   const historyResultsRef = useRef<Array<{ name: string; method: HttpMethod; status: number; statusText: string; timeMs: number; body?: string; error?: string }>>([]);
   const lastRunKeyRef = useRef<string | null>(null);
@@ -55,16 +69,25 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
       return;
     }
     const runKey = `${run.folderName}-${run.requests.map((r) => r.id).join(",")}`;
+    const rows = run.variablesOverride && run.variablesOverride.length > 0 ? run.variablesOverride : [{}];
+    const total = run.requests.length * rows.length;
+
+    if (initialResults && initialResults.length === total && !initialRunning) {
+      lastRunKeyRef.current = runKey;
+      setResults(initialResults);
+      setRunning(false);
+      return;
+    }
     if (lastRunKeyRef.current === runKey) return;
     lastRunKeyRef.current = runKey;
 
-    const { folderName, requests, variablesOverride, delayMs: delay, includeResponseBody: includeBody } = run;
+    onPersistResults?.([], true);
+
+    const { folderName, requests, delayMs: delay, includeResponseBody: includeBody } = run;
     abortedRef.current = false;
     historyResultsRef.current = [];
-    const rows = variablesOverride && variablesOverride.length > 0 ? variablesOverride : [{}];
     const vars = { ...variables };
     const reqs = [...requests];
-    const total = requests.length * rows.length;
 
     setResults(
       Array.from({ length: total }, (_, i) => ({
@@ -73,11 +96,9 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
       }))
     );
 
-    /** Dá tempo para o React repintar a UI entre cada execução (running → concluído/erro). */
-    const yieldToPaint = () =>
-      new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-      });
+    /** Yield entre execuções. Usa setTimeout em vez de requestAnimationFrame para o runner
+     * continuar rodando quando o app estiver minimizado/em segundo plano (rAF é pausado pelo WebView). */
+    const yieldToMain = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     (async () => {
       let runIndex = 0;
@@ -88,12 +109,14 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
           if (abortedRef.current) break;
 
           setCurrentRunIndex(runIndex);
-          setResults((prev) =>
-            prev.map((r, idx) =>
+          setResults((prev) => {
+            const next = prev.map((r, idx) =>
               idx === runIndex ? { ...r, status: "running" as const } : r
-            )
-          );
-          await yieldToPaint();
+            );
+            onPersistResults?.(next, true);
+            return next;
+          });
+          await yieldToMain();
 
           try {
             const response = await sendRequest(reqs[i], iterVars);
@@ -105,11 +128,13 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
               timeMs: response.timeMs,
               ...(includeBody ? { body: response.body } : undefined),
             });
-            setResults((prev) =>
-              prev.map((r, idx) =>
+            setResults((prev) => {
+              const next = prev.map((r, idx) =>
                 idx === runIndex ? { ...r, status: "done" as const, response } : r
-              )
-            );
+              );
+              onPersistResults?.(next, true);
+              return next;
+            });
           } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
             historyResultsRef.current.push({
@@ -120,20 +145,26 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
               timeMs: 0,
               error: errMsg,
             });
-            setResults((prev) =>
-              prev.map((r, idx) =>
+            setResults((prev) => {
+              const next = prev.map((r, idx) =>
                 idx === runIndex
                   ? { ...r, status: "error" as const, error: errMsg }
                   : r
-              )
-            );
+              );
+              onPersistResults?.(next, true);
+              return next;
+            });
           }
-          await yieldToPaint();
+          await yieldToMain();
           runIndex++;
           if (delay > 0 && runIndex < total) await new Promise((r) => setTimeout(r, delay));
         }
       }
       setRunning(false);
+      setResults((prev) => {
+        onPersistResults?.(prev, false);
+        return prev;
+      });
       addRunnerRun({
         folderName,
         includeBody,
@@ -283,55 +314,6 @@ export function RunnerContent({ run, variables, onClose }: RunnerContentProps) {
         </ul>
         </div>
 
-        {runnerHistory.length > 0 && (
-          <div className="runner-history-wrap">
-          <p className="runner-section-label">Histórico de execuções</p>
-          <ul className="runner-history-list">
-            {runnerHistory.map((entry) => (
-              <li key={entry.id} className="runner-history-item">
-                <button
-                  type="button"
-                  className="runner-history-header"
-                  onClick={() => setExpandedHistoryId(expandedHistoryId === entry.id ? null : entry.id)}
-                  aria-expanded={expandedHistoryId === entry.id}
-                >
-                  <span className="runner-history-date">
-                    {new Date(entry.date).toLocaleString("pt-BR")}
-                  </span>
-                  <span className="runner-history-folder">{entry.folderName}</span>
-                  <span className="runner-history-summary">
-                    {entry.results.filter((r) => r.status >= 200 && r.status < 300).length}/{entry.results.length} ok
-                  </span>
-                </button>
-                {expandedHistoryId === entry.id && (
-                  <ul className="runner-list runner-history-results">
-                    {entry.results.map((res, i) => (
-                      <li key={i} className="runner-list-item runner-list-item--done">
-                        <span className="runner-item-status" aria-hidden>
-                          {res.status >= 200 && res.status < 300 ? "✓" : "⚠"}
-                        </span>
-                        <span className="runner-item-method">{res.method}</span>
-                        <span className="runner-item-name">{res.name}</span>
-                        <span className="runner-item-result">
-                          {res.status} {res.statusText} — {res.timeMs} ms
-                        </span>
-                        {res.error && (
-                          <span className="runner-item-error">{res.error}</span>
-                        )}
-                        {entry.includeBody && res.body != null && (
-                          <div className="runner-response-body runner-response-body--small">
-                            <pre>{res.body}</pre>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-          </div>
-        )}
       </div>
     </div>
   );

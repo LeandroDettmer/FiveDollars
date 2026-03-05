@@ -64,6 +64,27 @@ function treeContainsRequestId(nodes: CollectionNode[], requestId: string): bool
   return false;
 }
 
+/** Retorna a request com o id dado na árvore, ou null. */
+function findRequestInNodes(nodes: CollectionNode[], requestId: string): RequestConfig | null {
+  for (const node of nodes) {
+    if (node.type === "request" && node.request?.id === requestId) return node.request;
+    if (node.type === "folder") {
+      const found = findRequestInNodes(node.children, requestId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/** Retorna a request com o id dado em qualquer collection, ou null. */
+export function getRequestById(collections: Collection[], requestId: string): RequestConfig | null {
+  for (const coll of collections) {
+    const req = findRequestInNodes(coll.items, requestId);
+    if (req) return req;
+  }
+  return null;
+}
+
 /** Retorna a collection que contém a request com o id dado, ou null. */
 export function getCollectionContainingRequest(
   collections: Collection[],

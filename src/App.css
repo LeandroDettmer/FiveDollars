@@ -57,6 +57,124 @@ body {
   min-width: 0;
 }
 
+/* Área principal: barra de abas + conteúdo */
+.app-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Barra de abas (estilo Postman) */
+.tab-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  min-height: 0;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tab-bar-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 8px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 200px;
+  min-width: 0;
+}
+
+.tab-bar-tab:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.tab-bar-tab--active {
+  color: var(--text);
+  background: var(--bg);
+  border-bottom-color: var(--accent);
+}
+
+.tab-bar-tab-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.tab-bar-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-bar-tab-close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-bar-tab-close:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.app-tab-content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-tab-pane {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-tab-content .runner-panel,
+.app-tab-content .app-main-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-empty-tabs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
 .sidebar-resize-handle {
   width: 6px;
   flex-shrink: 0;
@@ -971,7 +1089,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
-  z-index: 10;
+  z-index: 9999999;
 }
 
 .btn-with-tooltip:hover .btn-shortcut-tooltip {
@@ -1289,6 +1407,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .body-editor-wrap .cm-editor {
@@ -1309,6 +1429,20 @@ body {
 .body-editor-wrap .cm-gutters {
   border-right: 1px solid var(--border);
   background: var(--bg-secondary);
+}
+
+.body-editor-resize-handle {
+  flex-shrink: 0;
+  height: 8px;
+  margin: 0;
+  background: var(--border);
+  cursor: ns-resize;
+  transition: background 0.15s;
+}
+
+.body-editor-resize-handle:hover,
+.body-editor-resize-handle--active {
+  background: var(--accent);
 }
 
 /* Variáveis {{var}} no body JSON: itálico como no Postman, sem sublinhado de erro */
@@ -2151,9 +2285,10 @@ body {
 
 /* Runner (executar pasta) — modal e painel compartilham o conteúdo */
 .modal-content.about-modal {
-  max-width: 480px;
-  width: 90%;
-  max-height: 85vh;
+  max-width: 150vh;
+  width: 70vh;
+  max-height: 55vh;
+  height: 90vh;
   display: flex;
   flex-direction: column;
 }
@@ -2406,7 +2541,7 @@ body {
   font-size: 11px;
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--text-muted);
   cursor: pointer;
   text-align: left;
 }

@@ -20,9 +20,7 @@ export function Sidebar() {
     updateCollection,
     addEnvironment,
     currentRequest,
-    setCurrentRequest,
-    setRunnerPanelPendingConfig,
-    setRunnerPanelRun,
+    openTab,
     history,
     clearHistory,
     setSelectedHistoryEntryId,
@@ -81,7 +79,12 @@ export function Sidebar() {
     const newRequest = createNewRequest();
     const newItems = addRequestToNodes(coll.items, [], newRequest);
     updateCollection(coll.id, { items: newItems });
-    setCurrentRequest(newRequest);
+    openTab({
+      id: `req-${newRequest.id}`,
+      type: "request",
+      requestId: newRequest.id,
+      label: newRequest.name,
+    });
     setCollapsedCollectionIds((prev) => {
       const next = new Set(prev);
       next.delete(coll.id);
@@ -370,15 +373,29 @@ export function Sidebar() {
                             nodes={coll.items}
                             currentRequestId={currentRequest?.id ?? null}
                             onSelectRequest={(req) => {
-                              setRunnerPanelPendingConfig(null);
-                              setRunnerPanelRun(null);
-                              setCurrentRequest(req)
+                              openTab({
+                                id: `req-${req.id}`,
+                                type: "request",
+                                requestId: req.id,
+                                label: req.name,
+                              });
                             }}
                             searchQuery={collectionSearch}
                             onUpdateItems={(items) => updateCollection(coll.id, { items })}
                             defaultFolderOpen={foldersExpanded}
                             onRunFolder={(requests, folderName) => {
-                              if (requests.length > 0) setRunnerPanelPendingConfig({ requests, folderName });
+                              if (requests.length > 0) {
+                                openTab({
+                                  id: `runner-${generateId()}`,
+                                  type: "runner",
+                                  label: `Runner: ${folderName}`,
+                                  pendingConfig: { requests, folderName },
+                                  run: null,
+                                  runResults: null,
+                                  runRunning: false,
+                                  configFormState: null,
+                                });
+                              }
                             }}
                           />
                         )}

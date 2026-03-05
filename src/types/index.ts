@@ -100,3 +100,57 @@ export interface ScriptLogEntry {
   type: "log" | "warn" | "error" | "info" | "debug";
   args: unknown[];
 }
+
+/** Estado de execução de um Runner (por aba). */
+export interface RunnerTabRun {
+  folderName: string;
+  requests: RequestConfig[];
+  variablesOverride?: Record<string, string>[];
+  delayMs: number;
+  includeResponseBody: boolean;
+}
+
+/** Um resultado na lista da execução do Runner (persistido na aba). */
+export interface RunnerTabResult {
+  request: RequestConfig;
+  status: "pending" | "running" | "done" | "error";
+  response?: RequestResponse;
+  error?: string;
+}
+
+/** Aba de requisição (uma rota). */
+export interface RequestTab {
+  id: string;
+  type: "request";
+  requestId: string;
+  label: string;
+}
+
+/** Estado do formulário de config do Runner (para restaurar ao voltar na aba). */
+export interface RunnerConfigFormState {
+  selectedIds: string[];
+  iterations: number;
+  delayMs: number;
+  dataFileRows: Record<string, string>[] | null;
+  dataFileName: string | null;
+  includeResponseBody: boolean;
+}
+
+/** Aba de Runner (execução de pasta). */
+export interface RunnerTab {
+  id: string;
+  type: "runner";
+  label: string;
+  /** Tela de configurar run. */
+  pendingConfig: { folderName: string; requests: RequestConfig[] } | null;
+  /** Execução em andamento ou concluída. */
+  run: RunnerTabRun | null;
+  /** Resultados da última execução (para restaurar ao voltar na aba). */
+  runResults: RunnerTabResult[] | null;
+  /** Se a execução ainda está rodando. */
+  runRunning: boolean;
+  /** Estado do formulário de config (checkboxes, iterações, delay, arquivo, etc.). */
+  configFormState: RunnerConfigFormState | null;
+}
+
+export type Tab = RequestTab | RunnerTab;

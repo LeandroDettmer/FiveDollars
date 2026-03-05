@@ -625,6 +625,7 @@ export function RequestPanel() {
                 onChange={(body) => update({ body })}
                 mode={req.bodyType === "json" ? "json" : "raw"}
                 placeholder={req.bodyType === "json" ? '{"key": "value"}' : "Texto"}
+                resizeable={true}
               />
             )}
           </div>
