@@ -37,7 +37,14 @@ Abra `src-tauri/tauri.conf.json` e substitua `SUBSTITUA_PELA_SUA_CHAVE_PUBLICA` 
 
 O GitHub pode alterar quebras de linha em secrets. Por isso o workflow espera a chave em **base64** (uma única linha), e o CI decodifica antes do build.
 
-1. No seu computador, gere o valor para o secret (uma linha em base64, sem quebras):
+**Importante:** o arquivo da chave privada (`FiveDollars.key`) deve ser usado **inteiro**. Ele tem várias linhas, por exemplo:
+- `untrusted comment: minisign secret key`
+- uma linha em branco ou com senha
+- duas linhas com dados em base64
+
+Se você colar no secret só as linhas de base64 (sem a primeira linha de comentário), o CI falha com **"Missing comment in secret key"**. Use sempre o arquivo completo.
+
+1. No seu computador, gere o valor para o secret (arquivo **inteiro** em base64, uma única linha):
    ```bash
    base64 < ~/.tauri/FiveDollars.key | tr -d '\n'
    ```
@@ -61,3 +68,13 @@ Assim, ao publicar um release (ou rodar o workflow manualmente com uma tag), o C
 | GitHub Secret   | Conteúdo do arquivo da chave **privada** |
 
 Sem a chave privada no CI, o build ainda roda, mas os `.sig` não são gerados e o `latest.json` pode ficar incompleto; o updater no app só funciona com assinaturas válidas.
+
+## Erro: "Missing comment in secret key"
+
+Significa que o valor do secret **TAURI_SIGNING_PRIVATE_KEY** não é o base64 do arquivo da chave **inteiro**. O minisign exige a primeira linha do arquivo (`untrusted comment: minisign secret key`).
+
+**Como corrigir:** no seu computador, rode de novo:
+```bash
+base64 < ~/.tauri/FiveDollars.key | tr -d '\n'
+```
+Copie **toda** a saída (incluindo o início, que decodifica para "untrusted comment...") e atualize o secret no GitHub com esse valor. Não use só as últimas linhas do arquivo.
