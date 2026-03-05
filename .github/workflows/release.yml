@@ -70,9 +70,10 @@ jobs:
         shell: bash
         run: |
           set -e
-          printf '%s' "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
+          # Remove espaços e quebras de linha que podem ter entrado ao colar o secret
+          echo "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | tr -d ' \n\r\t' | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
           if ! [ -s "$RUNNER_TEMP/tauri_signing.key" ]; then
-            echo "::error::Chave decodificada vazia. Secret deve ser o base64 do arquivo .key: base64 < ~/.tauri/SUA_CHAVE.key | tr -d '\\n'"
+            echo "::error::Chave decodificada vazia. Secret deve ser o base64 do arquivo .key: base64 -w 0 < ~/.tauri/SUA_CHAVE.key (ou base64 < arquivo | tr -d '\\n')"
             exit 1
           fi
           echo "TAURI_SIGNING_PRIVATE_KEY=$RUNNER_TEMP/tauri_signing.key" >> $GITHUB_ENV
