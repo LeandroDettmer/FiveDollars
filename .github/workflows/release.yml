@@ -66,12 +66,16 @@ jobs:
         run: npm ci
 
       - name: Prepare signing key
-        if: secrets.TAURI_SIGNING_PRIVATE_KEY != ''
         shell: bash
         run: |
           set -e
+          KEY="${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
+          if [ -z "$KEY" ]; then
+            echo "TAURI_SIGNING_PRIVATE_KEY não definido, build seguirá sem assinatura."
+            exit 0
+          fi
           # Remove espaços e quebras de linha que podem ter entrado ao colar o secret
-          echo "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | tr -d ' \n\r\t' | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
+          echo "$KEY" | tr -d ' \n\r\t' | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
           if ! [ -s "$RUNNER_TEMP/tauri_signing.key" ]; then
             echo "::error::Chave decodificada vazia. Secret deve ser o base64 do arquivo .key: base64 -w 0 < ~/.tauri/SUA_CHAVE.key (ou base64 < arquivo | tr -d '\\n')"
             exit 1
