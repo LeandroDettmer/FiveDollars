@@ -10,7 +10,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM4OEQ2NjIwMTAzMzVFQjMKUldTelhqTVFJR2FOeUNRMnVCNUJoeEY4UUtuQUtPZ3NHc0JOaHBGNTQ5aDNRVWZ4QlI4RzBKNk4K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJGRUIwQjYyMDA2OUZGNDgKUldSSS8ya0FZZ3ZyTC9LRWhyMHFVT3VpVVhaNzFTdHk5MmJ2NW11M081cC80aTFuMW5BQzBPT2sK",
       "endpoints": [
         "https://github.com/LeandroDettmer/FiveDollars/releases/latest/download/latest.json"
       ]
