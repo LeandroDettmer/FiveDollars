@@ -1,5 +1,5 @@
 {
-  "version": "0.1.4",
+  "version": "0.1.3",
   "platforms": {
     "darwin-aarch64": {
       "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.1.4/FiveDollars.app.tar.gz",
