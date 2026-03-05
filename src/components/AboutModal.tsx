@@ -181,9 +181,6 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
             )}
             {activeTab === "export" && (
               <div className="about-export-panel">
-                <p className="about-export-desc">
-                  Para importar um backup FiveDollars de volta: use o botão <strong>Importar</strong> na sidebar (Collections).
-                </p>
                 <div className="about-export-options">
                   <div className="about-export-option">
                     <p className="about-export-option-desc">

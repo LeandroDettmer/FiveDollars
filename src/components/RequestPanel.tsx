@@ -46,7 +46,7 @@ export function RequestPanel() {
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [scriptsTab, setScriptsTab] = useState<"pre" | "post">("post");
-  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">("params");
+  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">(defaultRequest?.method === "GET" ? "params" : "body");
   const variables = getResolvedVariables(req.id);
   const reqRef = useRef(req);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -69,7 +69,8 @@ export function RequestPanel() {
   }, [currentRequest?.id]);
 
   useEffect(() => {
-    if (req.method === "GET" && requestTab === "body") setRequestTab("params");
+    if (req.method === "GET" && requestTab !== "params") setRequestTab("params");
+    if (req.method === "POST" && requestTab !== "body") setRequestTab("body");
   }, [req.method]);
 
   useEffect(() => {
@@ -245,6 +246,7 @@ export function RequestPanel() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
+        e.stopPropagation();
         if (!sendingRef.current) handleSendRef.current();
         return;
       }
@@ -253,8 +255,8 @@ export function RequestPanel() {
         formatBodyJsonRef.current();
       }
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
   }, []);
 
   return (
@@ -308,7 +310,7 @@ export function RequestPanel() {
       </div>
       {req.url && (
         <div className="variable-preview-line">
-          <VariablePreview text={req.url} variables={variables} />
+          <VariablePreview text={req.url} variables={variables} returnNormalized={true} />
         </div>
       )}
 

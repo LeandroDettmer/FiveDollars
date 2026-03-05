@@ -1181,7 +1181,8 @@ body {
 }
 
 .variable-preview-line {
-  margin-top: 4px;
+  margin-top: 2px;
+  margin-bottom: 2px;
   padding: 4px 0;
   font-size: 11px;
   font-family: var(--font-mono);
