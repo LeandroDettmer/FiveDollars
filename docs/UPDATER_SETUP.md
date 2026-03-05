@@ -35,12 +35,17 @@ Abra `src-tauri/tauri.conf.json` e substitua `SUBSTITUA_PELA_SUA_CHAVE_PUBLICA` 
 
 ## 3. Configurar a chave privada no GitHub (CI)
 
-Para o workflow de release gerar os artefatos assinados e o `latest.json`:
+O GitHub pode alterar quebras de linha em secrets. Por isso o workflow espera a chave em **base64** (uma única linha), e o CI decodifica antes do build.
 
-1. No repositório no GitHub: **Settings → Secrets and variables → Actions**
-2. **New repository secret**
-3. Nome: `TAURI_SIGNING_PRIVATE_KEY`
-4. Valor: cole o **conteúdo completo** do arquivo da chave privada (`~/.tauri/FiveDollars.key`)
+1. No seu computador, gere o valor para o secret (uma linha em base64, sem quebras):
+   ```bash
+   base64 < ~/.tauri/FiveDollars.key | tr -d '\n'
+   ```
+   Copie a saída inteira (uma linha longa). No Linux você pode usar `base64 -w 0 ~/.tauri/FiveDollars.key` em vez disso.
+
+2. No repositório no GitHub: **Settings → Secrets and variables → Actions**
+3. Crie ou edite o secret **TAURI_SIGNING_PRIVATE_KEY**
+4. Valor: cole **só** a linha em base64 que você gerou acima (sem espaços ou quebras no início/fim)
 
 Assim, ao publicar um release (ou rodar o workflow manualmente com uma tag), o CI vai:
 

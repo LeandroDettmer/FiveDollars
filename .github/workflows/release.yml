@@ -63,11 +63,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare signing key (base64)
+        if: env.HAS_SIGNING_KEY == 'true'
+        env:
+          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        run: |
+          echo "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
+          echo "TAURI_SIGNING_PRIVATE_KEY=$RUNNER_TEMP/tauri_signing.key" >> $GITHUB_ENV
+
       - name: Build Tauri
         run: npm run tauri build
         env:
           CARGO_TERM_COLOR: always
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          # TAURI_SIGNING_PRIVATE_KEY vem do step "Prepare signing key" (arquivo decodificado) quando o secret existe
 
       - name: Prepare and upload artifact (macOS)
         if: matrix.name == 'macos'
