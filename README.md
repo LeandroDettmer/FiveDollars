@@ -73,15 +73,28 @@ npm run tauri build
 
 O repositório tem um workflow que **gera o app para macOS, Windows e Linux** e **anexa ao Release** quando você publica um release.
 
-1. **Versão**  
-   Atualize a versão em `package.json` e em `src-tauri/tauri.conf.json` (ex.: `0.1.0`).
+### Versão (para quem for fazer release)
+
+A versão precisa estar igual em `package.json` e `src-tauri/tauri.conf.json`. Use os scripts (qualquer dev pode usar):
+
+| Comando | Efeito |
+|--------|--------|
+| `npm run patch` | Sobe o patch: `0.1.4` → `0.1.5` (atualiza os dois arquivos) |
+| `npm run unpatch` | Desce o patch: `0.1.5` → `0.1.4` (útil para corrigir antes de publicar) |
+
+Depois de rodar `npm run patch` (ou `unpatch`), faça commit das alterações antes de criar a tag.
+
+### Passos do release
+
+1. **Bump da versão**  
+   `npm run patch` (ou edite manualmente os dois arquivos).
 
 2. **Commit e push**  
-   Faça commit das alterações e dê push para o `main` (ou o branch que usar).
+   `git add package.json src-tauri/tauri.conf.json` → commit → push para o `main`.
 
 3. **Publicar o release**  
-   No GitHub: **Releases** → **Create a new release** → escolha ou crie uma tag (ex.: `v0.1.0`) → **Publish release**.  
-   Ou use **Actions** → **Release** → **Run workflow** e informe a tag (ex.: `v0.1.0`).
+   No GitHub: **Releases** → **Create a new release** → escolha ou crie uma tag (ex.: `v0.1.5`) → **Publish release**.  
+   Ou use **Actions** → **Release** → **Run workflow** e informe a tag (ex.: `v0.1.5`).
 
 4. **O que acontece**  
    O GitHub Actions roda o job **Release** em paralelo para **macOS**, **Linux** e **Windows**.  
