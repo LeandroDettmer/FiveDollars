@@ -66,6 +66,9 @@ jobs:
         run: npm ci
 
       - name: Prepare signing key
+        if: env.HAS_SIGNING_KEY == 'true'
+        env:
+          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
         shell: bash
         run: |
           set -e
