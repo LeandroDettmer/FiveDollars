@@ -64,11 +64,14 @@ jobs:
         run: npm ci
 
       - name: Prepare signing key (base64)
-        if: env.HAS_SIGNING_KEY == 'true'
-        env:
-          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        if: secrets.TAURI_SIGNING_PRIVATE_KEY != ''
         run: |
           echo "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
+          # Tauri exige linha "untrusted comment" no início; adiciona se não existir
+          if ! head -1 "$RUNNER_TEMP/tauri_signing.key" | grep -q "untrusted comment"; then
+            (echo "untrusted comment: Tauri updater signing key"; cat "$RUNNER_TEMP/tauri_signing.key") > "$RUNNER_TEMP/tauri_signing.key.new"
+            mv "$RUNNER_TEMP/tauri_signing.key.new" "$RUNNER_TEMP/tauri_signing.key"
+          fi
           echo "TAURI_SIGNING_PRIVATE_KEY=$RUNNER_TEMP/tauri_signing.key" >> $GITHUB_ENV
 
       - name: Build Tauri
