@@ -27,7 +27,7 @@ Abra `src-tauri/tauri.conf.json` e substitua `SUBSTITUA_PELA_SUA_CHAVE_PUBLICA` 
   "updater": {
     "pubkey": "CONTEÚDO_COLETADO_DO_ARQUIVO_.pub_AQUI",
     "endpoints": [
-      "https://github.com/LeandroDettmer/FiveDollars/releases/latest/download/latest.json"
+      "https://raw.githubusercontent.com/LeandroDettmer/FiveDollars/main/latest.json"
     ]
   }
 }
@@ -60,6 +60,7 @@ Assim, ao publicar um release (ou rodar o workflow manualmente com uma tag), o C
 
 - Gerar os instaladores e os arquivos `.sig`
 - Incluir o `latest.json` no release
+- Fazer push do `latest.json` na raiz do repo (para ser servido em `raw.githubusercontent.com`) — o app usa essa URL para evitar o redirect 302 da URL `releases/latest/download/latest.json`, que o plugin updater pode não tratar corretamente
 - O app instalado vai conseguir verificar e baixar a nova versão ao clicar em **Verificar atualizações** (Sobre / Dados na sidebar).
 
 ## Resumo

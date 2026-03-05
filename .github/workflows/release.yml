@@ -10,6 +10,9 @@ on:
         required: true
         default: 'v0.1.0'
 
+env:
+  NODE_VERSION: '20'
+
 jobs:
   build:
     strategy:
@@ -23,7 +26,6 @@ jobs:
           - platform: windows-latest
             name: windows
     runs-on: ${{ matrix.platform }}
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,10 +35,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install Rust (stable)
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache Rust
@@ -44,7 +46,7 @@ jobs:
         with:
           workspaces: 'src-tauri -> target'
 
-      - name: Install Linux dependencies (Tauri)
+      - name: Install Linux dependencies
         if: matrix.name == 'linux'
         run: |
           sudo apt-get update
@@ -63,77 +65,73 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare signing key (base64)
-        if: env.HAS_SIGNING_KEY == 'true'
-        env:
-          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+      - name: Prepare signing key
+        if: secrets.TAURI_SIGNING_PRIVATE_KEY != ''
         shell: bash
         run: |
           set -e
           printf '%s' "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
           if ! [ -s "$RUNNER_TEMP/tauri_signing.key" ]; then
-            echo "::error::Chave decodificada vazia. Use no secret o base64 do arquivo .key inteiro: base64 < ~/.tauri/SUA_CHAVE.key | tr -d '\\n'"
+            echo "::error::Chave decodificada vazia. Secret deve ser o base64 do arquivo .key: base64 < ~/.tauri/SUA_CHAVE.key | tr -d '\\n'"
             exit 1
           fi
           echo "TAURI_SIGNING_PRIVATE_KEY=$RUNNER_TEMP/tauri_signing.key" >> $GITHUB_ENV
-          echo "Chave de assinatura preparada (path no env)."
+
       - name: Build Tauri
         run: npm run tauri build
         env:
           CARGO_TERM_COLOR: always
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-      - name: Prepare and upload artifact (macOS)
+
+      - name: Upload artifact (macOS)
         if: matrix.name == 'macos'
+        shell: bash
         run: |
-          echo "Procurando .dmg em src-tauri/target..."
-          find src-tauri/target -name "*.dmg" -type f 2>/dev/null || true
-          DMG=$(find src-tauri/target -name "*.dmg" -type f 2>/dev/null | head -1)
+          mkdir -p release-artifact
+          DMG=$(find src-tauri/target -name "*.dmg" -type f | head -1)
           if [ -z "$DMG" ]; then
-            echo "DMG não encontrado. Conteúdo de src-tauri/target/release/bundle:"
-            ls -la src-tauri/target/release/bundle/ 2>/dev/null || true
+            echo "::error::DMG não encontrado"
             ls -la src-tauri/target/release/bundle/dmg/ 2>/dev/null || true
             exit 1
           fi
-          echo "Encontrado: $DMG"
-          mkdir -p release-artifact
           cp "$DMG" release-artifact/FiveDollars-macos.dmg
-          # Artefatos do updater (tar.gz + assinatura)
           for f in src-tauri/target/release/bundle/macos/*.app.tar.gz; do
-            [ -f "$f" ] && cp "$f" release-artifact/ && cp "${f}.sig" release-artifact/ 2>/dev/null || true && break
+            if [ -f "$f" ]; then
+              cp "$f" release-artifact/FiveDollars.app.tar.gz
+              [ -f "${f}.sig" ] && cp "${f}.sig" release-artifact/FiveDollars.app.tar.gz.sig
+              break
+            fi
           done
 
-      - name: Prepare and upload artifact (Linux)
+      - name: Upload artifact (Linux)
         if: matrix.name == 'linux'
         run: |
           mkdir -p release-artifact
-          if ls src-tauri/target/release/bundle/appimage/*.AppImage 1>/dev/null 2>&1; then
-            cp src-tauri/target/release/bundle/appimage/*.AppImage release-artifact/FiveDollars-linux.AppImage
-            SIG="$(find src-tauri/target/release/bundle/appimage -name '*.AppImage.sig' -type f 2>/dev/null | head -1)"
-            if [ -n "$SIG" ]; then cp "$SIG" release-artifact/FiveDollars-linux.AppImage.sig; fi
-          fi
-          if ls src-tauri/target/release/bundle/deb/*.deb 1>/dev/null 2>&1; then
-            cp src-tauri/target/release/bundle/deb/*.deb release-artifact/
-          fi
+          for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
+            [ -f "$f" ] && cp "$f" release-artifact/FiveDollars-linux.AppImage && cp "${f}.sig" release-artifact/FiveDollars-linux.AppImage.sig 2>/dev/null; break
+          done
+          cp src-tauri/target/release/bundle/deb/*.deb release-artifact/ 2>/dev/null || true
           if [ -z "$(ls -A release-artifact 2>/dev/null)" ]; then
-            echo "Nenhum artefato Linux encontrado"
+            echo "::error::Nenhum artefato Linux (AppImage/deb)"
             exit 1
           fi
 
-      - name: Prepare and upload artifact (Windows)
+      - name: Upload artifact (Windows)
         if: matrix.name == 'windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path release-artifact
-          $msi = Get-ChildItem -Path src-tauri/target/release/bundle/msi -Filter *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          New-Item -ItemType Directory -Force -Path release-artifact | Out-Null
+          $bundle = "src-tauri/target/release/bundle"
+          $msi = Get-ChildItem -Path "$bundle/msi/*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+          $exe = Get-ChildItem -Path "$bundle/nsis/*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($msi) {
             Copy-Item $msi.FullName release-artifact/FiveDollars-windows.msi
-            $sig = Join-Path (Split-Path $msi.FullName) ($msi.Name + ".sig")
+            $sig = "$($msi.FullName).sig"
             if (Test-Path $sig) { Copy-Item $sig release-artifact/FiveDollars-windows.msi.sig }
           }
-          $exe = Get-ChildItem -Path src-tauri/target/release/bundle/nsis -Filter *.exe -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($exe) {
             Copy-Item $exe.FullName release-artifact/FiveDollars-windows.exe
-            $sig = Join-Path (Split-Path $exe.FullName) ($exe.Name + ".sig")
+            $sig = "$($exe.FullName).sig"
             if (Test-Path $sig) { Copy-Item $sig release-artifact/FiveDollars-windows.exe.sig }
           }
           if ((Get-ChildItem release-artifact).Count -eq 0) { throw "Nenhum artefato Windows encontrado" }
@@ -150,59 +148,71 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download all artifacts
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Gather release assets
-        id: gather
+      - name: Gather assets
         run: |
           mkdir -p release-assets
           find artifacts -type f -exec cp {} release-assets/ \;
-          ls -la release-assets/
           if [ -z "$(ls -A release-assets 2>/dev/null)" ]; then
-            echo "Nenhum artefato para anexar ao release"
+            echo "::error::Nenhum artefato baixado"
             exit 1
           fi
 
-      - name: Create latest.json for updater
-        id: latest_json
+      - name: Create latest.json
         env:
-          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
+          TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
         run: |
-          TAG="${RELEASE_TAG}"
           VERSION="${TAG#v}"
-          BASE="https://github.com/LeandroDettmer/FiveDollars/releases/download/${TAG}"
+          BASE="https://github.com/${{ github.repository }}/releases/download/${TAG}"
           PLATFORMS="{}"
           if [ -f release-assets/FiveDollars.app.tar.gz ] && [ -f release-assets/FiveDollars.app.tar.gz.sig ]; then
-            SIG=$(cat release-assets/FiveDollars.app.tar.gz.sig | tr -d '\n')
-            PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/FiveDollars.app.tar.gz" --arg sig "$SIG" '. + {"darwin-x86_64": {"url": $url, "signature": $sig}}')
+            SIG=$(tr -d '\n' < release-assets/FiveDollars.app.tar.gz.sig)
+            PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars.app.tar.gz" --arg sig "$SIG" '. + {"darwin-aarch64": {"url": $url, "signature": $sig}}')
           fi
           if [ -f release-assets/FiveDollars-linux.AppImage ] && [ -f release-assets/FiveDollars-linux.AppImage.sig ]; then
-            SIG=$(cat release-assets/FiveDollars-linux.AppImage.sig | tr -d '\n')
-            PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/FiveDollars-linux.AppImage" --arg sig "$SIG" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
+            SIG=$(tr -d '\n' < release-assets/FiveDollars-linux.AppImage.sig)
+            PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars-linux.AppImage" --arg sig "$SIG" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
           fi
           if [ -f release-assets/FiveDollars-windows.exe ] && [ -f release-assets/FiveDollars-windows.exe.sig ]; then
-            SIG=$(cat release-assets/FiveDollars-windows.exe.sig | tr -d '\n')
-            PLATFORMS=$(echo "$PLATFORMS" | jq --arg url "${BASE}/FiveDollars-windows.exe" --arg sig "$SIG" '. + {"windows-x86_64": {"url": $url, "signature": $sig}}')
+            SIG=$(tr -d '\n' < release-assets/FiveDollars-windows.exe.sig)
+            PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars-windows.exe" --arg sig "$SIG" '. + {"windows-x86_64": {"url": $url, "signature": $sig}}')
           fi
-          echo "{\"version\": \"$VERSION\", \"platforms\": $PLATFORMS}" | jq . > release-assets/latest.json
-          cat release-assets/latest.json
+          jq -n --arg version "$VERSION" --argjson platforms "$PLATFORMS" '{version: $version, platforms: $platforms}' > release-assets/latest.json
 
-      - name: Set release asset paths
+      - name: List release files
         id: paths
         run: |
-          echo "paths<<EOF" >> $GITHUB_OUTPUT
+          echo "files<<EOF" >> $GITHUB_OUTPUT
           find release-assets -type f >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create Release and upload assets
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.paths.outputs.paths }}
+          files: ${{ steps.paths.outputs.files }}
           tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag_name }}
           draft: false
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publica latest.json na raiz do repo para o app poder buscar sem redirect (releases/latest/download retorna 302)
+      - name: Publish latest.json to repo (raw URL)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          branch="${{ github.event.repository.default_branch }}"
+          git fetch origin "$branch"
+          git checkout "$branch"
+          cp release-assets/latest.json ./latest.json
+          git add latest.json
+          git diff --staged --quiet && echo "latest.json sem alteração" || (git commit -m "chore: update latest.json for updater endpoint" && git push origin "$branch")
