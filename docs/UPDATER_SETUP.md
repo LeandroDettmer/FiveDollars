@@ -52,7 +52,9 @@ Se você colar no secret só as linhas de base64 (sem a primeira linha de coment
 
 2. No repositório no GitHub: **Settings → Secrets and variables → Actions**
 3. Crie ou edite o secret **TAURI_SIGNING_PRIVATE_KEY**
-4. Valor: cole **só** a linha em base64 que você gerou acima (sem espaços ou quebras no início/fim)
+4. Valor: cole **só** a linha em base64 (sem comentários, sem espaços ou quebras no início/fim). O CI decodifica esse valor e grava no arquivo que o Tauri usa; por isso o secret deve ser **só** o base64, nada mais.
+
+**Chave com senha (rsign encrypted):** se ao gerar você definiu senha, crie também o secret **TAURI_SIGNING_PRIVATE_KEY_PASSWORD** com essa senha. Se deixou senha em branco, pode criar o secret com valor vazio ou deixar sem criar (o workflow trata como vazio).
 
 Assim, ao publicar um release (ou rodar o workflow manualmente com uma tag), o CI vai:
 

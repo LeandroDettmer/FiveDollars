@@ -63,13 +63,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare signing key (base64)
+        if: env.HAS_SIGNING_KEY == 'true'
+        env:
+          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        shell: bash
+        run: |
+          set -e
+          printf '%s' "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" | base64 -d > "$RUNNER_TEMP/tauri_signing.key"
+          if ! [ -s "$RUNNER_TEMP/tauri_signing.key" ]; then
+            echo "::error::Chave decodificada vazia. Use no secret o base64 do arquivo .key inteiro: base64 < ~/.tauri/SUA_CHAVE.key | tr -d '\\n'"
+            exit 1
+          fi
+          echo "TAURI_SIGNING_PRIVATE_KEY=$RUNNER_TEMP/tauri_signing.key" >> $GITHUB_ENV
+          echo "Chave de assinatura preparada (path no env)."
       - name: Build Tauri
         run: npm run tauri build
         env:
           CARGO_TERM_COLOR: always
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          
       - name: Prepare and upload artifact (macOS)
         if: matrix.name == 'macos'
         run: |
