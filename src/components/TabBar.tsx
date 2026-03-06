@@ -8,11 +8,6 @@ function tabLabel(tab: Tab): string {
   return tab.label;
 }
 
-function tabIcon(tab: Tab): string {
-  if (tab.type === "runner") return "play_circle";
-  return "link";
-}
-
 export function TabBar() {
   const tabs = useAppStore((s) => s.tabs);
   const activeTabId = useAppStore((s) => s.activeTabId);
