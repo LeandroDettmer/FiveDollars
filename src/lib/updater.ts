@@ -8,18 +8,32 @@ export function isTauri(): boolean {
 }
 
 export type UpdateStatus =
-  | { status: "idle" }
-  | { status: "checking" }
+  | { status: "idle"; version?: string; body?: string; date?: string }
+  | { status: "checking"; version?: string; body?: string; date?: string }
   | { status: "available"; version: string; body?: string; date?: string }
-  | { status: "downloading"; progress?: number }
-  | { status: "ready" }
-  | { status: "none" }
-  | { status: "error"; message: string };
+  | { status: "downloading"; progress?: number; version?: string; body?: string; date?: string }
+  | { status: "ready"; version?: string; body?: string; date?: string }
+  | { status: "none"; version?: string; body?: string; date?: string }
+  | { status: "error"; message: string; version?: string; body?: string; date?: string }
+  | { status: "confirm"; version: string; body?: string; date?: string };
 
 export async function getAppVersion(): Promise<string> {
   if (!isTauri()) return "0.1.0";
   const { getVersion } = await import("@tauri-apps/api/app");
   return getVersion();
+}
+
+export async function checkForUpdate(): Promise<UpdateStatus> {
+  if (!isTauri()) return { status: "error", message: "Atualização só está disponível na versão desktop." };
+  const { check } = await import("@tauri-apps/plugin-updater");
+  const update = await check();
+
+  return {
+    status: update ? "available" : "none",
+    version: update ? update.version : "",
+    body: update ? update.body : undefined,
+    date: update ? update.date : undefined,
+  };
 }
 
 export async function checkAndInstallUpdate(

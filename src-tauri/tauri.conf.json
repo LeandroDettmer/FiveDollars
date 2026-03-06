@@ -1,6 +1,5 @@
 {
   "productName": "FiveDollars",
-  "version": "0.1.7",
   "identifier": "com.fivedollars.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -25,7 +24,8 @@
         "height": 1080,
         "minWidth": 800,
         "minHeight": 600,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "center": true
       }
     ],
     "security": {

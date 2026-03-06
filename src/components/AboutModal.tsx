@@ -5,8 +5,9 @@ import { collectionToPostmanV21 } from "@/lib/exportPostmanV21";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import type { Collection } from "@/types";
-import { isTauri, getAppVersion, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
+import { isTauri, getAppVersion, checkForUpdate, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
 import { useKeyDown } from "@/lib/useKeyDown";
+import { ConfirmModal } from "./ConfirmModal";
 
 const APP_AUTHOR = "Leandro Dettmer";
 
@@ -31,7 +32,8 @@ function downloadJson(obj: object, filename: string) {
 export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const [version, setVersion] = useState(versionProp ?? "0.1.0");
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: "idle" });
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: "idle", version: "" });
   const { collections, environments, currentEnv, history } = useAppStore();
 
   useEffect(() => {
@@ -73,10 +75,17 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
     downloadJson(data, defaultFilename);
   };
 
-  const handleCheckUpdate = () => {
+  const handleCheckUpdate = async () => {
     setUpdateStatus({ status: "idle" });
-    checkAndInstallUpdate(setUpdateStatus);
-  };
+
+    const updateStatus = await checkForUpdate();
+    if (updateStatus.status === "available") {
+      setUpdateStatus(updateStatus);
+      setConfirmModalOpen(true);
+    } else if (updateStatus.status === "none") {
+      setUpdateStatus(updateStatus);
+    };
+  }
 
   const handleExportPostman = async () => {
     const collection: Collection =
@@ -237,8 +246,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                     {updateStatus.status === "available" && (
                       <p className="about-update-available">
                         Nova versão <strong>{updateStatus.version}</strong> disponível.
-                        {updateStatus.body && ` ${updateStatus.body}`} O download e a instalação
-                        começaram automaticamente.
+                        {updateStatus.body && ` ${updateStatus.body}`}
                       </p>
                     )}
                     {updateStatus.status === "none" && (
@@ -252,6 +260,14 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                   </div>
                 )}
               </div>
+            )}
+            {confirmModalOpen && (
+              <ConfirmModal
+                title="Atualização disponível"
+                message={`A versão ${updateStatus?.version} está disponível. Deseja instalar agora?`}
+                onConfirm={() => checkAndInstallUpdate(setUpdateStatus)}
+                onClose={() => setConfirmModalOpen(false)}
+              />
             )}
           </div>
         </div>

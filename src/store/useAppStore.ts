@@ -17,6 +17,7 @@ import { saveAppData } from "@/lib/persistence";
 import {
   updateRequestInNodes,
   getCollectionContainingRequest,
+  getAllRequests,
   getRequestById,
 } from "@/lib/collectionTreeUtils";
 import { generateId } from "@/lib/id";
@@ -96,6 +97,7 @@ interface AppState {
   getCollectionForRequest: (requestId: string) => Collection | null;
   getActiveTab: () => Tab | null;
   getCollectionById: (id: string) => Collection | null;
+  refreshTabs: () => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -249,13 +251,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       tabs: s.tabs.map((t) =>
         t.id === tabId && t.type === "runner"
           ? {
-              ...t,
-              pendingConfig: patch.pendingConfig !== undefined ? patch.pendingConfig : t.pendingConfig,
-              run: patch.run !== undefined ? patch.run : t.run,
-              runResults: patch.runResults !== undefined ? patch.runResults : t.runResults,
-              runRunning: patch.runRunning !== undefined ? patch.runRunning : t.runRunning,
-              configFormState: patch.configFormState !== undefined ? patch.configFormState : t.configFormState,
-            }
+            ...t,
+            pendingConfig: patch.pendingConfig !== undefined ? patch.pendingConfig : t.pendingConfig,
+            run: patch.run !== undefined ? patch.run : t.run,
+            runResults: patch.runResults !== undefined ? patch.runResults : t.runResults,
+            runRunning: patch.runRunning !== undefined ? patch.runRunning : t.runRunning,
+            configFormState: patch.configFormState !== undefined ? patch.configFormState : t.configFormState,
+          }
           : t
       ),
     }));
@@ -374,11 +376,22 @@ export const useAppStore = create<AppState>((set, get) => ({
         const newItems = updateRequestInNodes(c.items, requestId, request);
         return newItems !== c.items ? { ...c, items: newItems } : c;
       }),
-      tabs: state.tabs.map((t) =>
-        t.type === "request" && t.requestId === requestId ? { ...t, label: request.name } : t
-      ),
     }));
+
     persist(get());
+    get().refreshTabs();
+  },
+
+  refreshTabs: () => {
+    const requests = getAllRequests(get().collections);
+    const updatedTabs = get().tabs.map((t) => {
+      if (t.type === "request") {
+        const requestObject = requests.find((r) => r.id === t.requestId);
+        return { ...t, label: requestObject?.name ?? "", method: requestObject?.method ?? "", url: requestObject?.url ?? "" };
+      }
+      return t;
+    });
+    set(() => ({ tabs: updatedTabs as Tab[] }));
   },
 
   addEnvironment: (env) => {

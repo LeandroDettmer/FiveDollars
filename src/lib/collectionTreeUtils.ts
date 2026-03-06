@@ -65,11 +65,11 @@ function treeContainsRequestId(nodes: CollectionNode[], requestId: string): bool
 }
 
 /** Retorna a request com o id dado na árvore, ou null. */
-function findRequestInNodes(nodes: CollectionNode[], requestId: string): RequestConfig | null {
+function findRequestInNodesByRequestId(nodes: CollectionNode[], requestId: string): RequestConfig | null {
   for (const node of nodes) {
     if (node.type === "request" && node.request?.id === requestId) return node.request;
     if (node.type === "folder") {
-      const found = findRequestInNodes(node.children, requestId);
+      const found = findRequestInNodesByRequestId(node.children, requestId);
       if (found) return found;
     }
   }
@@ -79,10 +79,26 @@ function findRequestInNodes(nodes: CollectionNode[], requestId: string): Request
 /** Retorna a request com o id dado em qualquer collection, ou null. */
 export function getRequestById(collections: Collection[], requestId: string): RequestConfig | null {
   for (const coll of collections) {
-    const req = findRequestInNodes(coll.items, requestId);
+    const req = findRequestInNodesByRequestId(coll.items, requestId);
     if (req) return req;
   }
   return null;
+}
+
+function findRequestsInNodes(nodes: CollectionNode[]): RequestConfig[] {
+  const requests: RequestConfig[] = [];
+
+  for (const node of nodes) {
+    if (node.type === "request") requests.push(node.request);
+    if (node.type === "folder") {
+      requests.push(...findRequestsInNodes(node.children));
+    }
+  }
+  return requests;
+}
+
+export function getAllRequests(collections: Collection[]): RequestConfig[] {
+  return collections.flatMap((c) => findRequestsInNodes(c.items));
 }
 
 /** Retorna a collection que contém a request com o id dado, ou null. */
@@ -226,7 +242,7 @@ export function renameNodeAtPath(nodes: CollectionNode[], path: NodePath, newNam
   if (target.type === "request") {
     target.request.name = newName.trim() || target.request.name;
   }
-  
+
   return root;
 }
 
