@@ -13,6 +13,7 @@ import {
 } from "@/lib/collectionTreeUtils";
 
 import { useAppStore } from "@/store/useAppStore";
+import { HttpMethodBadge } from "./HttpMethodBadge";
 
 type TreeAction =
   | "new-folder"
@@ -179,7 +180,7 @@ function NodeItem({
         />
       ) : (
         <>
-          <span className="collection-request-method">{node.request.method}</span>
+          <HttpMethodBadge method={node.request.method} className="collection-request-method" />
           <span className="collection-request-name">{node.name}</span>
         </>
       )}

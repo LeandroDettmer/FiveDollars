@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from "react";
+import { HttpMethodBadge } from "./HttpMethodBadge";
 import type { RequestConfig, RunnerConfigFormState } from "@/types";
 
 /** Converte JSON do arquivo em array de objetos (variáveis por iteração). */
@@ -184,7 +185,7 @@ export function RunnerConfigPanel({
                     checked={selectedIds.has(r.id)}
                     onChange={() => toggleRequest(r.id)}
                   />
-                  <span className="runner-item-method">{r.method}</span>
+                  <HttpMethodBadge method={r.method} className="runner-item-method" />
                   <span className="runner-item-name" title={r.url}>
                     {r.name}
                   </span>

@@ -1,5 +1,6 @@
 import { useKeyDown } from "@/lib/useKeyDown";
 import { useAppStore } from "@/store/useAppStore";
+import { HttpMethodBadge } from "./HttpMethodBadge";
 import type { Tab } from "@/types";
 
 function tabLabel(tab: Tab): string {
@@ -37,11 +38,14 @@ export function TabBar() {
           className={`tab-bar-tab ${tab.id === activeTabId ? "tab-bar-tab--active" : ""}`}
           onClick={() => setActiveTab(tab.id)}
         >
-          <span className="tab-bar-tab-icon material-symbols-outlined" aria-hidden>
-            {tabIcon(tab)}
-          </span>
           <span className="tab-bar-tab-label" title={tabLabel(tab)}>
-            {tabLabel(tab)}
+            {tab.type === "request" ? (
+              <>
+                <HttpMethodBadge method={tab.method} /> {tabLabel(tab)}
+              </>
+            ) : (
+              tabLabel(tab)
+            )}
           </span>
           <button
             type="button"

@@ -116,6 +116,29 @@ body {
 .tab-bar-tab-label {
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.http-method {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.http-method--get {
+  color: #49cc90; /* verde */
+}
+.http-method--post {
+  color: #e6b800; /* amarelo */
+}
+.http-method--put {
+  color: #61affe; /* azul claro */
+}
+.http-method--patch {
+  color: #50e3c2; /* teal */
+}
+.http-method--delete {
+  color: #f93e3e; /* rosa avermelhado */
 }
 
 .tab-bar-tab-close {
@@ -902,8 +925,6 @@ body {
 .collection-request-method {
   flex-shrink: 0;
   font-size: 10px;
-  font-weight: 600;
-  color: var(--accent);
   width: 36px;
 }
 
@@ -989,8 +1010,6 @@ body {
 
 .history-method {
   flex-shrink: 0;
-  color: var(--accent);
-  font-weight: 600;
 }
 
 .history-url {
@@ -2520,8 +2539,6 @@ body {
 .runner-item-method {
   width: 42px;
   flex-shrink: 0;
-  font-weight: 600;
-  color: var(--accent);
 }
 
 .runner-item-name {

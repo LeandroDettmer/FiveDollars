@@ -124,6 +124,8 @@ export interface RequestTab {
   type: "request";
   requestId: string;
   label: string;
+  method: HttpMethod;
+  url: string;
 }
 
 /** Estado do formulário de config do Runner (para restaurar ao voltar na aba). */

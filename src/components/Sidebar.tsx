@@ -4,6 +4,7 @@ import { CollectionTree } from "./CollectionTree";
 import { EnvironmentEditor, ENV_COLORS } from "./EnvironmentEditor";
 import { ConfirmModal } from "./ConfirmModal";
 import { AboutModal } from "./AboutModal";
+import { HttpMethodBadge } from "./HttpMethodBadge";
 import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
 import { useClickOutside } from "@/lib/useClickOutside";
@@ -109,6 +110,8 @@ export function Sidebar() {
       type: "request",
       requestId: newRequest.id,
       label: newRequest.name,
+      method: newRequest.method,
+      url: newRequest.url,
     });
     setCollapsedCollectionIds((prev) => {
       const next = new Set(prev);
@@ -416,6 +419,8 @@ export function Sidebar() {
                                 type: "request",
                                 requestId: req.id,
                                 label: req.name,
+                                method: req.method,
+                                url: req.url,
                               });
                             }}
                             searchQuery={collectionSearch}
@@ -528,7 +533,7 @@ export function Sidebar() {
                 }}
                 title={entry.scriptLogs?.length ? "Clique para ver os logs desta requisição" : "Clique para ver os logs"}
               >
-                <span className="history-method">{entry.method}</span>
+                <HttpMethodBadge method={entry.method} className="history-method" />
                 <span className="history-url" title={entry.url}>
                   {entry.url}
                 </span>

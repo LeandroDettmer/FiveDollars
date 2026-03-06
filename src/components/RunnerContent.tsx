@@ -3,6 +3,7 @@ import { sendRequest } from "@/lib/http";
 import { useAppStore } from "@/store/useAppStore";
 import type { RequestConfig, RunnerTabResult } from "@/types";
 import type { HttpMethod } from "@/types";
+import { HttpMethodBadge } from "./HttpMethodBadge";
 
 export interface RunnerContentRun {
   folderName: string;
@@ -212,7 +213,7 @@ export function RunnerContent({
                           <span className="runner-item-status" aria-hidden>
                             {res.status >= 200 && res.status < 300 ? "✓" : "⚠"}
                           </span>
-                          <span className="runner-item-method">{res.method}</span>
+                          <HttpMethodBadge method={res.method} className="runner-item-method" />
                           <span className="runner-item-name">{res.name}</span>
                           <span className="runner-item-result">
                             {res.status} {res.statusText} — {res.timeMs} ms
@@ -280,7 +281,7 @@ export function RunnerContent({
                 {r.status === "done" && (r.response && r.response.status < 400 ? "✓" : "⚠")}
                 {r.status === "error" && "✕"}
               </span>
-              <span className="runner-item-method">{r.request.method}</span>
+              <HttpMethodBadge method={r.request.method} className="runner-item-method" />
               <span className="runner-item-name" title={r.request.url}>
                 {r.request.name}
               </span>
