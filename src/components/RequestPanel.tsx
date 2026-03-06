@@ -12,6 +12,7 @@ import { generateId } from "@/lib/id";
 import { BodyEditor } from "@/components/BodyEditor";
 import { VariablePreview } from "@/components/VariablePreview";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
+import { useKeyDown } from "@/lib/useKeyDown";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
@@ -242,22 +243,21 @@ export function RequestPanel() {
   formatBodyJsonRef.current = formatBodyJson;
   handleSendRef.current = handleSend;
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!sendingRef.current) handleSendRef.current();
-        return;
-      }
-      if ((e.key === "f" || e.key === "F") && e.shiftKey && e.ctrlKey) {
-        e.preventDefault();
-        formatBodyJsonRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, []);
+
+  useKeyDown("Enter", (e) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!sendingRef.current) handleSendRef.current();
+    }
+  });
+
+  useKeyDown(["f", "F"], (e) => {
+    if (e.shiftKey && e.ctrlKey) {
+      e.preventDefault();
+      formatBodyJsonRef.current();
+    }
+  });
 
   return (
     <div className="request-panel">

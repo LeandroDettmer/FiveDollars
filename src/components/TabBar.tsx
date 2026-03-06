@@ -1,3 +1,4 @@
+import { useKeyDown } from "@/lib/useKeyDown";
 import { useAppStore } from "@/store/useAppStore";
 import type { Tab } from "@/types";
 
@@ -16,6 +17,13 @@ export function TabBar() {
   const activeTabId = useAppStore((s) => s.activeTabId);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const closeTab = useAppStore((s) => s.closeTab);
+
+  useKeyDown(["w", "w"], (e) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      if (activeTabId) closeTab(activeTabId);
+    }
+  });
 
   if (tabs.length === 0) return null;
 

@@ -5,7 +5,7 @@ import { useEffect } from "react";
  * Útil para atalhos como Esc fechar modal.
  */
 export function useKeyDown(
-  key: string,
+  key: string | string[],
   onKey: (e: KeyboardEvent) => void,
   options?: { event?: "keydown" | "keyup" }
 ) {
@@ -13,7 +13,7 @@ export function useKeyDown(
 
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
-      if (e.key === key) {
+      if (Array.isArray(key) ? key.includes(e.key.toLowerCase()) : e.key.toLowerCase() === key.toLowerCase()) {
         onKey(e);
       }
     };

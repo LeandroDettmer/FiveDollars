@@ -222,6 +222,11 @@ export function renameNodeAtPath(nodes: CollectionNode[], path: NodePath, newNam
   const target = getNodeAtPath(root, path);
   if (!target) return nodes;
   target.name = newName.trim() || target.name;
+
+  if (target.type === "request") {
+    target.request.name = newName.trim() || target.request.name;
+  }
+  
   return root;
 }
 

@@ -6,8 +6,13 @@ import { ConfirmModal } from "./ConfirmModal";
 import { AboutModal } from "./AboutModal";
 import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
+import { useClickOutside } from "@/lib/useClickOutside";
 import { generateId } from "@/lib/id";
 import type { Collection, Environment, RequestConfig } from "@/types";
+import {
+  type NodePath,
+} from "@/lib/collectionTreeUtils";
+
 
 export function Sidebar() {
   const {
@@ -30,30 +35,50 @@ export function Sidebar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [editingEnv, setEditingEnv] = useState<Environment | null>(null);
-  const [collapsedCollections, setCollapsedCollections] = useState(false);
-  const [collapsedEnvs, setCollapsedEnvs] = useState(false);
+  const [collapsedCollections, setCollapsedCollections] = useState(true);
+  const [collapsedEnvs, setCollapsedEnvs] = useState(true);
   const [collectionSearch, setCollectionSearch] = useState("");
   const [collectionToRemove, setCollectionToRemove] = useState<{ id: string; name: string } | null>(null);
   const [folderViewKey, setFolderViewKey] = useState(0);
-  const [foldersExpanded, setFoldersExpanded] = useState(false);
+  const [foldersExpanded, setFoldersExpanded] = useState(true);
   const [collapsedCollectionIds, setCollapsedCollectionIds] = useState<Set<string>>(new Set());
   const [collectionMenuOpenId, setCollectionMenuOpenId] = useState<string | null>(null);
   const [renamingCollectionId, setRenamingCollectionId] = useState<string | null>(null);
   const [renamingCollectionName, setRenamingCollectionName] = useState("");
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const collectionMenuRef = useRef<HTMLDivElement>(null);
+  const hasInitializedCollectionsRef = useRef(false);
+  useClickOutside(collectionMenuRef, () => setCollectionMenuOpenId(null), !!collectionMenuOpenId);
 
+  // ao buscar abrir as collections q contem a rota
   useEffect(() => {
-    if (!collectionMenuOpenId) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (collectionMenuRef.current?.contains(e.target as Node)) return;
-      setCollectionMenuOpenId(null);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [collectionMenuOpenId]);
+    if (collectionSearch.length > 0) {
+      setCollapsedCollectionIds(new Set());
+      setFoldersExpanded(true);
+      setCollapsedCollections(false);
+      setFolderViewKey(0);
+    }
 
-  console.log(collectionMenuRef);
+    if (collectionSearch.length === 0) {
+      setFoldersExpanded(false);
+      setCollapsedCollections(false);
+      setFolderViewKey((k) => k + 1);
+    }
+  }, [collectionSearch]);
+
+  // só na primeira vez que existir collection carregada
+  useEffect(() => {
+    if (collections.length > 0 && !hasInitializedCollectionsRef.current) {
+      hasInitializedCollectionsRef.current = true;
+      setCollapsedCollectionIds(new Set(collections.map((coll) => coll.id)));
+    }
+  }, [collections]);
+
+
+  console.log({ collectionSearch });
+  console.log({ foldersExpanded });
+  console.log({ collapsedCollections });
+  console.log({ collapsedCollectionIds });
 
   const toggleCollectionCollapsed = (id: string) => {
     setCollapsedCollectionIds((prev) => {
@@ -74,10 +99,10 @@ export function Sidebar() {
     bodyType: "none",
   });
 
-  const handleAddRequestToCollection = (coll: Collection) => {
+  const handleAddRequestToCollection = (coll: Collection, folderPath?: NodePath) => {
     setCollectionMenuOpenId(null);
     const newRequest = createNewRequest();
-    const newItems = addRequestToNodes(coll.items, [], newRequest);
+    const newItems = addRequestToNodes(coll.items, folderPath ?? [], newRequest);
     updateCollection(coll.id, { items: newItems });
     openTab({
       id: `req-${newRequest.id}`,
@@ -196,6 +221,77 @@ export function Sidebar() {
     <>
       <div className="sidebar-scroll">
         <section className="sidebar-section">
+          {(
+            <>
+              <div className="sidebar-search-wrap">
+
+                <div className="sidebar-collection-actions">
+                  <button
+                    type="button"
+                    className="new-collection-btn"
+                    onClick={handleCreateCollection}
+                    title="Nova collection"
+                  >
+                    Nova collection
+                  </button>
+                  <button type="button" className="import-btn" onClick={handleImportClick}>
+                    Importar
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <input
+                  type="search"
+                  className="sidebar-search-input"
+                  placeholder="Buscar rotas..."
+                  value={collectionSearch}
+                  onChange={(e) => setCollectionSearch(e.target.value)}
+                  aria-label="Buscar rotas na collection"
+                >
+                </input>
+                {collectionSearch.length > 0 && (
+                  <button
+                    type="button"
+                    className="sidebar-search-clear"
+                    onClick={() => setCollectionSearch("")}
+                    aria-label="Limpar busca"
+                    title="Limpar busca"
+                  >
+                    ×
+                  </button>
+                )}
+
+              </div>
+              <div className="sidebar-folder-actions">
+                <button
+                  type="button"
+                  className="sidebar-folder-action-btn"
+                  onClick={() => {
+                    setFoldersExpanded(false);
+                    setCollapsedCollections(true);
+                    setFolderViewKey((k) => k + 1);
+                  }}
+                  title="Recolher todas as pastas"
+                >
+                  Recolher todas
+                </button>
+                <button
+                  type="button"
+                  className="sidebar-folder-action-btn"
+                  onClick={() => {
+                    setFoldersExpanded(true);
+                    setCollapsedCollectionIds(new Set());
+                    setCollapsedCollections(false);
+                    setFolderViewKey((k) => k + 1);
+                  }}
+                  title="Expandir todas as pastas"
+                >
+                  Expandir todas
+                </button>
+              </div>
+            </>
+          )}
+
           <div className="sidebar-section-header">
             <button
               type="button"
@@ -209,19 +305,7 @@ export function Sidebar() {
               Collections
             </button>
             {!collapsedCollections && (
-              <div className="sidebar-collection-actions">
-                <button
-                  type="button"
-                  className="new-collection-btn"
-                  onClick={handleCreateCollection}
-                  title="Nova collection"
-                >
-                  Nova collection
-                </button>
-                <button type="button" className="import-btn" onClick={handleImportClick}>
-                  Importar
-                </button>
-              </div>
+              <></>
             )}
           </div>
           <input
@@ -235,57 +319,6 @@ export function Sidebar() {
           {!collapsedCollections && (
             <>
               {importError && <p className="sidebar-error">{importError}</p>}
-              {collections.length > 0 && (
-                <>
-                  <div className="sidebar-search-wrap">
-                    <input
-                      type="search"
-                      className="sidebar-search-input"
-                      placeholder="Buscar rotas..."
-                      value={collectionSearch}
-                      onChange={(e) => setCollectionSearch(e.target.value)}
-                      aria-label="Buscar rotas na collection"
-                    />
-                    {collectionSearch.length > 0 && (
-                      <button
-                        type="button"
-                        className="sidebar-search-clear"
-                        onClick={() => setCollectionSearch("")}
-                        aria-label="Limpar busca"
-                        title="Limpar busca"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  <div className="sidebar-folder-actions">
-                    <button
-                      type="button"
-                      className="sidebar-folder-action-btn"
-                      onClick={() => {
-                        setFoldersExpanded(false);
-                        setFolderViewKey((k) => k + 1);
-                      }}
-                      title="Recolher todas as pastas"
-                    >
-                      Recolher todas
-                    </button>
-                    <button
-                      type="button"
-                      className="sidebar-folder-action-btn"
-                      onClick={() => {
-                        setFoldersExpanded(true);
-                        setCollapsedCollectionIds(new Set());
-                        setCollapsedCollections(false);
-                        setFolderViewKey((k) => k + 1);
-                      }}
-                      title="Expandir todas as pastas"
-                    >
-                      Expandir todas
-                    </button>
-                  </div>
-                </>
-              )}
               {collections.length === 0 ? (
                 <p className="sidebar-hint">
                   Importe: backup FiveDollars (Sobre → Exportar), Postman (JSON) ou Insomnia (JSON/YAML).
@@ -296,7 +329,12 @@ export function Sidebar() {
                     const isCollapsed = collapsedCollectionIds.has(coll.id);
                     return (
                       <div key={coll.id} className={`collection-block ${isCollapsed ? "collection-block--collapsed" : ""}`}>
-                        <div className="collection-header">
+                        {/* ao clicar com botao direito, abrir menu de opcoes da collection */}
+                        <div className="collection-header" onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setCollectionMenuOpenId(coll.id);
+                        }}>
                           <button
                             type="button"
                             className="collection-header-toggle"
@@ -397,6 +435,7 @@ export function Sidebar() {
                                 });
                               }
                             }}
+                            onAddRequestToCollection={(coll, folderPath?: NodePath) => handleAddRequestToCollection(coll, folderPath ?? [])}
                           />
                         )}
                       </div>

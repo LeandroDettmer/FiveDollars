@@ -95,6 +95,7 @@ interface AppState {
   getResolvedVariables: (requestId?: string) => Record<string, string>;
   getCollectionForRequest: (requestId: string) => Collection | null;
   getActiveTab: () => Tab | null;
+  getCollectionById: (id: string) => Collection | null;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -360,6 +361,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const coll = getCollectionContainingRequest(collections, requestId);
     const collVars = coll?.variables ?? {};
     return { ...collVars, ...envVars };
+  },
+
+  getCollectionById: (id: string) => {
+    const { collections } = get();
+    return collections.find((c) => c.id === id) ?? null;
   },
 
   updateRequestInCollection: (requestId, request) => {
