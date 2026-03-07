@@ -1,8 +1,85 @@
-# FiveDollars
+# FiveDollars API Client
 
-API Client | Desktop | Web (alternativa ao Postman/Insomnia) com **React** e **Tauri**, usando CSS puro (sem Tailwind). Requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
+**API Client** para Desktop e Web — alternativa ao Postman/Insomnia. Cliente de requisições HTTP com **React** e **Tauri**, usando CSS puro (sem Tailwind). As requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
+
+![Interface do FiveDollars - Collections, Environments, requisição e resposta](docs/images/overview.png)
 
 ---
+
+## O que o app oferece
+
+- **Collections** — organize requisições em pastas; importe collections **Postman v2.1** e **Insomnia** (JSON/YAML).
+- **Environments** — ambientes com variáveis (`{{baseUrl}}`, `{{token}}`, etc.) e **cores para marcar importância ou tipo** (ex.: vermelho para Produção, verde para Local).
+- **Runner** — execute várias requisições de uma pasta em sequência, com iterações, delay, arquivo de dados JSON e opção de salvar resposta no histórico.
+- **Scripts** — Pre-request e Post-response por requisição (tokens dinâmicos, extrair dados da resposta, gravar em variáveis).
+- **Requisições** — GET, POST, PUT, PATCH, DELETE; headers, query/path params, body (JSON, form, raw); auth Basic, Bearer, API Key.
+
+---
+
+## Environments (Ambientes) e cores
+
+Crie ambientes na sidebar e defina variáveis (ex.: `baseUrl`, `token`). Use `{{nome}}` na URL, headers ou body; o ambiente ativo é aplicado antes do request.
+
+Cada ambiente pode ter uma **cor** para você **tagar importância ou tipo** (produção, homologação, local, etc.) e identificar rapidamente na lista. Clique no ambiente para ativar; duplo clique para editar nome, variáveis e cor.
+
+![Environments com cores para tagar importância](docs/images/environments.png)
+
+Exemplo: URL `{{baseUrl}}/api/users` com ambiente `{ "baseUrl": "https://api.exemplo.com" }` vira `https://api.exemplo.com/api/users`.
+
+---
+
+## Runner
+
+Execute várias requisições de uma pasta em sequência:
+
+- **Seleção** — escolha quais requisições rodar (marcar/desmarcar).
+- **Iterações** — rode N vezes ou use um **arquivo de dados** (JSON com array de objetos); cada objeto vira um conjunto de variáveis por iteração.
+- **Delay** — intervalo em ms entre requisições.
+- **Corpo da resposta** — opção para incluir ou não o body nas entradas do histórico do run.
+
+Abra o Runner pela pasta na sidebar (ex.: menu da pasta → "Run") e configure no painel antes de executar.
+
+### Configurar execução (pasta)
+
+![Configurar Run - Folder](docs/images/runner-config.png)
+
+### Runner em execução
+
+![Runner em execução](docs/images/runner-running.png)
+
+---
+
+## Importação de collections
+
+- **Postman v2.1**: exporte a collection como JSON (Collection v2.1) e use **Importar** na sidebar.
+- **Insomnia**: importe collections Insomnia (JSON ou YAML).
+
+Após importar, pastas e requisições aparecem na sidebar; clique numa requisição para carregar e enviar.
+
+---
+
+## Scripts: Pre-request e Post-response
+
+Por requisição (aba **Scripts** no painel da requisição):
+
+- **Pre-request**: executado **antes** do envio.
+  - API: `fv.environment.get(key)` / `fv.environment.set(key, value)`.
+  - Se a requisição pertencer a uma collection: `fv.collectionVariables.get(key)` / `fv.collectionVariables.set(key, value)`.
+  - Valores definidos com `set` são aplicados ao ambiente ativo (ou à collection) e usados na mesma requisição.
+- **Post-response**: executado **depois** de receber a resposta.
+  - API: `fv.response` (`.json()`, `.status`, `.statusText`, `.headers`, `.body`), `fv.environment.set(...)` e, se houver collection, `fv.collectionVariables.set(...)`.
+
+Útil para tokens dinâmicos, timestamps, extrair dados da resposta e gravar em variáveis para as próximas requisições. Logs dos scripts aparecem na interface quando disponível.
+
+---
+
+## Requisições
+
+Métodos: GET, POST, PUT, PATCH, DELETE. Suporte a headers, query params, path params e body (JSON, form, raw). Auth: Basic, Bearer, API Key (valores podem usar `{{var}}`).
+
+---
+
+# Para desenvolvedores
 
 ## Pré-requisitos
 
@@ -31,7 +108,7 @@ sudo apt-get install -y \
 
 ---
 
-## Como rodar
+## Como rodar o repositório
 
 ```bash
 npm install
@@ -73,15 +150,28 @@ npm run tauri build
 
 O repositório tem um workflow que **gera o app para macOS, Windows e Linux** e **anexa ao Release** quando você publica um release.
 
-1. **Versão**  
-   Atualize a versão em `package.json` e em `src-tauri/tauri.conf.json` (ex.: `0.1.0`).
+### Versão (para quem for fazer release)
+
+A versão precisa estar igual em `package.json` e `src-tauri/tauri.conf.json`. Use os scripts (qualquer dev pode usar):
+
+| Comando | Efeito |
+|--------|--------|
+| `npm run patch` | Sobe o patch: `0.1.4` → `0.1.5` (atualiza os dois arquivos) |
+| `npm run unpatch` | Desce o patch: `0.1.5` → `0.1.4` (útil para corrigir antes de publicar) |
+
+Depois de rodar `npm run patch` (ou `unpatch`), faça commit das alterações antes de criar a tag.
+
+### Passos do release
+
+1. **Bump da versão**  
+   `npm run patch` (ou edite manualmente os dois arquivos).
 
 2. **Commit e push**  
-   Faça commit das alterações e dê push para o `main` (ou o branch que usar).
+   `git add package.json src-tauri/tauri.conf.json` → commit → push para o `main`.
 
 3. **Publicar o release**  
-   No GitHub: **Releases** → **Create a new release** → escolha ou crie uma tag (ex.: `v0.1.0`) → **Publish release**.  
-   Ou use **Actions** → **Release** → **Run workflow** e informe a tag (ex.: `v0.1.0`).
+   No GitHub: **Releases** → **Create a new release** → escolha ou crie uma tag (ex.: `v0.1.5`) → **Publish release**.  
+   Ou use **Actions** → **Release** → **Run workflow** e informe a tag (ex.: `v0.1.5`).
 
 4. **O que acontece**  
    O GitHub Actions roda o job **Release** em paralelo para **macOS**, **Linux** e **Windows**.  
@@ -93,61 +183,6 @@ O repositório tem um workflow que **gera o app para macOS, Windows e Linux** e 
 - **macOS:** abra o `.dmg`, arraste o app para Aplicativos. Se aparecer *"FiveDollars is damaged"* (o app não é assinado com certificado Apple), use **botão direito no app** → **Abrir** → **Abrir** na confirmação. Alternativa no Terminal: `xattr -cr /Applications/FiveDollars.app`.
 - **Windows:** execute o `.msi` ou o `.exe` do instalador.
 - **Linux:** use o `.AppImage` (dar permissão de execução se precisar) ou instale o `.deb`.
-
----
-
-## Features
-
-### Importação de collections
-
-- **Postman v2.1**: exporte a collection como JSON (Collection v2.1) e use **Importar** na sidebar.
-- **Insomnia**: importe collections Insomnia (JSON ou YAML).
-
-Após importar, pastas e requisições aparecem na sidebar; clique numa requisição para carregar e enviar.
-
----
-
-### Runner
-
-Execute várias requisições de uma pasta em sequência:
-
-- **Seleção**: escolha quais requisições rodar (marcar/desmarcar).
-- **Iterações**: rode N vezes ou use um **arquivo de dados** (JSON com array de objetos); cada objeto vira um conjunto de variáveis por iteração.
-- **Delay**: intervalo em ms entre requisições.
-- **Corpo da resposta**: opção para incluir ou não o body nas entradas do histórico do run.
-
-Abra o Runner pela pasta na sidebar (ex.: “Run folder”) e configure no painel antes de executar.
-
----
-
-### Ambientes (Environments) e cores
-
-- Crie **ambientes** na sidebar e defina variáveis (ex.: `baseUrl`, `token`).
-- Use `{{nome}}` na URL, headers ou body; o ambiente ativo é aplicado antes do request.
-- **Cores por ambiente**: cada ambiente pode ter uma cor (paleta fixa ou cor personalizada) para identificação rápida na lista. Clique no ambiente para ativar; duplo clique para editar nome, variáveis e cor.
-
-Exemplo: URL `{{baseUrl}}/api/users` com ambiente `{ "baseUrl": "https://api.exemplo.com" }` vira `https://api.exemplo.com/api/users`.
-
----
-
-### Scripts: Pre-request e Post-response
-
-Por requisição (aba **Scripts** no painel da requisição):
-
-- **Pre-request**: executado **antes** do envio.
-  - API: `fv.environment.get(key)` / `fv.environment.set(key, value)`.
-  - Se a requisição pertencer a uma collection: `fv.collectionVariables.get(key)` / `fv.collectionVariables.set(key, value)`.
-  - Valores definidos com `set` são aplicados ao ambiente ativo (ou à collection) e usados na mesma requisição.
-- **Post-response**: executado **depois** de receber a resposta.
-  - API: `fv.response` (`.json()`, `.status`, `.statusText`, `.headers`, `.body`), `fv.environment.set(...)` e, se houver collection, `fv.collectionVariables.set(...)`.
-
-Útil para tokens dinâmicos, timestamps, extrair dados da resposta e gravar em variáveis para as próximas requisições. Logs dos scripts aparecem na interface quando disponível.
-
----
-
-## Requisições
-
-Métodos: GET, POST, PUT, PATCH, DELETE. Suporte a headers, query params, path params e body (JSON, form, raw). Auth: Basic, Bearer, API Key (valores podem usar `{{var}}`).
 
 ---
 

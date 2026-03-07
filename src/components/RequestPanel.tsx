@@ -12,6 +12,7 @@ import { generateId } from "@/lib/id";
 import { BodyEditor } from "@/components/BodyEditor";
 import { VariablePreview } from "@/components/VariablePreview";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
+import { useKeyDown } from "@/lib/useKeyDown";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
@@ -46,7 +47,7 @@ export function RequestPanel() {
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [scriptsTab, setScriptsTab] = useState<"pre" | "post">("post");
-  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">("params");
+  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">(defaultRequest?.method === "GET" ? "params" : "body");
   const variables = getResolvedVariables(req.id);
   const reqRef = useRef(req);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -69,7 +70,8 @@ export function RequestPanel() {
   }, [currentRequest?.id]);
 
   useEffect(() => {
-    if (req.method === "GET" && requestTab === "body") setRequestTab("params");
+    if (req.method === "GET" && requestTab !== "params") setRequestTab("params");
+    if (req.method === "POST" && requestTab !== "body") setRequestTab("body");
   }, [req.method]);
 
   useEffect(() => {
@@ -241,21 +243,21 @@ export function RequestPanel() {
   formatBodyJsonRef.current = formatBodyJson;
   handleSendRef.current = handleSend;
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        if (!sendingRef.current) handleSendRef.current();
-        return;
-      }
-      if ((e.key === "f" || e.key === "F") && e.shiftKey && e.ctrlKey) {
-        e.preventDefault();
-        formatBodyJsonRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+
+  useKeyDown("Enter", (e) => {
+    if (e.metaKey || e.ctrlKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!sendingRef.current) handleSendRef.current();
+    }
+  });
+
+  useKeyDown(["f", "F"], (e) => {
+    if (e.shiftKey && e.ctrlKey) {
+      e.preventDefault();
+      formatBodyJsonRef.current();
+    }
+  });
 
   return (
     <div className="request-panel">
@@ -308,7 +310,7 @@ export function RequestPanel() {
       </div>
       {req.url && (
         <div className="variable-preview-line">
-          <VariablePreview text={req.url} variables={variables} />
+          <VariablePreview text={req.url} variables={variables} returnNormalized={true} />
         </div>
       )}
 
@@ -625,6 +627,7 @@ export function RequestPanel() {
                 onChange={(body) => update({ body })}
                 mode={req.bodyType === "json" ? "json" : "raw"}
                 placeholder={req.bodyType === "json" ? '{"key": "value"}' : "Texto"}
+                resizeable={true}
               />
             )}
           </div>

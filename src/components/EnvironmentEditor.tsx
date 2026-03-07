@@ -142,7 +142,8 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="ex: 3_production"
+              placeholder="ex: _local"
+              autoCapitalize="off"
             />
           </div>
           <div className="env-editor-color">

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { CollectionNode, RequestConfig } from "@/types";
+import type { Collection, CollectionNode, RequestConfig } from "@/types";
 import {
   filterNodesBySearch,
   addFolderToNodes,
@@ -12,9 +12,13 @@ import {
   type NodePath,
 } from "@/lib/collectionTreeUtils";
 
+import { useAppStore } from "@/store/useAppStore";
+import { HttpMethodBadge } from "./HttpMethodBadge";
+
 type TreeAction =
   | "new-folder"
   | "new-subfolder"
+  | "new-request"
   | "move-up"
   | "move-down"
   | "rename"
@@ -47,6 +51,7 @@ function NodeItem({
   onRename: (nodeId: string, newName: string) => void;
   defaultFolderOpen?: boolean;
   currentRequestId?: string | null;
+  forceOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultFolderOpen);
   const [dragOver, setDragOver] = useState(false);
@@ -175,8 +180,8 @@ function NodeItem({
         />
       ) : (
         <>
-          <span className="collection-request-method">{node.request.method}</span>
-          {node.name}
+          <HttpMethodBadge method={node.request.method} className="collection-request-method" />
+          <span className="collection-request-name">{node.name}</span>
         </>
       )}
     </button>
@@ -190,6 +195,7 @@ export function CollectionTree({
   searchQuery = "",
   onUpdateItems,
   onRunFolder,
+  onAddRequestToCollection,
   defaultFolderOpen = false,
   currentRequestId = null,
 }: {
@@ -199,6 +205,7 @@ export function CollectionTree({
   searchQuery?: string;
   onUpdateItems?: (items: CollectionNode[]) => void;
   onRunFolder?: (requests: RequestConfig[], folderName: string) => void;
+  onAddRequestToCollection?: (coll: Collection, folderPath?: NodePath) => void;
   defaultFolderOpen?: boolean;
   currentRequestId?: string | null;
 }) {
@@ -209,11 +216,18 @@ export function CollectionTree({
     node: CollectionNode;
   } | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const { getCollectionById } = useAppStore();
+
+  console.log({ defaultFolderOpencollectionTree: defaultFolderOpen });
 
   const filteredNodes = useMemo(
     () => (searchQuery ? filterNodesBySearch(nodes, searchQuery) : nodes),
     [nodes, searchQuery]
   );
+
+  const collectionData: Collection | null = useMemo(() => {
+    return getCollectionById(_collectionId);
+  }, [nodes, _collectionId]);
 
   const handleContextMenu = (e: React.MouseEvent, path: NodePath, node: CollectionNode) => {
     e.preventDefault();
@@ -323,14 +337,23 @@ export function CollectionTree({
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             {contextMenu.path.length === 0 && (
-              <button type="button" onClick={() => runAction("new-folder")}>
-                Nova pasta
-              </button>
+              <>
+                <button type="button" onClick={() => runAction("new-folder")}>
+                  Nova pasta
+                </button>
+              </>
             )}
             {contextMenu.node.type === "folder" && contextMenu.node.id && (
               <>
                 <button type="button" onClick={() => runAction("new-subfolder")}>
                   Nova subpasta
+                </button>
+                <button type="button" onClick={() => {
+                  const path: NodePath | null = getPathByNodeId(nodes, contextMenu.node.id);
+                  onAddRequestToCollection?.((collectionData ?? { id: _collectionId, name: "", items: [], variables: {} }), path ?? [])
+                  setContextMenu(null);
+                }}>
+                  Nova requisição
                 </button>
                 {onRunFolder && (
                   <button type="button" onClick={() => runAction("run")} className="context-menu-run">

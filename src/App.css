@@ -57,6 +57,147 @@ body {
   min-width: 0;
 }
 
+/* Área principal: barra de abas + conteúdo */
+.app-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Barra de abas (estilo Postman) */
+.tab-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  min-height: 0;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tab-bar-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 8px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 200px;
+  min-width: 0;
+}
+
+.tab-bar-tab:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.tab-bar-tab--active {
+  color: var(--text);
+  background: var(--bg);
+  border-bottom-color: var(--accent);
+}
+
+.tab-bar-tab-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.tab-bar-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.http-method {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.http-method--get {
+  color: #49cc90; /* verde */
+}
+.http-method--post {
+  color: #e6b800; /* amarelo */
+}
+.http-method--put {
+  color: #61affe; /* azul claro */
+}
+.http-method--patch {
+  color: #50e3c2; /* teal */
+}
+.http-method--delete {
+  color: #f93e3e; /* rosa avermelhado */
+}
+
+.tab-bar-tab-close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-bar-tab-close:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.app-tab-content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-tab-pane {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-tab-content .runner-panel,
+.app-tab-content .app-main-area {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-empty-tabs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
 .sidebar-resize-handle {
   width: 6px;
   flex-shrink: 0;
@@ -453,10 +594,7 @@ body {
 }
 
 .sidebar-search-clear {
-  position: absolute;
-  top: 50%;
   right: 6px;
-  transform: translateY(-50%);
   width: 22px;
   height: 22px;
   padding: 0;
@@ -483,6 +621,7 @@ body {
 .sidebar-folder-actions {
   display: flex;
   gap: 6px;
+  margin-top: 8px;
   margin-bottom: 8px;
 }
 
@@ -657,7 +796,7 @@ body {
 }
 
 .collection-tree {
-  padding: 4px 0;
+  padding: 4px 0 4px 10px;
   position: relative;
 }
 
@@ -786,9 +925,15 @@ body {
 .collection-request-method {
   flex-shrink: 0;
   font-size: 10px;
-  font-weight: 600;
-  color: var(--accent);
   width: 36px;
+}
+
+.collection-request-name {
+  flex: 1;
+  padding-left: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .env-select {
@@ -865,8 +1010,6 @@ body {
 
 .history-method {
   flex-shrink: 0;
-  color: var(--accent);
-  font-weight: 600;
 }
 
 .history-url {
@@ -894,25 +1037,45 @@ body {
 
 .method-select {
   width: 110px;
-  padding: 8px 10px;
+  height: 36px;
+  padding: 0 28px 0 10px;
+  box-sizing: border-box;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
+  font-family: inherit;
+  line-height: 1.4;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23858585' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+.method-select:hover,
+.method-select:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 .url-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 12px;
+  height: 36px;
+  padding: 0 12px;
+  box-sizing: border-box;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   font-size: 13px;
   font-family: var(--font-mono);
+  line-height: 1.4;
 }
 
 .url-input::placeholder {
@@ -971,7 +1134,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
-  z-index: 10;
+  z-index: 9999999;
 }
 
 .btn-with-tooltip:hover .btn-shortcut-tooltip {
@@ -1063,7 +1226,8 @@ body {
 }
 
 .variable-preview-line {
-  margin-top: 4px;
+  margin-top: 2px;
+  margin-bottom: 2px;
   padding: 4px 0;
   font-size: 11px;
   font-family: var(--font-mono);
@@ -1289,6 +1453,8 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .body-editor-wrap .cm-editor {
@@ -1309,6 +1475,20 @@ body {
 .body-editor-wrap .cm-gutters {
   border-right: 1px solid var(--border);
   background: var(--bg-secondary);
+}
+
+.body-editor-resize-handle {
+  flex-shrink: 0;
+  height: 8px;
+  margin: 0;
+  background: var(--border);
+  cursor: ns-resize;
+  transition: background 0.15s;
+}
+
+.body-editor-resize-handle:hover,
+.body-editor-resize-handle--active {
+  background: var(--accent);
 }
 
 /* Variáveis {{var}} no body JSON: itálico como no Postman, sem sublinhado de erro */
@@ -2151,9 +2331,10 @@ body {
 
 /* Runner (executar pasta) — modal e painel compartilham o conteúdo */
 .modal-content.about-modal {
-  max-width: 480px;
-  width: 90%;
-  max-height: 85vh;
+  max-width: 150vh;
+  width: 70vh;
+  max-height: 55vh;
+  height: 90vh;
   display: flex;
   flex-direction: column;
 }
@@ -2358,8 +2539,6 @@ body {
 .runner-item-method {
   width: 42px;
   flex-shrink: 0;
-  font-weight: 600;
-  color: var(--accent);
 }
 
 .runner-item-name {
@@ -2406,7 +2585,7 @@ body {
   font-size: 11px;
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--text-muted);
   cursor: pointer;
   text-align: left;
 }

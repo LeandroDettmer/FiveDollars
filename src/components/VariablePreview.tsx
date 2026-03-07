@@ -9,14 +9,16 @@ export function VariablePreview({
   text,
   variables,
   className = "",
+  returnNormalized = false,
 }: {
   text: string;
   variables: Record<string, string>;
   className?: string;
+  returnNormalized?: boolean;
 }) {
   if (!text) return null;
 
-  const parts: Array<{ key: string; type: "text" | "var"; defined: boolean }> = [];
+  const parts: Array<{ key: string; type: "text" | "var"; defined: boolean; value?: string }> = [];
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   VAR_REGEX.lastIndex = 0;
@@ -26,7 +28,7 @@ export function VariablePreview({
     }
     const varName = m[1].trim();
     const defined = varName in variables && variables[varName] !== "";
-    parts.push({ key: m[0], type: "var", defined });
+    parts.push({ key: m[0], type: "var", defined, value: variables[varName] });
     lastIndex = m.index + m[0].length;
   }
   if (lastIndex < text.length) {
@@ -34,6 +36,22 @@ export function VariablePreview({
   }
 
   if (parts.length === 0) return <span className={className}>{text}</span>;
+
+  if (returnNormalized) {
+    return <span className={`variable-preview ${className}`.trim()}>
+      {parts.map((p, i) =>
+        p.type === "var" ? (
+          <span key={i}
+          className={p.defined ? "variable-preview-var defined" : "variable-preview-var undefined"}
+          >{p.value}
+          
+          </span>
+        ) : (
+          <span key={i}>{p.key}</span>
+        )
+      )}
+    </span>;
+  }
 
   return (
     <span className={`variable-preview ${className}`.trim()}>

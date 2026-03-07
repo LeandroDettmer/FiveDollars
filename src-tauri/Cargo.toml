@@ -2,7 +2,7 @@
 name = "five-dollars"
 version = "0.1.0"
 description = "API Client | Desktop | Web - alternativa ao Postman/Insomnia"
-authors = ["you"]
+authors = ["Leandro Dettmer"]
 edition = "2021"
 
 [build-dependencies]
