@@ -1,6 +1,6 @@
 # FiveDollars API Client
 
-**API Client** para Desktop e Web — alternativa ao Postman/Insomnia. Cliente de requisições HTTP com **React** e **Tauri**, usando CSS puro (sem Tailwind). As requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
+**API Client** para Desktop e Web — alternativa ao Postman/Insomnia. Cliente de requisições HTTP com **React** e **Tauri** As requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
 
 ![Interface do FiveDollars - Collections, Environments, requisição e resposta](docs/images/overview.png)
 
@@ -194,4 +194,4 @@ Depois de rodar `npm run patch` (ou `unpatch`), faça commit das alterações an
   - **`lib/`** – `http.ts` (fetch via Tauri), `resolveEnv.ts` (substituição de `{{var}}`), `importCollection.ts`, `runPostResponseScript.ts` (pre/post scripts), `urlUtils.ts`, parsers Postman/Insomnia
   - **`types/`** – tipos (collections, requests, environments)
 - **`src-tauri/`** – backend Rust (Tauri 2 + plugin HTTP)
-- **`App.css`** – tema dark (estilo VS Code), layout em colunas, CSS puro
+- **`App.css`** – tema dark (estilo VS Code), layout em colunas
