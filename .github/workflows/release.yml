@@ -182,7 +182,7 @@ jobs:
           fi
           if [ -f release-assets/FiveDollars-linux.AppImage ] && [ -f release-assets/FiveDollars-linux.AppImage.sig ]; then
             SIG=$(tr -d '\n' < release-assets/FiveDollars-linux.AppImage.sig)
-            PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars-linux.AppImage" --arg sig "$SIG" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
+            PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars-linux.AppImage" --arg sig "$SIG" '. + {"linux-x86_64-appimage": {"url": $url, "signature": $sig}}')
           fi
           if [ -f release-assets/FiveDollars-windows.exe ] && [ -f release-assets/FiveDollars-windows.exe.sig ]; then
             SIG=$(tr -d '\n' < release-assets/FiveDollars-windows.exe.sig)
