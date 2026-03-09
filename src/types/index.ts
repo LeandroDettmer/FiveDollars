@@ -57,8 +57,9 @@ export interface HistoryEntry {
   method: HttpMethod;
   url: string;
   timestamp: number;
-  /** Logs dos scripts (Pre-request / Post-response) dessa execução */
   scriptLogs?: ScriptLogEntry[];
+  request?: RequestConfig;
+  response?: RequestResponse;
 }
 
 /** Nó da árvore de uma collection: pasta ou requisição */

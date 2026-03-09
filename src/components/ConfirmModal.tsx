@@ -4,8 +4,10 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  children?: React.ReactNode;
 }
 
 export function ConfirmModal({
@@ -14,8 +16,10 @@ export function ConfirmModal({
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   danger = false,
+  confirmDisabled = false,
   onConfirm,
   onClose,
+  children,
 }: ConfirmModalProps) {
   const handleConfirm = () => {
     onConfirm();
@@ -41,6 +45,11 @@ export function ConfirmModal({
         </div>
         <div className="modal-body">
           <p className="confirm-modal-message">{message}</p>
+          {children && (
+            <div className="modal-content-children">
+              {children}
+            </div>
+          )}
         </div>
         <div className="modal-footer">
           <div className="modal-footer-right">
@@ -49,8 +58,10 @@ export function ConfirmModal({
             </button>
             <button
               type="button"
-              className={danger ? "btn-danger" : "btn-primary"}
+              className={confirmDisabled ? "btn-secondary" : danger ? "btn-danger" : "btn-primary"}
               onClick={handleConfirm}
+              aria-disabled={confirmDisabled}
+              disabled={confirmDisabled}
             >
               {confirmLabel}
             </button>

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { ResponseBodyView } from "./ResponseBodyView";
+import { ResponseBodyView } from "../ResponseBodyView";
 import type { ScriptLogEntry } from "@/types";
 
 const LOGS_HEIGHT_KEY = "fivedollars-logs-height";
@@ -106,29 +106,31 @@ export function ResponsePanel() {
     );
   }
 
+  const response = selectedEntry?.response ?? lastResponse;
+
   return (
     <div className="response-panel">
-      {lastResponse && (
+      {response && (
         <>
           <div className="response-meta">
             <span
               className={`status-badge ${
-                lastResponse.status >= 200 && lastResponse.status < 300
+                response.status >= 200 && response.status < 300
                   ? "status-ok"
-                  : lastResponse.status >= 400
+                  : response.status >= 400
                     ? "status-error"
                     : "status-info"
               }`}
             >
-              {lastResponse.status} {lastResponse.statusText}
+              {response.status} {response.statusText}
             </span>
-            <span className="meta-item">Tempo: {lastResponse.timeMs} ms</span>
-            <span className="meta-item">Tamanho: {lastResponse.sizeBytes} bytes</span>
+            <span className="meta-item">Tempo: {response.timeMs} ms</span>
+            <span className="meta-item">Tamanho: {response.sizeBytes} bytes</span>
           </div>
           <div className="response-body-wrap">
             <ResponseBodyView
-              content={lastResponse.body}
-              isJson={lastResponse.headers["content-type"]?.includes("application/json")}
+              content={response.body}
+              isJson={response.headers["content-type"]?.includes("application/json")}
               className="response-body-view"
             />
           </div>

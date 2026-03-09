@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { HttpMethodBadge } from "./HttpMethodBadge";
+import { HttpMethodBadge } from "../HttpMethodBadge";
 import type { RequestConfig, RunnerConfigFormState } from "@/types";
 
 /** Converte JSON do arquivo em array de objetos (variáveis por iteração). */

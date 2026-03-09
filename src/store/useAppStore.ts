@@ -90,7 +90,7 @@ interface AppState {
   setCurrentRequest: (req: RequestConfig | null) => void;
   setLastResponse: (res: RequestResponse | null) => void;
   sendingRequest: boolean;
-  setSendingRequest: (v: boolean) => void;
+  setSendingRequest: (sendingRequest: boolean, requestId?: string) => void;
   addToHistory: (entry: Omit<HistoryEntry, "id">) => void;
   clearHistory: () => void;
   getResolvedVariables: (requestId?: string) => Record<string, string>;
@@ -216,8 +216,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setActiveTab: (tabId) => {
     const state = get();
-    if (state.activeTabId === tabId) return;
+
+    get().setSelectedHistoryEntryId(null);
+    //if (state.activeTabId === tabId) return;
     const prevTab = state.activeTabId ? state.tabs.find((t) => t.id === state.activeTabId) : null;
+
     if (prevTab?.type === "request") {
       set((s) => ({
         tabRequestCache: {
@@ -230,14 +233,17 @@ export const useAppStore = create<AppState>((set, get) => ({
         },
       }));
     }
+
     set({ activeTabId: tabId });
     const tab = get().tabs.find((t) => t.id === tabId);
     if (tab?.type === "request") {
       const req = getRequestById(get().collections, tab.requestId);
       if (req) set({ currentRequest: req });
+      const lastHistoryEntry = state.history.find((h) => h.request?.id === req?.id);
+      console.log({lastHistoryEntry});
       const cache = get().tabRequestCache[tabId];
-      if (cache) {
-        set({ lastResponse: cache.lastResponse, scriptLogs: cache.scriptLogs, sendingRequest: cache.sendingRequest });
+      if (lastHistoryEntry) {
+        set({ lastResponse: lastHistoryEntry.response, scriptLogs: lastHistoryEntry.scriptLogs || [], sendingRequest: cache.sendingRequest });
       } else {
         set({ lastResponse: null, scriptLogs: [], sendingRequest: false });
       }
@@ -314,12 +320,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setStateFromPersisted: (data) => {
+    const actualStoreState = get();  
+
     set({
-      collections: data.collections,
-      environments: data.environments,
+      collections: data?.collections || actualStoreState.collections,
+      environments: data?.environments || actualStoreState.environments,
       currentEnv:
-        data.environments.find((e) => e.id === data.currentEnvId) ?? null,
-      history: data.history,
+        data?.environments?.find?.((e) => e.id === data?.currentEnvId) ?? actualStoreState.currentEnv,
+      history: data?.history || actualStoreState.history,
     });
     persist(get());
   },
@@ -435,17 +443,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       }));
     }
   },
+
   sendingRequest: false,
-  setSendingRequest: (sendingRequest) => {
+  setSendingRequest: (sendingRequest, requestId) => {
     set({ sendingRequest });
     const s = get();
-    if (s.activeTabId && s.tabs.some((t) => t.id === s.activeTabId && t.type === "request")) {
-      set((state) => ({
-        tabRequestCache: {
-          ...state.tabRequestCache,
-          [s.activeTabId!]: { ...(state.tabRequestCache[s.activeTabId!] ?? emptyTabCache()), sendingRequest },
-        },
-      }));
+    if (requestId) {
+      const tabId = s.tabs.find((t): t is RequestTab => t.type === "request" && t.requestId === requestId)?.id ?? null;
+      if (tabId) {
+        set((state) => ({
+          tabRequestCache: {
+            ...state.tabRequestCache,
+            [tabId]: { ...(state.tabRequestCache[tabId] ?? emptyTabCache()), sendingRequest },
+          },
+        }));
+      }
     }
   },
   setSelectedHistoryEntryId: (id) => set({ selectedHistoryEntryId: id }),

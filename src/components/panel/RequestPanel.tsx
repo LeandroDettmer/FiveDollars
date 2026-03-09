@@ -153,7 +153,7 @@ export function RequestPanel() {
     setCurrentRequest(req);
     updateRequestInCollection(req.id, req);
     abortControllerRef.current = new AbortController();
-    setSendingRequest(true);
+    setSendingRequest(true, req.id);
     setLastResponse(null);
     setSelectedHistoryEntryId(null);
     clearScriptLogs();
@@ -204,7 +204,7 @@ export function RequestPanel() {
           });
         }
       }
-      addToHistory({ method: req.method, url: req.url, timestamp: Date.now() });
+      addToHistory({ method: req.method, url: req.url, timestamp: Date.now(), response: res, request: req });
     } catch (err) {
       const isAborted = err instanceof Error && err.name === "AbortError";
       if (!isAborted) {
@@ -219,12 +219,13 @@ export function RequestPanel() {
       }
     } finally {
       abortControllerRef.current = null;
-      setSendingRequest(false);
+      setSendingRequest(false, req.id);
     }
   };
 
   const handleCancel = () => {
     abortControllerRef.current?.abort();
+    setSendingRequest(false, req.id);
   };
 
   const formatBodyJson = () => {

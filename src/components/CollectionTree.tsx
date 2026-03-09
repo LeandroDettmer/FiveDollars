@@ -154,7 +154,6 @@ function NodeItem({
   }
 
   const isActive = currentRequestId != null && node.request.id === currentRequestId;
-
   return (
     <button
       type="button"
@@ -217,8 +216,6 @@ export function CollectionTree({
   } | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const { getCollectionById } = useAppStore();
-
-  console.log({ defaultFolderOpencollectionTree: defaultFolderOpen });
 
   const filteredNodes = useMemo(
     () => (searchQuery ? filterNodesBySearch(nodes, searchQuery) : nodes),

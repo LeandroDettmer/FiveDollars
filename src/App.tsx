@@ -1,21 +1,33 @@
-import { useEffect } from "react";
-import { Sidebar } from "@/components/Sidebar";
+import { useEffect, useState } from "react";
+import { SidebarPanel } from "@/components/panel/SidebarPanel";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
-import { RunnerPanel } from "@/components/RunnerPanel";
+import { RunnerPanel } from "@/components/panel/RunnerPanel";
 import { ResizableMainArea } from "@/components/ResizableMainArea";
 import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
-import type { RunnerTab } from "@/types";
+import type { Collection, RunnerTab } from "@/types";
 import "./App.css";
+import { checkForUpdate, getAppVersion, isTauri } from "./lib/updater";
+import { generateId } from "./lib/id";
+import cropAppIcon from "../crop-app-icon.png";
 
 function App() {
-  const setStateFromPersisted = useAppStore((s) => s.setStateFromPersisted);
-  const tabs = useAppStore((s) => s.tabs);
-  const activeTabId = useAppStore((s) => s.activeTabId);
+  const [version, setVersion] = useState("");
+  const { addCollection, setStateFromPersisted, tabs, activeTabId } = useAppStore();
+  const [newUpdateAvailable, setNewUpdateAvailable] = useState<string | null>(null);
 
   useEffect(() => {
     loadAppData().then(setStateFromPersisted);
+    getAppVersion().then(setVersion);
+
+    if (isTauri()) {
+      checkForUpdate().then((updateStatus) => {
+        if (updateStatus?.status === "available") {
+          setNewUpdateAvailable(updateStatus?.version ?? "");
+        }
+      });
+    }
   }, [setStateFromPersisted]);
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : null;
@@ -27,13 +39,47 @@ function App() {
       </header>
       <div className="app-layout">
         <ResizableSidebar className="sidebar">
-          <Sidebar />
+          <SidebarPanel />
         </ResizableSidebar>
         <div className="app-content">
           <TabBar />
           <div className="app-tab-content">
             {!activeTab ? (
               <div className="app-empty-tabs">
+                <div style={{ paddingTop: "25vh" }}>
+                  <div>
+                    <img style={{ width: "12vh", borderRadius: "24px" }} src={cropAppIcon} alt="logo" />
+                    <p>Versão: {version}</p>
+                    {newUpdateAvailable && newUpdateAvailable !== "" &&
+                      <>
+                        <p>Nova versão disponível: {newUpdateAvailable}</p>
+                        <p>Acesse Configurações/Atualizações para atualizar</p>
+                      </>
+                    }
+                  </div>
+                  <div className="app-empty-actions">
+                    <button type="button" className="app-empty-action" onClick={() => {
+                      const newCollection: Collection = {
+                        id: generateId(),
+                        name: "Nova collection",
+                        items: [],
+                      };
+                      addCollection(newCollection);
+                    }}>
+                      <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
+                      Criar nova collection
+                    </button>
+                    <button type="button" className="app-empty-action" onClick={() => {
+                      (document.querySelector(".sidebar-search-input") as HTMLInputElement)?.focus();
+                    }}>
+                      <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>search</span>
+                      Buscar rotas...
+                    </button>
+                  </div>
+
+
+                </div>
+
               </div>
             ) : (
               <>

@@ -195,3 +195,9 @@ Depois de rodar `npm run patch` (ou `unpatch`), faça commit das alterações an
   - **`types/`** – tipos (collections, requests, environments)
 - **`src-tauri/`** – backend Rust (Tauri 2 + plugin HTTP)
 - **`App.css`** – tema dark (estilo VS Code), layout em colunas
+
+---
+
+### ❗ Common Errors
+ - *"FiveDollars is damaged"*
+  - Rode no Terminal: `xattr -cr /Applications/FiveDollars.app`

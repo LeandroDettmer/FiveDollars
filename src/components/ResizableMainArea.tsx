@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { RequestPanel } from "./RequestPanel";
-import { ResponsePanel } from "./ResponsePanel";
+import { RequestPanel } from "./panel/RequestPanel";
+import { ResponsePanel } from "./panel/ResponsePanel";
 
 const STORAGE_KEY = "fivedollars-response-width";
 const DEFAULT_RESPONSE_WIDTH = 480;

@@ -4,7 +4,6 @@ import { useAppStore } from "@/store/useAppStore";
 
 /** Primeira opção = sem cor (""), depois paleta predefinida */
 const ENV_COLORS = [
-  "",
   "#f48771",
   "#4ec9b0",
   "#569cd6",

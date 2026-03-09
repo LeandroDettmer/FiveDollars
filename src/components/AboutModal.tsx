@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import type { PersistedData } from "@/types/persisted";
-import { collectionToPostmanV21 } from "@/lib/exportPostmanV21";
-import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import type { Collection } from "@/types";
 import { isTauri, getAppVersion, checkForUpdate, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
 import { useKeyDown } from "@/lib/useKeyDown";
 import { ConfirmModal } from "./ConfirmModal";
+import { Export } from "./Export";
 
 const APP_AUTHOR = "Leandro Dettmer";
 
@@ -18,23 +13,11 @@ interface AboutModalProps {
 
 type TabId = "author" | "export" | "updateTab";
 
-function downloadJson(obj: object, filename: string) {
-  const json = JSON.stringify(obj, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const [version, setVersion] = useState(versionProp ?? "0.1.0");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: "idle", version: "" });
-  const { collections, environments, currentEnv, history } = useAppStore();
 
   useEffect(() => {
     if (isTauri()) {
@@ -43,37 +26,6 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       setVersion(versionProp);
     }
   }, [versionProp]);
-
-  const handleExportBackup = async () => {
-    const data: PersistedData & { _exportVersion?: number } = {
-      collections,
-      environments,
-      currentEnvId: currentEnv?.id ?? null,
-      history,
-      _exportVersion: 1,
-    };
-    const defaultFilename = `FiveDollars-backup-${new Date().toISOString().slice(0, 10)}.json`;
-
-    if (isTauri()) {
-      try {
-        const path = await save({
-          defaultPath: defaultFilename,
-          filters: [{ name: "JSON", extensions: ["json"] }],
-        });
-        if (path) {
-          await invoke("write_backup_file", {
-            path,
-            payload: JSON.stringify(data, null, 2),
-          });
-        }
-      } catch (e) {
-        console.error("Erro ao exportar backup:", e);
-      }
-      return;
-    }
-
-    downloadJson(data, defaultFilename);
-  };
 
   const handleCheckUpdate = async () => {
     setUpdateStatus({ status: "idle" });
@@ -86,35 +38,6 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       setUpdateStatus(updateStatus);
     };
   }
-
-  const handleExportPostman = async () => {
-    const collection: Collection =
-      collections.length > 0
-        ? collections[0]
-        : { id: "empty", name: "Empty", items: [] };
-    const postman = collectionToPostmanV21(collection);
-    const name = "FiveDollars-collection";
-
-    if (isTauri()) {
-      try {
-        const path = await save({
-          defaultPath: `${name}-postman-v2.1.json`,
-          filters: [{ name: "JSON", extensions: ["json"] }],
-        });
-        if (path) {
-          await invoke("write_backup_file", {
-            path,
-            payload: JSON.stringify(postman, null, 2),
-          });
-        }
-      } catch (e) {
-        console.error("Erro ao exportar Postman:", e);
-      }
-      return;
-    }
-
-    downloadJson(postman, `${name}-postman-v2.1.json`);
-  };
 
   useKeyDown("Escape", onClose);
 
@@ -133,7 +56,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       >
         <div className="modal-header">
           <h2 id="about-modal-title" className="modal-title">
-            Sobre / Dados
+            Configurações
           </h2>
           <button
             type="button"
@@ -189,34 +112,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
               </div>
             )}
             {activeTab === "export" && (
-              <div className="about-export-panel">
-                <div className="about-export-options">
-                  <div className="about-export-option">
-                    <p className="about-export-option-desc">
-                      <strong>Backup FiveDollars</strong> — collections, ambientes e histórico. Use para backup ou para importar depois no app.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={handleExportBackup}
-                    >
-                      Exportar backup FiveDollars
-                    </button>
-                  </div>
-                  <div className="about-export-option">
-                    <p className="about-export-option-desc">
-                      <strong>Postman v2.1</strong> — exporta a primeira collection em formato Postman. Use no Postman ou em outras ferramentas.
-                    </p>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={handleExportPostman}
-                    >
-                      Exportar Postman v2.1
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <Export />
             )}
             {activeTab === "updateTab" && isTauri() && (
               <div className="about-author-panel">

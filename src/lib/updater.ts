@@ -3,6 +3,8 @@
  * Usa o endpoint configurado em tauri.conf.json (ex.: GitHub Releases latest.json).
  */
 
+import { useAppStore } from "@/store/useAppStore";
+
 export function isTauri(): boolean {
   return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
 }
@@ -18,7 +20,11 @@ export type UpdateStatus =
   | { status: "confirm"; version: string; body?: string; date?: string };
 
 export async function getAppVersion(): Promise<string> {
-  if (!isTauri()) return "0.1.0";
+  if (!isTauri()) {
+    const packageJson = await import("../../package.json");
+    return packageJson.default.version;
+  }
+  
   const { getVersion } = await import("@tauri-apps/api/app");
   return getVersion();
 }
@@ -82,6 +88,9 @@ export async function checkAndInstallUpdate(
           break;
       }
     });
+
+    await useAppStore().clearHistory();
+    await useAppStore().clearScriptLogs();
 
     await relaunch();
     return true;

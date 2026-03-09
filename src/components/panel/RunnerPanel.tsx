@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { RunnerContent } from "./RunnerContent";
+import { RunnerContent } from "../RunnerContent";
 import { RunnerConfigPanel } from "./RunnerConfigPanel";
 import type { RunnerTab, RunnerConfigFormState } from "@/types";
 

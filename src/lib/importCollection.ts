@@ -28,10 +28,20 @@ function isInsomniaDoc(obj: unknown): obj is InsomniaCollectionDoc {
 /** Backup exportado pelo FiveDollars (Sobre → Exportar dados). */
 function isFiveDollarsBackup(obj: unknown): obj is PersistedData & { _exportVersion?: number } {
   const o = obj as Record<string, unknown>;
+
+  if (o?._exportVersion === 1) {
+    return (
+      Array.isArray(o?.collections) &&
+      Array.isArray(o?.environments) &&
+      (o?.currentEnvId === null || typeof o?.currentEnvId === "string") &&
+      Array.isArray(o?.history)
+    );
+  }
+
+  //actually version 2
   return (
-    Array.isArray(o?.collections) &&
-    Array.isArray(o?.environments) &&
-    (o?.currentEnvId === null || typeof o?.currentEnvId === "string") &&
+    Array.isArray(o?.collections) ||
+    Array.isArray(o?.environments) ||
     Array.isArray(o?.history)
   );
 }

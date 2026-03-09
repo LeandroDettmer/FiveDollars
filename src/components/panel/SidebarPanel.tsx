@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
-import { CollectionTree } from "./CollectionTree";
-import { EnvironmentEditor, ENV_COLORS } from "./EnvironmentEditor";
-import { ConfirmModal } from "./ConfirmModal";
-import { AboutModal } from "./AboutModal";
-import { HttpMethodBadge } from "./HttpMethodBadge";
+import { CollectionTree } from "../CollectionTree";
+import { EnvironmentEditor, ENV_COLORS } from "../EnvironmentEditor";
+import { ConfirmModal } from "../ConfirmModal";
+import { AboutModal } from "../AboutModal";
+import { HttpMethodBadge } from "../HttpMethodBadge";
 import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
 import { useClickOutside } from "@/lib/useClickOutside";
@@ -15,7 +15,7 @@ import {
 } from "@/lib/collectionTreeUtils";
 
 
-export function Sidebar() {
+export function SidebarPanel() {
   const {
     environments,
     currentEnv,
@@ -32,6 +32,7 @@ export function Sidebar() {
     setSelectedHistoryEntryId,
     selectedHistoryEntryId,
     setStateFromPersisted,
+    setLastResponse,
   } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -74,12 +75,6 @@ export function Sidebar() {
       setCollapsedCollectionIds(new Set(collections.map((coll) => coll.id)));
     }
   }, [collections]);
-
-
-  console.log({ collectionSearch });
-  console.log({ foldersExpanded });
-  console.log({ collapsedCollections });
-  console.log({ collapsedCollectionIds });
 
   const toggleCollectionCollapsed = (id: string) => {
     setCollapsedCollectionIds((prev) => {
@@ -206,7 +201,7 @@ export function Sidebar() {
     const newEnv = addEnvironment({
       name: `Ambiente ${environments.length + 1}`,
       variables: {},
-      color,
+      color: color ?? "#4fc1ff",
     });
     setEditingEnv(newEnv);
   };
@@ -522,7 +517,20 @@ export function Sidebar() {
               <li
                 key={entry.id}
                 className={`history-item ${selectedHistoryEntryId === entry.id ? "history-item-selected" : ""}`}
-                onClick={() => setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id)}
+                onClick={() => {
+                  console.log({ entry });
+                  setLastResponse(entry.response ?? null);
+
+                  openTab({
+                    id: `req-${entry.request?.id ?? ""}`,
+                    type: "request",
+                    requestId: entry.request?.id ?? "",
+                    label: entry.url,
+                    method: entry.method,
+                    url: entry.url,
+                  });
+                  setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id);
+                }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
