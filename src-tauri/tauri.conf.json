@@ -1,6 +1,6 @@
 {
   "productName": "FiveDollars",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "identifier": "com.fivedollars.app",
   "build": {
     "beforeDevCommand": "npm run dev",

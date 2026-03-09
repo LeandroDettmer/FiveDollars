@@ -49,7 +49,7 @@ function App() {
                 <div style={{ paddingTop: "25vh" }}>
                   <div>
                     <img style={{ width: "12vh", borderRadius: "24px" }} src={cropAppIcon} alt="logo" />
-                    <p>Versão: {version}</p>
+                    <p>Versão: v{version}</p>
                     {newUpdateAvailable && newUpdateAvailable !== "" &&
                       <>
                         <p>Nova versão disponível: {newUpdateAvailable}</p>
