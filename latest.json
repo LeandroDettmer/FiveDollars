@@ -6,7 +6,7 @@
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDAyMUxXTEFGYlFXMyswckJsamVQWGRDSHY1UGQxNHJYaXJpL1ZwUmZmcXJaenRLN3pDaStzcUdySm9NOGVrUzJEaUt2TVFWTnFHWXBhdktzNFZyQ2dZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczMDkyOTI5CWZpbGU6Rml2ZURvbGxhcnMuYXBwLnRhci5negpOQTZ3YWdDUW9HNmhOaEtSL0ZZY1pLSWU5QW10VjRjbkdVM1A4Sy9QSzhsa3Q0NEdwWmJld3I5aGpwS2xJM3BLdUNwdzRKQStzYU9rYmNIUm9jZy9CUT09Cg=="
     },
     "linux-x86_64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.1.10/FiveDollars-linux.AppImage",
+      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.1.10/FiveDollars_0.1.10_amd64.deb",
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTHpGQUtiUXU1Nk5seUxqV0lwWE5ocUtIRjNNcWFZNVVETW1rVDJJTW1leG5hd1hGTmhROEVGODJqS1FpV3Y2M2NRYVhIWFlpbHlKai82Z3ArY0d1YmdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczMDkzMDM4CWZpbGU6Rml2ZURvbGxhcnNfMC4xLjEwX2FtZDY0LkFwcEltYWdlCkw0MDU0LzRGWko3cTVoVFJ0SlZFamJha2FvaEdYWGwyVXMyb3IrSy92ZktSOFg5d1hubDNRbXpBYWp2TmxtN2VmK3NGazc4TEtRR1dQZnQwdEs3VUJnPT0K"
     },
     "windows-x86_64": {
