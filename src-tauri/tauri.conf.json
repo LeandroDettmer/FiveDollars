@@ -34,7 +34,7 @@
     }
   },
   "bundle": {
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": "v1Compatible",
     "active": true,
     "targets": "all",
     "icon": [
