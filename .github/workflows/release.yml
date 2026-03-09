@@ -109,9 +109,16 @@ jobs:
         if: matrix.name == 'linux'
         run: |
           mkdir -p release-artifact
+          # AppImage (fallback para updater)
           for f in src-tauri/target/release/bundle/appimage/*.AppImage; do
             [ -f "$f" ] && cp "$f" release-artifact/FiveDollars-linux.AppImage && cp "${f}.sig" release-artifact/FiveDollars-linux.AppImage.sig 2>/dev/null; break
           done
+          # .deb com nome fixo para o updater (prioridade para quem instalou via .deb)
+          DEB=$(find src-tauri/target/release/bundle/deb -name "*.deb" -type f 2>/dev/null | head -1)
+          if [ -n "$DEB" ]; then
+            cp "$DEB" release-artifact/FiveDollars-linux.deb
+            [ -f "${DEB}.sig" ] && cp "${DEB}.sig" release-artifact/FiveDollars-linux.deb.sig
+          fi
           cp src-tauri/target/release/bundle/deb/*.deb release-artifact/ 2>/dev/null || true
           if [ -z "$(ls -A release-artifact 2>/dev/null)" ]; then
             echo "::error::Nenhum artefato Linux (AppImage/deb)"
@@ -180,7 +187,11 @@ jobs:
             SIG=$(tr -d '\n' < release-assets/FiveDollars.app.tar.gz.sig)
             PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars.app.tar.gz" --arg sig "$SIG" '. + {"darwin-aarch64": {"url": $url, "signature": $sig}}')
           fi
-          if [ -f release-assets/FiveDollars-linux.AppImage ] && [ -f release-assets/FiveDollars-linux.AppImage.sig ]; then
+          # Linux: preferir .deb se tiver assinatura (quem instalou via .deb); senão AppImage
+          if [ -f release-assets/FiveDollars-linux.deb ] && [ -f release-assets/FiveDollars-linux.deb.sig ]; then
+            SIG=$(tr -d '\n' < release-assets/FiveDollars-linux.deb.sig)
+            PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars-linux.deb" --arg sig "$SIG" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
+          elif [ -f release-assets/FiveDollars-linux.AppImage ] && [ -f release-assets/FiveDollars-linux.AppImage.sig ]; then
             SIG=$(tr -d '\n' < release-assets/FiveDollars-linux.AppImage.sig)
             PLATFORMS=$(echo "$PLATFORMS" | jq -c --arg url "${BASE}/FiveDollars-linux.AppImage" --arg sig "$SIG" '. + {"linux-x86_64": {"url": $url, "signature": $sig}}')
           fi
