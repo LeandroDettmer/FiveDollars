@@ -60,13 +60,25 @@ interface AppState {
   activeTabId: string | null;
   /** Cache de response/logs por aba de requisição. */
   tabRequestCache: Record<string, TabRequestCache>;
+  /** Requisições temporárias (Ctrl+N): não estão em nenhuma collection. */
+  tempRequests: Record<string, RequestConfig>;
   openTab: (tab: Tab) => void;
   closeTab: (tabId: string) => void;
+  /** Fecha todas as abas que exibem a requisição com o id dado (ex.: ao remover da árvore). */
+  closeTabsByRequestId: (requestId: string) => void;
   setActiveTab: (tabId: string) => void;
   /** Atualiza estado da aba runner (pendingConfig / run / runResults / runRunning / configFormState). */
   updateRunnerTab: (tabId: string, patch: Partial<Pick<RunnerTab, "pendingConfig" | "run" | "runResults" | "runRunning" | "configFormState">>) => void;
   /** Atualiza label da aba de requisição (ex.: ao renomear request). */
   updateRequestTabLabel: (tabId: string, label: string) => void;
+  /** Atualiza outros campos da aba de requisição (ex.: isTemp ao salvar). */
+  updateRequestTab: (tabId: string, patch: Partial<Pick<RequestTab, "label" | "method" | "url" | "isTemp">>) => void;
+  /** Cria e abre uma requisição temporária (Ctrl+N). */
+  openNewTempRequest: () => void;
+  setTempRequest: (requestId: string, request: RequestConfig) => void;
+  removeTempRequest: (requestId: string) => void;
+  /** Persiste alterações: em tempRequests se a aba for temp, senão em collection. */
+  saveRequestUpdates: (requestId: string, request: RequestConfig) => void;
   /** @deprecated Mantido para compatibilidade; preferir estado por aba. */
   runnerPanelPendingConfig: { folderName: string; requests: RequestConfig[] } | null;
   setRunnerPanelPendingConfig: (config: { folderName: string; requests: RequestConfig[] } | null) => void;
@@ -119,6 +131,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   tabRequestCache: {},
+  tempRequests: {},
   runnerPanelPendingConfig: null,
   runnerPanelRun: null,
 
@@ -133,6 +146,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const existing = state.tabs.find(
         (t): t is RequestTab => t.type === "request" && t.requestId === tab.requestId
       );
+
       if (existing) {
         get().setActiveTab(existing.id);
         return;
@@ -148,7 +162,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
     const next = get();
     if (tab.type === "request") {
-      const req = getRequestById(next.collections, tab.requestId);
+      const req = (tab as RequestTab).isTemp
+        ? next.tempRequests[tab.requestId] ?? null
+        : getRequestById(next.collections, tab.requestId);
       if (req) {
         set({ currentRequest: req });
         const cache = next.tabRequestCache[tab.id];
@@ -167,8 +183,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   closeTab: (tabId) => {
     const s = get();
+    const closingTab = s.tabs.find((t) => t.id === tabId);
+    if (closingTab?.type === "request" && closingTab.isTemp) {
+      set((state) => {
+        const nextTemp = { ...state.tempRequests };
+        delete nextTemp[closingTab.requestId];
+        return { tempRequests: nextTemp };
+      });
+    }
     if (s.activeTabId === tabId) {
-      const closingTab = s.tabs.find((t) => t.id === tabId);
       if (closingTab?.type === "request") {
         set((state) => ({
           tabRequestCache: {
@@ -190,13 +213,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     const newActiveId =
       s.activeTabId === tabId ? newTabs[idx]?.id ?? newTabs[idx - 1]?.id ?? null : s.activeTabId;
     set({ tabs: newTabs, activeTabId: newActiveId, tabRequestCache: newCache });
-    const next = get();
+    const nextState = get();
     if (newActiveId) {
-      const tab = next.tabs.find((t) => t.id === newActiveId);
+      const tab = nextState.tabs.find((t) => t.id === newActiveId);
       if (tab?.type === "request") {
-        const req = getRequestById(next.collections, tab.requestId);
+        const req = tab.isTemp
+          ? nextState.tempRequests[tab.requestId] ?? null
+          : getRequestById(nextState.collections, tab.requestId);
         if (req) set({ currentRequest: req });
-        const cache = next.tabRequestCache[newActiveId];
+        const cache = nextState.tabRequestCache[newActiveId];
         if (cache) {
           set({
             lastResponse: cache.lastResponse,
@@ -211,6 +236,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     } else {
       set({ currentRequest: null, lastResponse: null, scriptLogs: [], sendingRequest: false });
+    }
+  },
+
+  closeTabsByRequestId: (requestId) => {
+    const tabIds = get().tabs
+      .filter((t): t is RequestTab => t.type === "request" && t.requestId === requestId)
+      .map((t) => t.id);
+    for (const tabId of tabIds) {
+      get().closeTab(tabId);
     }
   },
 
@@ -235,20 +269,35 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     set({ activeTabId: tabId });
+    
     const tab = get().tabs.find((t) => t.id === tabId);
+    
     if (tab?.type === "request") {
-      const req = getRequestById(get().collections, tab.requestId);
-      if (req) set({ currentRequest: req });
+      
+      const state = get();
+      
+      const req = tab.isTemp
+        ? state.tempRequests[tab.requestId] ?? null
+        : getRequestById(state.collections, tab.requestId);
+      
+        if (req) set({ currentRequest: req });
+      
       const lastHistoryEntry = state.history.find((h) => h.request?.id === req?.id);
-      console.log({lastHistoryEntry});
+
       const cache = get().tabRequestCache[tabId];
+
       if (lastHistoryEntry) {
         set({ lastResponse: lastHistoryEntry.response, scriptLogs: lastHistoryEntry.scriptLogs || [], sendingRequest: cache.sendingRequest });
       } else {
         set({ lastResponse: null, scriptLogs: [], sendingRequest: false });
       }
-    } else {
+
+      return;
+    } 
+
+    if (tab?.type === "runner") {
       set({ currentRequest: null, lastResponse: null, scriptLogs: [], sendingRequest: false });
+      return;
     }
   },
 
@@ -273,6 +322,74 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({
       tabs: s.tabs.map((t) => (t.id === tabId && t.type === "request" ? { ...t, label } : t)),
     }));
+  },
+
+  updateRequestTab: (tabId, patch) => {
+    set((s) => ({
+      tabs: s.tabs.map((t) =>
+        t.id === tabId && t.type === "request" ? { ...t, ...patch } : t
+      ),
+    }));
+  },
+
+  openNewTempRequest: () => {
+    const defaultRequest: RequestConfig = {
+      id: generateId(),
+      name: "Nova requisição",
+      method: "GET",
+      url: "https://httpbin.org/get",
+      headers: [{ id: generateId(), key: "", value: "", enabled: true }],
+      queryParams: [{ id: generateId(), key: "", value: "", enabled: true }],
+      bodyType: "none",
+    };
+    const tab: RequestTab = {
+      id: `req-${defaultRequest.id}`,
+      type: "request",
+      requestId: defaultRequest.id,
+      label: defaultRequest.name,
+      method: defaultRequest.method,
+      url: defaultRequest.url,
+      isTemp: true,
+    };
+    set((s) => ({
+      tempRequests: { ...s.tempRequests, [defaultRequest.id]: defaultRequest },
+    }));
+    get().openTab(tab);
+  },
+
+  setTempRequest: (requestId, request) => {
+    const checkAlreadyOpen = get().tabs.find((t) => t.type === "request" && t.requestId === requestId);
+    if (checkAlreadyOpen) {
+      return;
+    }
+
+    set((s) => ({
+      tempRequests: { ...s.tempRequests, [requestId]: request },
+    }));
+  },
+
+  removeTempRequest: (requestId) => {
+    set((s) => {
+      const next = { ...s.tempRequests };
+      delete next[requestId];
+      return { tempRequests: next };
+    });
+  },
+
+  saveRequestUpdates: (requestId, request) => {
+    const tab = get().tabs.find(
+      (t): t is RequestTab => t.type === "request" && t.requestId === requestId
+    );
+    if (tab?.isTemp) {
+      get().setTempRequest(requestId, request);
+      get().updateRequestTab(tab.id, {
+        label: request.name,
+        method: request.method,
+        url: request.url,
+      });
+    } else {
+      get().updateRequestInCollection(requestId, request);
+    }
   },
 
   setRunnerPanelPendingConfig: (runnerPanelPendingConfig) => set({ runnerPanelPendingConfig }),
@@ -391,11 +508,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   refreshTabs: () => {
-    const requests = getAllRequests(get().collections);
-    const updatedTabs = get().tabs.map((t) => {
+    const { tabs, collections, tempRequests } = get();
+    const requests = getAllRequests(collections);
+    const updatedTabs = tabs.map((t) => {
       if (t.type === "request") {
-        const requestObject = requests.find((r) => r.id === t.requestId);
-        return { ...t, label: requestObject?.name ?? "", method: requestObject?.method ?? "", url: requestObject?.url ?? "" };
+        const requestObject = t.isTemp
+          ? tempRequests[t.requestId]
+          : requests.find((r) => r.id === t.requestId);
+        return { ...t, label: requestObject?.name ?? t.label, method: requestObject?.method ?? t.method, url: requestObject?.url ?? t.url };
       }
       return t;
     });

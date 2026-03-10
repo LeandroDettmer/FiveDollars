@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useKeyDown } from "@/lib/useKeyDown";
 import { useAppStore } from "@/store/useAppStore";
 import { Card } from "./Card";
 import { Dropdown } from "./Dropdown";
 import { HttpMethodBadge } from "./HttpMethodBadge";
-import type { Tab } from "@/types";
+import { SaveRequestModal } from "./SaveRequestModal";
+import type { Tab, RequestTab } from "@/types";
 
 function tabLabel(tab: Tab): string {
   if (tab.type === "request") return tab.label;
@@ -19,8 +20,14 @@ export function TabBar() {
   const currentEnv = useAppStore((s) => s.currentEnv);
   const environments = useAppStore((s) => s.environments);
   const setCurrentEnv = useAppStore((s) => s.setCurrentEnv);
+  const tempRequests = useAppStore((s) => s.tempRequests);
 
   const [envDropdownOpen, setEnvDropdownOpen] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  /** Tab id da requisição temporária que estamos salvando (pode ser da aba ativa ou da aba clicada no menu). */
+  const [saveModalTabId, setSaveModalTabId] = useState<string | null>(null);
+  const [tabContextMenu, setTabContextMenu] = useState<{ tabId: string; x: number; y: number } | null>(null);
+  const tabContextMenuRef = useRef<HTMLDivElement>(null);
 
   useKeyDown(["w", "w"], (e) => {
     if (e.ctrlKey) {
@@ -28,6 +35,35 @@ export function TabBar() {
       if (activeTabId) closeTab(activeTabId);
     }
   });
+
+  useKeyDown(["s"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : null;
+      if (activeTab?.type === "request" && (activeTab as RequestTab).isTemp) {
+        setSaveModalTabId(activeTab.id);
+        setSaveModalOpen(true);
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (!tabContextMenu) return;
+    const close = () => setTabContextMenu(null);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [tabContextMenu]);
+
+  const saveModalTab = saveModalTabId ? tabs.find((t) => t.id === saveModalTabId) : null;
+  const saveModalRequestTab = saveModalTab?.type === "request" ? (saveModalTab as RequestTab) : null;
+  const saveModalRequest =
+    saveModalOpen && saveModalRequestTab?.isTemp
+      ? tempRequests[saveModalRequestTab.requestId] ?? null
+      : null;
 
   if (tabs.length === 0) return null;
 
@@ -41,6 +77,12 @@ export function TabBar() {
             aria-selected={tab.id === activeTabId}
             className={`tab-bar-tab ${tab.id === activeTabId ? "tab-bar-tab--active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
+            onContextMenu={(e) => {
+              if (tab.type === "request" && (tab as RequestTab).isTemp) {
+                e.preventDefault();
+                setTabContextMenu({ tabId: tab.id, x: e.clientX, y: e.clientY });
+              }
+            }}
           >
             <span className="tab-bar-tab-label" title={tabLabel(tab)}>
               {tab.type === "request" ? (
@@ -136,6 +178,41 @@ export function TabBar() {
           </>
         )}
       </Dropdown>
+      {tabContextMenu && (
+        <>
+          <div
+            className="collection-tree-context-backdrop"
+            onClick={() => setTabContextMenu(null)}
+            onContextMenu={(e) => e.preventDefault()}
+          />
+          <div
+            ref={tabContextMenuRef}
+            className="collection-tree-context-menu tab-context-menu"
+            style={{ left: tabContextMenu.x, top: tabContextMenu.y }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setSaveModalTabId(tabContextMenu.tabId);
+                setTabContextMenu(null);
+                setSaveModalOpen(true);
+              }}
+            >
+              Salvar requisição...
+            </button>
+          </div>
+        </>
+      )}
+      {saveModalOpen && saveModalRequest && saveModalRequestTab && (
+        <SaveRequestModal
+          request={saveModalRequest}
+          tabId={saveModalRequestTab.id}
+          onClose={() => {
+            setSaveModalOpen(false);
+            setSaveModalTabId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

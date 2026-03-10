@@ -294,11 +294,12 @@ body {
 }
 
 .app-empty-actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  width: 100%;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  margin-top: 4vh;
+  margin-top: 2%;
 }
 
 .app-empty-action {
@@ -2036,6 +2037,78 @@ body {
   padding: 16px;
   overflow-y: auto;
   flex: 1;
+}
+
+.modal-content.save-request-modal {
+  max-width: 480px;
+  width: 90%;
+}
+
+.save-request-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.save-request-modal-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.save-request-modal-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.save-request-collections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.save-request-collection-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.save-request-collection-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.save-request-folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 8px;
+}
+
+.save-request-folder-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+
+.save-request-folder-option:hover {
+  background: var(--bg-tertiary);
+}
+
+.save-request-folder-icon {
+  font-size: 18px;
+  color: var(--text-muted);
 }
 
 .modal-footer {

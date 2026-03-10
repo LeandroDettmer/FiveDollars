@@ -195,6 +195,7 @@ export function CollectionTree({
   onUpdateItems,
   onRunFolder,
   onAddRequestToCollection,
+  onRequestRemoved,
   defaultFolderOpen = false,
   currentRequestId = null,
 }: {
@@ -205,6 +206,7 @@ export function CollectionTree({
   onUpdateItems?: (items: CollectionNode[]) => void;
   onRunFolder?: (requests: RequestConfig[], folderName: string) => void;
   onAddRequestToCollection?: (coll: Collection, folderPath?: NodePath) => void;
+  onRequestRemoved?: (requestId: string) => void;
   defaultFolderOpen?: boolean;
   currentRequestId?: string | null;
 }) {
@@ -268,7 +270,10 @@ export function CollectionTree({
         if (node.id) setEditingNodeId(node.id);
         break;
       case "delete":
-        if (path !== null) next = removeNodeAtPath(nodes, path);
+        if (path !== null) {
+          next = removeNodeAtPath(nodes, path);
+          if (node.type === "request") onRequestRemoved?.(node.request.id);
+        }
         break;
       case "run":
         if (node.type === "folder" && onRunFolder) {

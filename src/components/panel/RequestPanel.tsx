@@ -35,7 +35,7 @@ export function RequestPanel() {
     getCollectionForRequest,
     addToHistory,
     currentEnv,
-    updateRequestInCollection,
+    saveRequestUpdates,
     updateCollection,
     updateEnvironment,
     clearScriptLogs,
@@ -63,11 +63,11 @@ export function RequestPanel() {
     }
     if (currentRequest.id !== req.id) {
       if (req.id) {
-        updateRequestInCollection(req.id, req);
+        saveRequestUpdates(req.id, req);
       }
       setReq(currentRequest);
     }
-  }, [currentRequest?.id]);
+  }, [currentRequest?.id, saveRequestUpdates]);
 
   useEffect(() => {
     if (req.method === "GET" && requestTab !== "params") setRequestTab("params");
@@ -78,10 +78,10 @@ export function RequestPanel() {
     if (!req.id) return;
     const t = setTimeout(() => {
       const latest = reqRef.current;
-      if (latest.id) updateRequestInCollection(latest.id, latest);
+      if (latest.id) saveRequestUpdates(latest.id, latest);
     }, 800);
     return () => clearTimeout(t);
-  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.pathParams, req.bodyType, req.body, req.preRequestScript, req.postResponseScript]);
+  }, [req.url, req.method, req.name, req.headers, req.queryParams, req.pathParams, req.bodyType, req.body, req.preRequestScript, req.postResponseScript, saveRequestUpdates]);
 
   // Sincronizar Query Params -> URL: ao editar params, atualizar a URL exibida
   useEffect(() => {
@@ -151,7 +151,7 @@ export function RequestPanel() {
 
   const handleSend = async () => {
     setCurrentRequest(req);
-    updateRequestInCollection(req.id, req);
+    saveRequestUpdates(req.id, req);
     abortControllerRef.current = new AbortController();
     setSendingRequest(true, req.id);
     setLastResponse(null);

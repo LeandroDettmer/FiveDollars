@@ -6,6 +6,7 @@ import { ResizableMainArea } from "@/components/ResizableMainArea";
 import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
+import { useKeyDown } from "@/lib/useKeyDown";
 import type { Collection, RunnerTab } from "@/types";
 import "./App.css";
 import { checkForUpdate, getAppVersion, isTauri } from "./lib/updater";
@@ -14,8 +15,15 @@ import cropAppIcon from "../crop-app-icon.png";
 
 function App() {
   const [version, setVersion] = useState("");
-  const { addCollection, setStateFromPersisted, tabs, activeTabId } = useAppStore();
+  const { addCollection, setStateFromPersisted, tabs, activeTabId, openNewTempRequest } = useAppStore();
   const [newUpdateAvailable, setNewUpdateAvailable] = useState<string | null>(null);
+
+  useKeyDown(["n"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      openNewTempRequest();
+    }
+  });
 
   useEffect(() => {
     loadAppData().then(setStateFromPersisted);
@@ -69,15 +77,22 @@ function App() {
                       <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
                       Criar nova collection
                     </button>
+
+                    <button type="button" className="app-empty-action" onClick={() => {
+                      openNewTempRequest();
+                    }}>
+                      <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
+                      Criar nova rota
+                    </button>
+
                     <button type="button" className="app-empty-action" onClick={() => {
                       (document.querySelector(".sidebar-search-input") as HTMLInputElement)?.focus();
                     }}>
                       <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>search</span>
                       Buscar rotas...
                     </button>
+
                   </div>
-
-
                 </div>
 
               </div>

@@ -127,6 +127,8 @@ export interface RequestTab {
   label: string;
   method: HttpMethod;
   url: string;
+  /** Requisição temporária (Ctrl+N): não está em nenhuma pasta/collection. */
+  isTemp?: boolean;
 }
 
 /** Estado do formulário de config do Runner (para restaurar ao voltar na aba). */

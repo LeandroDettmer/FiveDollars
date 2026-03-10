@@ -33,6 +33,9 @@ export function SidebarPanel() {
     selectedHistoryEntryId,
     setStateFromPersisted,
     setLastResponse,
+    getCollectionForRequest,
+    setTempRequest,
+    closeTabsByRequestId,
   } = useAppStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -52,7 +55,6 @@ export function SidebarPanel() {
   const hasInitializedCollectionsRef = useRef(false);
   useClickOutside(collectionMenuRef, () => setCollectionMenuOpenId(null), !!collectionMenuOpenId);
 
-  // ao buscar abrir as collections q contem a rota
   useEffect(() => {
     if (collectionSearch.length > 0) {
       setCollapsedCollectionIds(new Set());
@@ -420,6 +422,7 @@ export function SidebarPanel() {
                             }}
                             searchQuery={collectionSearch}
                             onUpdateItems={(items) => updateCollection(coll.id, { items })}
+                            onRequestRemoved={closeTabsByRequestId}
                             defaultFolderOpen={foldersExpanded}
                             onRunFolder={(requests, folderName) => {
                               if (requests.length > 0) {
@@ -518,17 +521,34 @@ export function SidebarPanel() {
                 key={entry.id}
                 className={`history-item ${selectedHistoryEntryId === entry.id ? "history-item-selected" : ""}`}
                 onClick={() => {
-                  console.log({ entry });
                   setLastResponse(entry.response ?? null);
-
-                  openTab({
-                    id: `req-${entry.request?.id ?? ""}`,
-                    type: "request",
-                    requestId: entry.request?.id ?? "",
-                    label: entry.url,
-                    method: entry.method,
-                    url: entry.url,
-                  });
+                  const requestId = entry.request?.id ?? "";
+                  if (!requestId) {
+                    setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id);
+                    return;
+                  }
+                  const inCollection = getCollectionForRequest(requestId);
+                  if (!inCollection && entry.request) {
+                    setTempRequest(requestId, entry.request);
+                    openTab({
+                      id: `req-${requestId}`,
+                      type: "request",
+                      requestId,
+                      label: entry.request.name,
+                      method: entry.request.method,
+                      url: entry.request.url,
+                      isTemp: true,
+                    });
+                  } else {
+                    openTab({
+                      id: `req-${requestId}`,
+                      type: "request",
+                      requestId,
+                      label: entry.request?.name ?? entry.url,
+                      method: entry.method,
+                      url: entry.url,
+                    });
+                  }
                   setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id);
                 }}
                 role="button"
