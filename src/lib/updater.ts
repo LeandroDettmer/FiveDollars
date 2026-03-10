@@ -89,8 +89,9 @@ export async function checkAndInstallUpdate(
       }
     });
 
-    await useAppStore().clearHistory();
-    await useAppStore().clearScriptLogs();
+    const store = useAppStore.getState();
+    await store.clearHistory();
+    await store.clearScriptLogs();
 
     await relaunch();
     return true;
