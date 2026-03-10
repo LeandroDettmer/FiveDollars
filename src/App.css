@@ -1491,6 +1491,8 @@ body {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: 4px;
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   color: var(--text);
   cursor: pointer;
 }
@@ -1505,6 +1507,9 @@ body {
   padding: 6px 8px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   border-radius: 4px;
   color: var(--text);
   font-size: 12px;
