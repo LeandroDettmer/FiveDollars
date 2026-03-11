@@ -334,7 +334,13 @@ export function SidebarPanel() {
                           e.preventDefault();
                           e.stopPropagation();
                           setCollectionMenuOpenId(coll.id);
-                        }}>
+                        }}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRenameCollection(coll);
+                        }}
+                        >
                           <button
                             type="button"
                             className="collection-header-toggle"

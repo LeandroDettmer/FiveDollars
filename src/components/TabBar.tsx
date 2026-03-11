@@ -29,8 +29,8 @@ export function TabBar() {
   const [tabContextMenu, setTabContextMenu] = useState<{ tabId: string; x: number; y: number } | null>(null);
   const tabContextMenuRef = useRef<HTMLDivElement>(null);
 
-  useKeyDown(["w", "w"], (e) => {
-    if (e.ctrlKey) {
+  useKeyDown(["w"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       if (activeTabId) closeTab(activeTabId);
     }

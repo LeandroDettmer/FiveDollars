@@ -31,6 +31,7 @@ function NodeItem({
   node,
   depth,
   path,
+  setEditingNodeId,
   onSelectRequest,
   onContextMenu,
   onUpdateItems,
@@ -43,6 +44,7 @@ function NodeItem({
   node: CollectionNode;
   depth: number;
   path: NodePath;
+  setEditingNodeId: (nodeId: string | null) => void;
   onSelectRequest: (req: RequestConfig) => void;
   onContextMenu: (e: React.MouseEvent, path: NodePath, node: CollectionNode) => void;
   onUpdateItems: (items: CollectionNode[]) => void;
@@ -100,6 +102,12 @@ function NodeItem({
         onDragOver={handleFolderDragOver}
         onDragLeave={handleFolderDragLeave}
         onDrop={handleFolderDrop}
+        onDoubleClick={(e) => {
+          console.log("double click");
+          setEditingNodeId(node.id);
+          e.preventDefault();
+          e.stopPropagation();
+        }}
       >
         <button
           type="button"
@@ -137,6 +145,7 @@ function NodeItem({
                 node={child}
                 depth={depth + 1}
                 path={[...path, idx]}
+                setEditingNodeId={setEditingNodeId}
                 onSelectRequest={onSelectRequest}
                 onContextMenu={onContextMenu}
                 onUpdateItems={onUpdateItems}
@@ -178,10 +187,14 @@ function NodeItem({
           autoFocus
         />
       ) : (
-        <>
+        <div onDoubleClick={(e) => {
+          setEditingNodeId(node.id);
+          e.preventDefault();
+          e.stopPropagation();
+        }}>
           <HttpMethodBadge method={node.request.method} className="collection-request-method" />
           <span className="collection-request-name">{node.name}</span>
-        </>
+        </div>
       )}
     </button>
   );
@@ -317,6 +330,7 @@ export function CollectionTree({
           node={node}
           depth={0}
           path={[idx]}
+          setEditingNodeId={setEditingNodeId}
           onSelectRequest={onSelectRequest}
           onContextMenu={handleContextMenu}
           onUpdateItems={onUpdateItems ?? (() => { })}

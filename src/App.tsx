@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SidebarPanel } from "@/components/panel/SidebarPanel";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
 import { RunnerPanel } from "@/components/panel/RunnerPanel";
@@ -7,16 +7,12 @@ import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
 import { useKeyDown } from "@/lib/useKeyDown";
-import type { Collection, RunnerTab } from "@/types";
+import type { RunnerTab } from "@/types";
+import { Main } from "./components/Main";
 import "./App.css";
-import { checkForUpdate, getAppVersion, isTauri } from "./lib/updater";
-import { generateId } from "./lib/id";
-import cropAppIcon from "../crop-app-icon.png";
 
 function App() {
-  const [version, setVersion] = useState("");
-  const { addCollection, setStateFromPersisted, tabs, activeTabId, openNewTempRequest } = useAppStore();
-  const [newUpdateAvailable, setNewUpdateAvailable] = useState<string | null>(null);
+  const { setStateFromPersisted, tabs, activeTabId, openNewTempRequest } = useAppStore();
 
   useKeyDown(["n"], (e) => {
     if (e.ctrlKey || e.metaKey) {
@@ -27,15 +23,6 @@ function App() {
 
   useEffect(() => {
     loadAppData().then(setStateFromPersisted);
-    getAppVersion().then(setVersion);
-
-    if (isTauri()) {
-      checkForUpdate().then((updateStatus) => {
-        if (updateStatus?.status === "available") {
-          setNewUpdateAvailable(updateStatus?.version ?? "");
-        }
-      });
-    }
   }, [setStateFromPersisted]);
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : null;
@@ -53,49 +40,7 @@ function App() {
           <TabBar />
           <div className="app-tab-content">
             {!activeTab ? (
-              <div className="app-empty-tabs">
-                <div style={{ paddingTop: "25vh" }}>
-                  <div>
-                    <img style={{ width: "12vh", borderRadius: "24px" }} src={cropAppIcon} alt="logo" />
-                    <p>Versão: v{version}</p>
-                    {newUpdateAvailable && newUpdateAvailable !== "" &&
-                      <>
-                        <p>Nova versão disponível: {newUpdateAvailable}</p>
-                        <p>Acesse Configurações/Atualizações para atualizar</p>
-                      </>
-                    }
-                  </div>
-                  <div className="app-empty-actions">
-                    <button type="button" className="app-empty-action" onClick={() => {
-                      const newCollection: Collection = {
-                        id: generateId(),
-                        name: "Nova collection",
-                        items: [],
-                      };
-                      addCollection(newCollection);
-                    }}>
-                      <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
-                      Criar nova collection
-                    </button>
-
-                    <button type="button" className="app-empty-action" onClick={() => {
-                      openNewTempRequest();
-                    }}>
-                      <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
-                      Criar nova rota
-                    </button>
-
-                    <button type="button" className="app-empty-action" onClick={() => {
-                      (document.querySelector(".sidebar-search-input") as HTMLInputElement)?.focus();
-                    }}>
-                      <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>search</span>
-                      Buscar rotas...
-                    </button>
-
-                  </div>
-                </div>
-
-              </div>
+              <Main />
             ) : (
               <>
                 {/* Runner abas: sempre montadas (ocultas quando inativas) para a execução não reiniciar ao trocar de aba */}
