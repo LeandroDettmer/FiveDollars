@@ -33,18 +33,28 @@ export function parseUrlQueryParams(
       params.push({ key, value });
     });
     return { base, params };
-  } catch {
+  } catch (e) {
+    console.error("Error parsing URL", e);
     return null;
   }
 }
 
 /** Extrai nomes de path params da URL (ex.: :id, :userId). */
-export function extractPathParamNames(url: string): string[] {
+export function extractPathParamNames(url: string, pathParams?: KeyValue[] | null): string[] {
   const names: string[] = [];
   const re = /:([a-zA-Z_][a-zA-Z0-9_]*)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(url)) !== null) {
     if (!names.includes(m[1])) names.push(m[1]);
   }
+
+  if (pathParams && pathParams?.length > 0) {
+    for (const p of pathParams) {
+      if (p.key.trim() && !names.includes(p.key.trim())) {
+        names.push(p.key.trim());
+      }
+    }
+  }
+
   return names;
 }

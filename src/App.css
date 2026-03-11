@@ -1533,11 +1533,12 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .add-row-btn {
   margin-top: 6px;
+  margin-bottom: 6px;
   padding: 4px 8px;
   background: transparent;
   border: 1px dashed var(--border);

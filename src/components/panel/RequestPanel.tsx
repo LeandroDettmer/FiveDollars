@@ -3,14 +3,13 @@ import { useAppStore } from "@/store/useAppStore";
 import { sendRequest } from "@/lib/http";
 import { runPreRequestScript, runPostResponseScript } from "@/lib/runPostResponseScript";
 import {
-  getBaseUrl,
   buildUrlWithQuery,
   parseUrlQueryParams,
   extractPathParamNames,
 } from "@/lib/urlUtils";
 import { generateId } from "@/lib/id";
 import { BodyEditor } from "@/components/BodyEditor";
-import { VariablePreview } from "@/components/VariablePreview";
+import { parseVariableParts, VariablePreview } from "@/components/VariablePreview";
 import { VariableHighlightInput } from "@/components/VariableHighlightInput";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
 import { useKeyDown } from "@/lib/useKeyDown";
@@ -47,7 +46,6 @@ export function RequestPanel() {
     openNewTempRequest,
   } = useAppStore();
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
-  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [scriptsTab, setScriptsTab] = useState<"pre" | "post">("post");
   const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">(defaultRequest?.method === "GET" ? "params" : "body");
   const variables = getResolvedVariables(req.id);
@@ -57,7 +55,6 @@ export function RequestPanel() {
   const sendingRef = useRef(sending);
   reqRef.current = req;
   sendingRef.current = sending;
-  const toggleShowPassword = (id: string) => setShowPasswords((s) => ({ ...s, [id]: !s[id] }));
 
   useEffect(() => {
     if (!currentRequest) {
@@ -85,26 +82,41 @@ export function RequestPanel() {
     return () => clearTimeout(t);
   }, [req.url, req.method, req.name, req.headers, req.queryParams, req.pathParams, req.bodyType, req.body, req.preRequestScript, req.postResponseScript, saveRequestUpdates]);
 
-  // Sincronizar Query Params -> URL: ao editar params, atualizar a URL exibida
+
   useEffect(() => {
-    const base = getBaseUrl(req.url);
-    if (base == null) return;
-    const newUrl = buildUrlWithQuery(base, req.queryParams);
-    if (newUrl !== req.url) setReq((r) => ({ ...r, url: newUrl }));
-  }, [req.queryParams]);
+    if (!req.url) return;
+
+    const newUrl = buildUrlWithQuery(req.url, req.queryParams);
+    if (newUrl == req.url) return;
+    const useUrl = newUrl != req.url ? req.url : newUrl;
+
+    const parts = parseVariableParts(useUrl, variables);
+    const normalizedUrl = parts.map((p) => p.type === "var" ? p.value : p.key).join("");
+    const parsed = parseUrlQueryParams(normalizedUrl);
+    if (parsed == null) return;
+    const { params } = parsed;
+
+    const newParams: KeyValue[] =
+      params.length > 0
+        ? [...params.map((p) => ({ id: generateId(), key: p.key, value: p.value, enabled: true }))]
+        : [];
+
+    if (newParams.length === req.queryParams.length && newParams.every((p) => p.key.trim() === req.queryParams.find((q) => q.key.trim() === p.key.trim())?.key.trim()) && newParams.every((p) => p.value.trim() === req.queryParams.find((q) => q.key.trim() === p.key.trim())?.value.trim())) return;
+
+    setReq((r) => ({ ...r, queryParams: newParams }));
+  }, [req.url]);
 
   // Ao alterar a URL, garantir que pathParams tenha linhas para cada :param
   useEffect(() => {
     const names = extractPathParamNames(req.url);
+
     if (names.length === 0) return;
     const current = req.pathParams ?? [];
-    const missing = names.filter((n) => !current.some((p) => p.key.trim() === n));
-    if (missing.length === 0) return;
+
     setReq((r) => ({
       ...r,
       pathParams: [
-        ...(r.pathParams ?? []),
-        ...missing.map((key) => ({ id: generateId(), key, value: "", enabled: true })),
+        ...names.map((key) => ({ id: generateId(), key, value: current.find((p) => p.key.trim() === key)?.value ?? "", enabled: true })),
       ],
     }));
   }, [req.url]);
@@ -271,6 +283,35 @@ export function RequestPanel() {
     }
   });
 
+  const handleQueryParamChange = (e: React.ChangeEvent<HTMLInputElement>, row: KeyValue, kind: "key" | "value") => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const newQueryParams = req.queryParams.map((q) => q.id === row.id ? { ...q, [kind]: e.target.value } : q);
+
+    if (kind === "key") {
+      setReq((r) => ({
+        ...r,
+        url: buildUrlWithQuery(r.url, newQueryParams),
+        queryParams: newQueryParams
+      }))
+    } else if (kind === "value") {
+      setReq((r) => ({
+        ...r,
+        url: buildUrlWithQuery(r.url, newQueryParams),
+        queryParams: newQueryParams
+      }))
+    }
+  }
+
+  const handleRemoveQueryParam = (row: KeyValue) => {
+    setReq((r) => ({
+      ...r,
+      url: buildUrlWithQuery(r.url, r.queryParams.filter((q) => q.id !== row.id)),
+      queryParams: r.queryParams.filter((q) => q.id !== row.id)
+    }))
+  }
+
   return (
     <div className="request-panel">
       <div className="request-toolbar">
@@ -292,14 +333,7 @@ export function RequestPanel() {
           placeholder="URL (use {{baseUrl}} e :id para path params)"
           variables={variables}
           onBlur={() => {
-            const parsed = parseUrlQueryParams(req.url);
-            if (parsed == null) return;
-            const { params } = parsed;
-            const newParams: KeyValue[] =
-              params.length > 0
-                ? [...params.map((p) => ({ id: generateId(), key: p.key, value: p.value, enabled: true })), { id: generateId(), key: "", value: "", enabled: true }]
-                : [{ id: generateId(), key: "", value: "", enabled: true }];
-            setReq((r) => ({ ...r, queryParams: newParams }));
+
           }}
         />
         {sending ? (
@@ -377,21 +411,28 @@ export function RequestPanel() {
               <div key={row.id} className="key-value-row">
                 <input
                   placeholder="Key"
-                  value={row.key}
-                  onChange={(e) => updateRow("queryParams", row.id, { key: e.target.value })}
+                  value={req.queryParams.find((q) => q.id === row.id)?.key ?? ""}
+                  onChange={(e) => {
+                    handleQueryParamChange(e, row, "key");
+                  }}
+
                 />
                 <input
                   placeholder="Value"
-                  value={row.value}
-                  onChange={(e) => updateRow("queryParams", row.id, { value: e.target.value })}
+                  value={req.queryParams.find((q) => q.id === row.id)?.value ?? ""}
+                  onChange={(e) => {
+                    handleQueryParamChange(e, row, "value");
+                  }}
                 />
-                <button type="button" onClick={() => removeRow("queryParams", row.id)}>−</button>
+                <button type="button" onClick={() =>
+                  handleRemoveQueryParam(row)
+                }>−</button>
               </div>
             ))}
             <button type="button" className="add-row-btn" onClick={() => addRow("queryParams")}>
               + Parâmetro
             </button>
-            {extractPathParamNames(req.url).length > 0 && (
+            {extractPathParamNames(req.url, req.pathParams).length > 0 && (
               <>
                 <h4 className="request-section-sub">Path Params</h4>
                 <p className="request-section-hint">
@@ -401,7 +442,7 @@ export function RequestPanel() {
                   .filter(
                     (p) =>
                       !p.key.trim() ||
-                      extractPathParamNames(req.url).includes(p.key.trim())
+                      extractPathParamNames(req.url, req.pathParams).includes(p.key.trim())
                   )
                   .map((row) => (
                     <div key={row.id} className="key-value-row">
@@ -485,8 +526,8 @@ export function RequestPanel() {
                       </label>
 
                       <VariableHighlightInput
-                        value={req.authBasicPassword ?? ""}
-                        onChange={(value) => update({ authBasicPassword: value })}
+                        value={req.authBearerToken ?? ""}
+                        onChange={(value) => update({ authBearerToken: value })}
                         placeholder="{{password}}"
                         type={"text"}
                         variables={variables}
@@ -510,6 +551,7 @@ export function RequestPanel() {
                     <label className="auth-field auth-field-with-toggle">
                       <span>Value</span>
                     </label>
+
                     <div className="auth-input-row">
                       <VariableHighlightInput
                         value={req.authApiKeyValue ?? ""}
@@ -532,25 +574,20 @@ export function RequestPanel() {
             {req.headers.map((row) => (
               <div key={row.id} className="header-row-wrap">
                 <div className="key-value-row">
-                  <input
-                    placeholder="Header"
-                    value={row.key}
-                    onChange={(e) => updateRow("headers", row.id, { key: e.target.value })}
+                  <VariableHighlightInput
+                    value={row.key ?? ""}
+                    onChange={(value) => updateRow("headers", row.id, { key: value })}
+                    placeholder="{{key}}"
+                    variables={variables}
                   />
-                  <input
-                    placeholder="Value"
-                    value={row.value}
-                    onChange={(e) => updateRow("headers", row.id, { value: e.target.value })}
+                  <VariableHighlightInput
+                    value={row.value ?? ""}
+                    onChange={(value) => updateRow("headers", row.id, { value })}
+                    placeholder="{{value}}"
+                    variables={variables}
                   />
                   <button type="button" onClick={() => removeRow("headers", row.id)}>−</button>
                 </div>
-                {(row.value ?? "").includes("{{") && (
-                  <VariablePreview
-                    className="auth-variable-preview"
-                    text={row.value ?? ""}
-                    variables={variables}
-                  />
-                )}
               </div>
             ))}
             <button type="button" className="add-row-btn" onClick={() => addRow("headers")}>
