@@ -6,20 +6,12 @@ import { ResizableMainArea } from "@/components/ResizableMainArea";
 import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
-import { useKeyDown } from "@/lib/useKeyDown";
 import type { RunnerTab } from "@/types";
 import { Main } from "./components/Main";
 import "./App.css";
 
 function App() {
-  const { setStateFromPersisted, tabs, activeTabId, openNewTempRequest } = useAppStore();
-
-  useKeyDown(["n"], (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      openNewTempRequest();
-    }
-  });
+  const { setStateFromPersisted, tabs, activeTabId } = useAppStore();
 
   useEffect(() => {
     loadAppData().then(setStateFromPersisted);

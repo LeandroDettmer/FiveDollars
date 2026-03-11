@@ -8,6 +8,7 @@ import { SaveRequestModal } from "./SaveRequestModal";
 import type { Tab, RequestTab } from "@/types";
 
 function tabLabel(tab: Tab): string {
+  if (tab.type === "request" && (tab as RequestTab).isTemp) return `${tab.label} *`;
   if (tab.type === "request") return tab.label;
   return tab.label;
 }
@@ -24,10 +25,11 @@ export function TabBar() {
 
   const [envDropdownOpen, setEnvDropdownOpen] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
-  /** Tab id da requisição temporária que estamos salvando (pode ser da aba ativa ou da aba clicada no menu). */
+
   const [saveModalTabId, setSaveModalTabId] = useState<string | null>(null);
   const [tabContextMenu, setTabContextMenu] = useState<{ tabId: string; x: number; y: number } | null>(null);
   const tabContextMenuRef = useRef<HTMLDivElement>(null);
+  const [showTooltipTempRequest, setShowTooltipTempRequest] = useState(false);
 
   useKeyDown(["w"], (e) => {
     if (e.ctrlKey || e.metaKey) {
@@ -67,6 +69,8 @@ export function TabBar() {
 
   if (tabs.length === 0) return null;
 
+  console.log({activeTabId})
+
   return (
     <div className="tab-bar-row">
       <div className="tab-bar" role="tablist" aria-label="Abas">
@@ -84,15 +88,36 @@ export function TabBar() {
               }
             }}
           >
-            <span className="tab-bar-tab-label" title={tabLabel(tab)}>
+            <span className="tab-bar-tab-label" title={tabLabel(tab)}
+            >
               {tab.type === "request" ? (
-                <>
+                <div
+                  onMouseOver={() => {
+                    if (tab.type === "request" && (tab as RequestTab).isTemp && tab.id === activeTabId) {
+                      setShowTooltipTempRequest(!showTooltipTempRequest);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (tab.type === "request" && (tab as RequestTab).isTemp && tab.id === activeTabId) {
+                      setShowTooltipTempRequest(false);
+                    }
+                  }}>
                   <HttpMethodBadge method={tab.method} /> {tabLabel(tab)}
-                </>
+
+                  {showTooltipTempRequest && tab.type === "request" && (tab as RequestTab).isTemp && tab.id === activeTabId && (
+                    <>
+                      <br></br>
+                      <h1 style={{ fontSize: "0.8em", color: "#888" }}>Ctrl+S · ⌘+S</h1>
+                    </>
+                  )}
+
+                </div>
               ) : (
                 tabLabel(tab)
               )}
+
             </span>
+
             <button
               type="button"
               className="tab-bar-tab-close"
@@ -106,6 +131,7 @@ export function TabBar() {
               ×
             </button>
           </div>
+
         ))}
       </div>
       <Dropdown

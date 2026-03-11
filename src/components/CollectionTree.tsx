@@ -97,17 +97,10 @@ function NodeItem({
     return (
       <div
         className={`collection-folder ${dragOver ? "collection-folder-drag-over" : ""}`}
-        style={{ paddingLeft: depth * 8 }}
         onContextMenu={(e) => onContextMenu(e, path, node)}
         onDragOver={handleFolderDragOver}
         onDragLeave={handleFolderDragLeave}
         onDrop={handleFolderDrop}
-        onDoubleClick={(e) => {
-          console.log("double click");
-          setEditingNodeId(node.id);
-          e.preventDefault();
-          e.stopPropagation();
-        }}
       >
         <button
           type="button"
@@ -118,8 +111,11 @@ function NodeItem({
           onDragStart={handleDragStart}
         >
           <span style={{ fontSize: "1.3vh" }} className="collection-folder-icon material-symbols-outlined" aria-hidden>
-            {open ? "keyboard_arrow_down" : "keyboard_arrow_right"}
+            {open ? "keyboard_arrow_down" : "keyboard_arrow_right"} 
           </span>
+          
+          <span style={{ fontSize: "1.3vh", marginLeft: -4 }} className="collection-folder-icon material-symbols-outlined" aria-hidden>folder</span>
+          
           {isEditing ? (
             <input
               className="collection-tree-rename-input"
@@ -134,7 +130,12 @@ function NodeItem({
               autoFocus
             />
           ) : (
-            node.name
+            <div onDoubleClick={(e) => {
+              console.log(e)
+              e.preventDefault();
+              e.stopPropagation();
+              setEditingNodeId(node.id);
+            }}>{node.name}</div>
           )}
         </button>
         {open && (
@@ -167,7 +168,7 @@ function NodeItem({
     <button
       type="button"
       className={`collection-request-btn ${isActive ? "collection-request-btn--active" : ""}`}
-      style={{ paddingLeft: 12 + depth * 8 }}
+      style={{ paddingLeft: 12 + depth * 8}}
       onClick={() => onSelectRequest(node.request)}
       onContextMenu={(e) => onContextMenu(e, path, node)}
       draggable

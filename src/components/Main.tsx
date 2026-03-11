@@ -4,6 +4,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { Collection } from "@/types";
 import { generateId } from "@/lib/id";
 import { isTauri, checkForUpdate, getAppVersion } from "@/lib/updater";
+import { useKeyDown } from "@/lib/useKeyDown";
 
 export function Main() {
   const [version, setVersion] = useState("");
@@ -22,6 +23,41 @@ export function Main() {
     }
   }, []);
 
+  useKeyDown(["n"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      openNewTempRequest();
+    }
+  });
+
+  useKeyDown(["c"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      handleCreateCollection();
+    }
+  });
+
+  useKeyDown(["k"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      handleSetSearchFocus();
+    }
+  });
+
+  const handleCreateCollection = () => {
+    const newCollection: Collection = {
+      id: generateId(),
+      name: "Nova collection",
+      items: [],
+    };
+    addCollection(newCollection);
+  }
+
+  const handleSetSearchFocus = () => {
+    (document.querySelector(".sidebar-search-input") as HTMLInputElement)?.focus();
+  }
+
+
   return (
     <div className="app-empty-tabs">
       <div style={{ paddingTop: "25vh" }}>
@@ -37,15 +73,11 @@ export function Main() {
         </div>
         <div className="app-empty-actions">
           <button type="button" className="app-empty-action" onClick={() => {
-            const newCollection: Collection = {
-              id: generateId(),
-              name: "Nova collection",
-              items: [],
-            };
-            addCollection(newCollection);
+            handleCreateCollection();
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
             Criar nova collection
+            <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘C ·  Ctrl+C</span>
           </button>
 
           <button type="button" className="app-empty-action" onClick={() => {
@@ -53,6 +85,7 @@ export function Main() {
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
             Criar nova rota
+            <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘N ·  Ctrl+N</span>
           </button>
 
           <button type="button" className="app-empty-action" onClick={() => {
@@ -60,6 +93,7 @@ export function Main() {
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>search</span>
             Buscar rotas...
+            <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘+K ·  Ctrl+K</span>
           </button>
 
         </div>

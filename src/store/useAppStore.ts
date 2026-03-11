@@ -69,8 +69,6 @@ interface AppState {
   setActiveTab: (tabId: string) => void;
   /** Atualiza estado da aba runner (pendingConfig / run / runResults / runRunning / configFormState). */
   updateRunnerTab: (tabId: string, patch: Partial<Pick<RunnerTab, "pendingConfig" | "run" | "runResults" | "runRunning" | "configFormState">>) => void;
-  /** Atualiza label da aba de requisição (ex.: ao renomear request). */
-  updateRequestTabLabel: (tabId: string, label: string) => void;
   /** Atualiza outros campos da aba de requisição (ex.: isTemp ao salvar). */
   updateRequestTab: (tabId: string, patch: Partial<Pick<RequestTab, "label" | "method" | "url" | "isTemp">>) => void;
   /** Cria e abre uma requisição temporária (Ctrl+N). */
@@ -318,12 +316,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
-  updateRequestTabLabel: (tabId, label) => {
-    set((s) => ({
-      tabs: s.tabs.map((t) => (t.id === tabId && t.type === "request" ? { ...t, label } : t)),
-    }));
-  },
-
   updateRequestTab: (tabId, patch) => {
     set((s) => ({
       tabs: s.tabs.map((t) =>
@@ -353,6 +345,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
     set((s) => ({
       tempRequests: { ...s.tempRequests, [defaultRequest.id]: defaultRequest },
+      selectedHistoryEntryId: null,
     }));
     get().openTab(tab);
   },

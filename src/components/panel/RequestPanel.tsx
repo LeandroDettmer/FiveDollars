@@ -11,6 +11,7 @@ import {
 import { generateId } from "@/lib/id";
 import { BodyEditor } from "@/components/BodyEditor";
 import { VariablePreview } from "@/components/VariablePreview";
+import { VariableHighlightInput } from "@/components/VariableHighlightInput";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
 import { useKeyDown } from "@/lib/useKeyDown";
 
@@ -43,6 +44,7 @@ export function RequestPanel() {
     setSelectedHistoryEntryId,
     sendingRequest: sending,
     setSendingRequest,
+    openNewTempRequest,
   } = useAppStore();
   const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
@@ -189,8 +191,10 @@ export function RequestPanel() {
           variables = { ...variables, ...newVars };
         }
       }
+
       const res = await sendRequest(req, variables, abortControllerRef.current.signal);
       setLastResponse(res);
+
       if (req.postResponseScript?.trim()) {
         const newVars = runPostResponseScript(
           req.postResponseScript,
@@ -254,9 +258,16 @@ export function RequestPanel() {
   });
 
   useKeyDown(["f", "F"], (e) => {
-    if (e.shiftKey && e.ctrlKey) {
+    if (e.shiftKey && e.ctrlKey || e.metaKey && e.shiftKey) {
       e.preventDefault();
       formatBodyJsonRef.current();
+    }
+  });
+
+  useKeyDown(["n"], (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      openNewTempRequest();
     }
   });
 
@@ -274,12 +285,12 @@ export function RequestPanel() {
             </option>
           ))}
         </select>
-        <input
-          type="text"
-          className="url-input"
-          placeholder="URL (use {{baseUrl}} e :id para path params)"
+
+        <VariableHighlightInput
           value={req.url}
-          onChange={(e) => update({ url: e.target.value })}
+          onChange={(url) => update({ url })}
+          placeholder="URL (use {{baseUrl}} e :id para path params)"
+          variables={variables}
           onBlur={() => {
             const parsed = parseUrlQueryParams(req.url);
             if (parsed == null) return;
@@ -301,7 +312,7 @@ export function RequestPanel() {
               type="button"
               className="send-btn"
               onClick={handleSend}
-              title="Enviar (Ctrl+Enter ou ⌘+Enter)"
+              title="Enviar (Ctrl+Enter · ⌘+Enter)"
             >
               Enviar
             </button>
@@ -440,120 +451,74 @@ export function RequestPanel() {
                   <div className="auth-fields">
                     <label className="auth-field">
                       <span>Username</span>
-                      <input
-                        type="text"
-                        value={req.authBasicUsername ?? ""}
-                        onChange={(e) => update({ authBasicUsername: e.target.value })}
-                        placeholder="{{username}}"
-                      />
-                      {(req.authBasicUsername ?? "").includes("{{") && (
-                        <VariablePreview
-                          className="auth-variable-preview"
-                          text={req.authBasicUsername ?? ""}
-                          variables={variables}
-                        />
-                      )}
                     </label>
+
+                    <VariableHighlightInput
+                      value={req.authBasicUsername ?? ""}
+                      onChange={(value) => update({ authBasicUsername: value })}
+                      placeholder="{{username}}"
+                      variables={variables}
+                    />
+
                     <label className="auth-field auth-field-with-toggle">
                       <span>Password</span>
-                      <div className="auth-input-row">
-                        <input
-                          type={showPasswords["basicPassword"] ? "text" : "password"}
-                          value={req.authBasicPassword ?? ""}
-                          onChange={(e) => update({ authBasicPassword: e.target.value })}
-                          placeholder="{{password}}"
-                        />
-                        <button
-                          type="button"
-                          className="auth-toggle-visibility"
-                          onClick={() => toggleShowPassword("basicPassword")}
-                          title={showPasswords["basicPassword"] ? "Ocultar senha" : "Exibir senha"}
-                        >
-                          {showPasswords["basicPassword"] ? "Ocultar" : "Exibir"}
-                        </button>
-                      </div>
-                      {(req.authBasicPassword ?? "").includes("{{") && (
-                        <VariablePreview
-                          className="auth-variable-preview"
-                          text={req.authBasicPassword ?? ""}
-                          variables={variables}
-                        />
-                      )}
                     </label>
+
+                    <div className="auth-input-row">
+                      <VariableHighlightInput
+                        value={req.authBasicPassword ?? ""}
+                        onChange={(value) => update({ authBasicPassword: value })}
+                        placeholder="{{password}}"
+                        type={"text"}
+                        variables={variables}
+                      />
+
+                    </div>
+
                   </div>
                 )}
                 {req.authType === "bearer" && (
-                  <label className="auth-field auth-field-with-toggle">
-                    <span>Token</span>
-                    <div className="auth-input-row">
-                      <input
-                        type={showPasswords["bearerToken"] ? "text" : "password"}
-                        value={req.authBearerToken ?? ""}
-                        onChange={(e) => update({ authBearerToken: e.target.value })}
-                        placeholder="{{token}}"
-                      />
-                      <button
-                        type="button"
-                        className="auth-toggle-visibility"
-                        onClick={() => toggleShowPassword("bearerToken")}
-                        title={showPasswords["bearerToken"] ? "Ocultar" : "Exibir"}
-                      >
-                        {showPasswords["bearerToken"] ? "Ocultar" : "Exibir"}
-                      </button>
-                    </div>
-                    {(req.authBearerToken ?? "").includes("{{") && (
-                      <VariablePreview
-                        className="auth-variable-preview"
-                        text={req.authBearerToken ?? ""}
+                  <>
+                    <div className="auth-fields">
+                      <label className="auth-field">
+                        <span>Token</span>
+                      </label>
+
+                      <VariableHighlightInput
+                        value={req.authBasicPassword ?? ""}
+                        onChange={(value) => update({ authBasicPassword: value })}
+                        placeholder="{{password}}"
+                        type={"text"}
                         variables={variables}
                       />
-                    )}
-                  </label>
+                    </div>
+                  </>
                 )}
                 {req.authType === "apikey" && (
                   <div className="auth-fields">
                     <label className="auth-field">
                       <span>Key (header name)</span>
-                      <input
-                        type="text"
-                        value={req.authApiKeyKey ?? ""}
-                        onChange={(e) => update({ authApiKeyKey: e.target.value })}
-                        placeholder="Authorization"
-                      />
-                      {(req.authApiKeyKey ?? "").includes("{{") && (
-                        <VariablePreview
-                          className="auth-variable-preview"
-                          text={req.authApiKeyKey ?? ""}
-                          variables={variables}
-                        />
-                      )}
                     </label>
+
+                    <VariableHighlightInput
+                      value={req.authApiKeyKey ?? ""}
+                      onChange={(value) => update({ authApiKeyKey: value })}
+                      placeholder="Authorization"
+                      variables={variables}
+                    />
+
                     <label className="auth-field auth-field-with-toggle">
                       <span>Value</span>
-                      <div className="auth-input-row">
-                        <input
-                          type={showPasswords["apikeyValue"] ? "text" : "password"}
-                          value={req.authApiKeyValue ?? ""}
-                          onChange={(e) => update({ authApiKeyValue: e.target.value })}
-                          placeholder="{{api_key}}"
-                        />
-                        <button
-                          type="button"
-                          className="auth-toggle-visibility"
-                          onClick={() => toggleShowPassword("apikeyValue")}
-                          title={showPasswords["apikeyValue"] ? "Ocultar" : "Exibir"}
-                        >
-                          {showPasswords["apikeyValue"] ? "Ocultar" : "Exibir"}
-                        </button>
-                      </div>
-                      {(req.authApiKeyValue ?? "").includes("{{") && (
-                        <VariablePreview
-                          className="auth-variable-preview"
-                          text={req.authApiKeyValue ?? ""}
-                          variables={variables}
-                        />
-                      )}
                     </label>
+                    <div className="auth-input-row">
+                      <VariableHighlightInput
+                        value={req.authApiKeyValue ?? ""}
+                        onChange={(value) => update({ authApiKeyValue: value })}
+                        placeholder="{{api_key}}"
+                        type={"text"}
+                        variables={variables}
+                      />
+                    </div>
                   </div>
                 )}
               </>
@@ -613,11 +578,11 @@ export function RequestPanel() {
                     type="button"
                     className="body-format-btn"
                     onClick={formatBodyJson}
-                    title="Identar JSON (Ctrl+Shift+F)"
+                    title="Identar JSON (Ctrl+Shift+F · ⌘+Shift+F)"
                   >
                     Formatar
                   </button>
-                  <span className="btn-shortcut-tooltip" role="tooltip">Ctrl+Shift+F</span>
+                  <span className="btn-shortcut-tooltip" role="tooltip">Ctrl+Shift+F · ⌘+Shift+F</span>
                 </span>
               )}
             </div>
@@ -686,6 +651,6 @@ export function RequestPanel() {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

@@ -5,20 +5,16 @@
  */
 const VAR_REGEX = /\{\{([^}]+)\}\}/g;
 
-export function VariablePreview({
-  text,
-  variables,
-  className = "",
-  returnNormalized = false,
-}: {
-  text: string;
-  variables: Record<string, string>;
-  className?: string;
-  returnNormalized?: boolean;
-}) {
-  if (!text) return null;
+export type VariablePart =
+  | { key: string; type: "text"; defined: false }
+  | { key: string; type: "var"; defined: boolean; value?: string };
 
-  const parts: Array<{ key: string; type: "text" | "var"; defined: boolean; value?: string }> = [];
+export function parseVariableParts(
+  text: string,
+  variables: Record<string, string>
+): VariablePart[] {
+  if (!text) return [];
+  const parts: VariablePart[] = [];
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   VAR_REGEX.lastIndex = 0;
@@ -34,8 +30,25 @@ export function VariablePreview({
   if (lastIndex < text.length) {
     parts.push({ key: text.slice(lastIndex), type: "text", defined: false });
   }
+  return parts.length > 0 ? parts : [{ key: text, type: "text", defined: false }];
+}
 
+export function VariablePreview({
+  text,
+  variables,
+  className = "",
+  returnNormalized = false,
+}: {
+  text: string;
+  variables: Record<string, string>;
+  className?: string;
+  returnNormalized?: boolean;
+}) {
+  if (!text) return null;
+
+  const parts = parseVariableParts(text, variables);
   if (parts.length === 0) return <span className={className}>{text}</span>;
+  if (parts.length === 1 && parts[0].type === "text") return <span className={className}>{text}</span>;
 
   if (returnNormalized) {
     return <span className={`variable-preview ${className}`.trim()}>
