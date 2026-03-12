@@ -1219,6 +1219,8 @@ body {
 }
 
 .variable-highlight-input__overlay {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
   position: absolute;
   inset: 0;
   padding: 0 12px;

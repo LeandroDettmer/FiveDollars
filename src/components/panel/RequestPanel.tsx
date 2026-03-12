@@ -109,8 +109,6 @@ export function RequestPanel() {
   // Ao alterar a URL, garantir que pathParams tenha linhas para cada :param
   useEffect(() => {
     const names = extractPathParamNames(req.url);
-
-    if (names.length === 0) return;
     const current = req.pathParams ?? [];
 
     setReq((r) => ({
