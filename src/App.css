@@ -505,9 +505,10 @@ body {
   flex-direction: row;
 }
 
+/* RequestPanel é o principal: sempre ocupa o máximo; largura mínima garantida por ResizableMainArea */
 .app-main-request {
   flex: 1;
-  min-width: 200px;
+  min-width: 400px;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -571,6 +572,7 @@ body {
 
 .sidebar-section-history {
   margin-bottom: 12px;
+  user-select: none; /* evita seleção de texto e menu do navegador ao clicar com botão direito */
 }
 
 .sidebar-footer {
@@ -952,6 +954,7 @@ body {
 .collection-tree {
   padding: 4px 0 4px 10px;
   position: relative;
+  user-select: none; /* evita seleção de texto ao clicar com botão direito */
 }
 
 .collection-tree-rename-input {
@@ -963,6 +966,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: 2px;
   color: var(--text);
+  user-select: text;
 }
 .collection-tree-rename-input:focus {
   outline: none;
@@ -1140,6 +1144,7 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+  user-select: none;
   cursor: pointer;
 }
 

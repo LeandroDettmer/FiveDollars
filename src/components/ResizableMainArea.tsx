@@ -3,9 +3,11 @@ import { RequestPanel } from "./panel/RequestPanel";
 import { ResponsePanel } from "./panel/ResponsePanel";
 
 const STORAGE_KEY = "fivedollars-response-width";
-const DEFAULT_RESPONSE_WIDTH = 480;
-const MIN_RESPONSE_WIDTH = 280;
-const MAX_RESPONSE_WIDTH = 960;
+const DEFAULT_RESPONSE_WIDTH = 210;
+const MIN_RESPONSE_WIDTH = 200;
+const MAX_RESPONSE_WIDTH = 660;
+/** RequestPanel é o principal: nunca menor que isso (response é limitado ao restante). */
+const MIN_REQUEST_WIDTH = 400;
 
 function getStoredWidth(): number {
   if (typeof window === "undefined") return DEFAULT_RESPONSE_WIDTH;
@@ -17,10 +19,11 @@ function getStoredWidth(): number {
 function setStoredWidth(w: number) {
   try {
     localStorage.setItem(STORAGE_KEY, String(w));
-  } catch {}
+  } catch { }
 }
 
 export function ResizableMainArea() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [responseWidth, setResponseWidth] = useState(getStoredWidth);
   const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
@@ -28,6 +31,22 @@ export function ResizableMainArea() {
 
   useEffect(() => {
     setResponseWidth(getStoredWidth());
+  }, []);
+
+  // Garantir que o RequestPanel sempre tenha pelo menos MIN_REQUEST_WIDTH: ao medir o container,
+  // limitar a largura do response para que o request não fique pequeno (ex.: ao abrir em janela pequena).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const updateFromContainer = () => {
+      const total = el.getBoundingClientRect().width;
+      const maxResponse = Math.max(MIN_RESPONSE_WIDTH, total - MIN_REQUEST_WIDTH);
+      setResponseWidth((prev) => (prev > maxResponse ? maxResponse : prev));
+    };
+    updateFromContainer();
+    const ro = new ResizeObserver(updateFromContainer);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
@@ -42,7 +61,10 @@ export function ResizableMainArea() {
     (e: PointerEvent) => {
       if (!dragging) return;
       const delta = startX.current - e.clientX;
-      const next = Math.min(MAX_RESPONSE_WIDTH, Math.max(MIN_RESPONSE_WIDTH, startW.current + delta));
+      let next = Math.max(MIN_RESPONSE_WIDTH, startW.current + delta);
+      const containerW = containerRef.current?.getBoundingClientRect().width ?? 0;
+      const maxResponse = Math.max(MIN_RESPONSE_WIDTH, containerW - MIN_REQUEST_WIDTH);
+      next = Math.min(MAX_RESPONSE_WIDTH, Math.min(next, maxResponse));
       setResponseWidth(next);
       setStoredWidth(next);
     },
@@ -64,7 +86,7 @@ export function ResizableMainArea() {
   }, [dragging, onPointerMove, onPointerUp]);
 
   return (
-    <div className="app-main-area">
+    <div className="app-main-area" ref={containerRef}>
       <div className="app-main-request">
         <RequestPanel />
       </div>

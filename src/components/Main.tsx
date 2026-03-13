@@ -5,6 +5,7 @@ import { Collection } from "@/types";
 import { generateId } from "@/lib/id";
 import { isTauri, checkForUpdate, getAppVersion } from "@/lib/updater";
 import { useKeyDown } from "@/lib/useKeyDown";
+import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 export function Main() {
   const [version, setVersion] = useState("");
@@ -59,7 +60,7 @@ export function Main() {
 
 
   return (
-    <div className="app-empty-tabs">
+    <div className="app-empty-tabs" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
       <div style={{ paddingTop: "25vh" }}>
         <div>
           <img style={{ width: "12vh", borderRadius: "24px" }} src={cropAppIcon} alt="logo" />

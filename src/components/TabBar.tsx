@@ -6,6 +6,7 @@ import { Dropdown } from "./Dropdown";
 import { HttpMethodBadge } from "./HttpMethodBadge";
 import { SaveRequestModal } from "./SaveRequestModal";
 import type { Tab, RequestTab } from "@/types";
+import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 function tabLabel(tab: Tab): string {
   if (tab.type === "request" && (tab as RequestTab).isTemp) return `${tab.label} *`;
@@ -70,7 +71,7 @@ export function TabBar() {
   if (tabs.length === 0) return null;
 
   return (
-    <div className="tab-bar-row">
+    <div className="tab-bar-row" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
       <div className="tab-bar-wrap">
         <div className="tab-bar" role="tablist" aria-label="Abas">
         {tabs.map((tab) => (

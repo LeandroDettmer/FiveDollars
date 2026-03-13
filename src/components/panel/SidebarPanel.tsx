@@ -10,6 +10,7 @@ import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/
 import { useClickOutside } from "@/lib/useClickOutside";
 import { generateId } from "@/lib/id";
 import type { Collection, Environment, RequestConfig } from "@/types";
+import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 import {
   type NodePath,
 } from "@/lib/collectionTreeUtils";
@@ -219,7 +220,7 @@ export function SidebarPanel() {
 
   return (
     <>
-      <div className="sidebar-scroll">
+      <div className="sidebar-scroll" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
         <section className="sidebar-section">
           {(
             <>
@@ -335,11 +336,11 @@ export function SidebarPanel() {
                           e.stopPropagation();
                           setCollectionMenuOpenId(coll.id);
                         }}
-                        onDoubleClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleRenameCollection(coll);
-                        }}
+                          onDoubleClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRenameCollection(coll);
+                          }}
                         >
                           <button
                             type="button"
@@ -456,7 +457,7 @@ export function SidebarPanel() {
           )}
         </section>
 
-        <section className="sidebar-section">
+        <section className="sidebar-section" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
           <div className="env-section-header">
             <button
               type="button"
@@ -514,17 +515,23 @@ export function SidebarPanel() {
           )}
         </section>
 
-        <section className="sidebar-section sidebar-section-history">
+        <section
+          className="sidebar-section sidebar-section-history"
+          onMouseDown={preventRightClickSelect}
+          onContextMenu={preventContextMenu}
+        >
           <div className="history-section-header">
             <h3>Histórico</h3>
             <button type="button" className="clear-history-btn" onClick={clearHistory} title="Limpar histórico">
               Limpar
             </button>
           </div>
-          <ul className="history-list">
+          <ul className="history-list" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
             {history.slice(0, 20).map((entry) => (
               <li
                 key={entry.id}
+                onMouseDown={preventRightClickSelect}
+                onContextMenu={preventContextMenu}
                 className={`history-item ${selectedHistoryEntryId === entry.id ? "history-item-selected" : ""}`}
                 onClick={() => {
                   setLastResponse(entry.response ?? null);
@@ -585,7 +592,7 @@ export function SidebarPanel() {
         </section>
       </div>
 
-      <section className="sidebar-section sidebar-footer">
+      <section className="sidebar-section sidebar-footer" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
         <button
           type="button"
           className="sidebar-about-btn"

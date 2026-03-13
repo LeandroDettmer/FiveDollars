@@ -3,7 +3,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 const STORAGE_KEY = "fivedollars-sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
-const MAX_WIDTH = 880;
+const MAX_WIDTH = 490;
 
 function getStoredWidth(): number {
   if (typeof window === "undefined") return DEFAULT_WIDTH;

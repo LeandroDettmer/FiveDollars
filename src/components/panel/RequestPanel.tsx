@@ -13,6 +13,7 @@ import { parseVariableParts, VariablePreview } from "@/components/VariablePrevie
 import { VariableHighlightInput } from "@/components/VariableHighlightInput";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
 import { useKeyDown } from "@/lib/useKeyDown";
+import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
@@ -314,6 +315,7 @@ export function RequestPanel() {
     <div className="request-panel">
       <div className="request-toolbar">
         <select
+          onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}
           value={req.method}
           onChange={(e) => update({ method: e.target.value as RequestConfig["method"] })}
           className="method-select"
@@ -335,7 +337,7 @@ export function RequestPanel() {
           }}
         />
         {sending ? (
-          <button type="button" className="send-btn cancel-btn" onClick={handleCancel}>
+          <button type="button" className="send-btn cancel-btn" onClick={handleCancel} onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
             Cancelar
           </button>
         ) : (
@@ -345,6 +347,7 @@ export function RequestPanel() {
               className="send-btn"
               onClick={handleSend}
               title="Enviar (Ctrl+Enter · ⌘+Enter)"
+              onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}
             >
               Enviar
             </button>
@@ -353,12 +356,12 @@ export function RequestPanel() {
         )}
       </div>
       {req.url && (
-        <div className="variable-preview-line">
+        <div className="variable-preview-line" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
           <VariablePreview text={req.url} variables={variables} returnNormalized={true} />
         </div>
       )}
 
-      <div className="request-tabs">
+      <div className="request-tabs" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
         <button
           type="button"
           className={`request-tab ${requestTab === "params" ? "request-tab-active" : ""}`}
@@ -404,7 +407,7 @@ export function RequestPanel() {
       <div className="request-tab-content">
         {requestTab === "params" && (
           <div className="request-section">
-            <h4>Query Params</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Query Params</h4>
             {req.queryParams.map((row) => (
               <div key={row.id} className="key-value-row">
                 <input
@@ -432,7 +435,7 @@ export function RequestPanel() {
             </button>
             {extractPathParamNames(req.url, req.pathParams).length > 0 && (
               <>
-                <h4 className="request-section-sub">Path Params</h4>
+                <h4 className="request-section-sub" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Path Params</h4>
                 <p className="request-section-hint">
                   Substitui :nome na URL pelo valor (ex.: :id → 123). Use {"{{var}}"} para variáveis.
                 </p>
@@ -467,7 +470,7 @@ export function RequestPanel() {
 
         {requestTab === "auth" && (
           <div className="request-section">
-            <h4>Authorization</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Authorization</h4>
             <label className="auth-type-select-wrap">
               <span className="auth-type-label">Tipo</span>
               <select
@@ -568,7 +571,7 @@ export function RequestPanel() {
 
         {requestTab === "headers" && (
           <div className="request-section">
-            <h4>Headers</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Headers</h4>
             {req.headers.map((row) => (
               <div key={row.id} className="header-row-wrap">
                 <div className="key-value-row">
@@ -636,7 +639,7 @@ export function RequestPanel() {
 
         {requestTab === "scripts" && (
           <div className="request-section">
-            <h4>Scripts</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Scripts</h4>
             <div className="script-tabs">
               <button
                 type="button"

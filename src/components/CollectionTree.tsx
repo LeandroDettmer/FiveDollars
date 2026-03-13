@@ -93,11 +93,16 @@ function NodeItem({
     onDropOnFolder(sourceNodeId, node.id);
   };
 
+  const preventRightClickSelect = (e: React.MouseEvent) => {
+    if (e.button === 2) e.preventDefault();
+  };
+
   if (node.type === "folder") {
     return (
       <div
         className={`collection-folder ${dragOver ? "collection-folder-drag-over" : ""}`}
         onContextMenu={(e) => onContextMenu(e, path, node)}
+        onMouseDown={preventRightClickSelect}
         onDragOver={handleFolderDragOver}
         onDragLeave={handleFolderDragLeave}
         onDrop={handleFolderDrop}
@@ -171,6 +176,7 @@ function NodeItem({
       style={{ paddingLeft: 12 + depth * 8}}
       onClick={() => onSelectRequest(node.request)}
       onContextMenu={(e) => onContextMenu(e, path, node)}
+      onMouseDown={preventRightClickSelect}
       draggable
       onDragStart={handleDragStart}
     >
@@ -250,6 +256,7 @@ export function CollectionTree({
 
   const handleTreeContextMenu = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest(".collection-request-btn, .collection-folder")) return;
+    e.stopPropagation();
     e.preventDefault();
     setContextMenu({ x: e.clientX, y: e.clientY, path: [], node: { id: "", name: "", type: "folder", children: [] } });
   };
@@ -324,6 +331,9 @@ export function CollectionTree({
     <div
       className="collection-tree"
       onContextMenu={handleTreeContextMenu}
+      onMouseDown={(e) => {
+        if (e.button === 2) e.preventDefault();
+      }}
     >
       {filteredNodes.map((node, idx) => (
         <NodeItem

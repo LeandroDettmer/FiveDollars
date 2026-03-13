@@ -8,6 +8,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
 import type { RunnerTab } from "@/types";
 import { Main } from "./components/Main";
+import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 import "./App.css";
 
 function App() {
@@ -21,7 +22,7 @@ function App() {
 
   return (
     <>
-      <header className="app-header">
+      <header className="app-header" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
         FiveDollars <span>— API Client | Desktop | Web</span>
       </header>
       <div className="app-layout">
