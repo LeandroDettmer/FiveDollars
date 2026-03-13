@@ -69,11 +69,10 @@ export function TabBar() {
 
   if (tabs.length === 0) return null;
 
-  console.log({activeTabId})
-
   return (
     <div className="tab-bar-row">
-      <div className="tab-bar" role="tablist" aria-label="Abas">
+      <div className="tab-bar-wrap">
+        <div className="tab-bar" role="tablist" aria-label="Abas">
         {tabs.map((tab) => (
           <div
             key={tab.id}
@@ -88,10 +87,10 @@ export function TabBar() {
               }
             }}
           >
-            <span className="tab-bar-tab-label" title={tabLabel(tab)}
-            >
+            <span className="tab-bar-tab-label" title={tabLabel(tab)}>
               {tab.type === "request" ? (
                 <div
+                  className="tab-bar-tab-label-inner"
                   onMouseOver={() => {
                     if (tab.type === "request" && (tab as RequestTab).isTemp && tab.id === activeTabId) {
                       setShowTooltipTempRequest(!showTooltipTempRequest);
@@ -101,21 +100,20 @@ export function TabBar() {
                     if (tab.type === "request" && (tab as RequestTab).isTemp && tab.id === activeTabId) {
                       setShowTooltipTempRequest(false);
                     }
-                  }}>
-                  <HttpMethodBadge method={tab.method} /> {tabLabel(tab)}
-
+                  }}
+                >
+                  <HttpMethodBadge method={tab.method} />
+                  <span className="tab-bar-tab-name">{tabLabel(tab)}</span>
                   {showTooltipTempRequest && tab.type === "request" && (tab as RequestTab).isTemp && tab.id === activeTabId && (
                     <>
-                      <br></br>
-                      <h1 style={{ fontSize: "0.8em", color: "#888" }}>Ctrl+S · ⌘+S</h1>
+                      <br />
+                      <span style={{ fontSize: "0.8em", color: "#888" }}>Ctrl+S · ⌘+S</span>
                     </>
                   )}
-
                 </div>
               ) : (
-                tabLabel(tab)
+                <span className="tab-bar-tab-name">{tabLabel(tab)}</span>
               )}
-
             </span>
 
             <button
@@ -133,8 +131,10 @@ export function TabBar() {
           </div>
 
         ))}
+        </div>
       </div>
-      <Dropdown
+      <div className="tab-bar-env-wrap">
+        <Dropdown
         open={envDropdownOpen}
         onOpenChange={setEnvDropdownOpen}
         panelClassName="tab-bar-env-dropdown"
@@ -203,7 +203,8 @@ export function TabBar() {
             ))}
           </>
         )}
-      </Dropdown>
+        </Dropdown>
+      </div>
       {tabContextMenu && (
         <>
           <div

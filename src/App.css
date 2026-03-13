@@ -68,7 +68,7 @@ body {
   overflow: hidden;
 }
 
-/* Barra de abas (estilo Postman) */
+/* Barra de abas (estilo Postman): rola horizontalmente, texto trunca ao encolher */
 .tab-bar {
   display: flex;
   align-items: stretch;
@@ -76,7 +76,8 @@ body {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   min-height: 0;
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -94,7 +95,8 @@ body {
   cursor: pointer;
   white-space: nowrap;
   max-width: 200px;
-  min-width: 0;
+  min-width: 72px;
+  flex-shrink: 1;
 }
 
 .tab-bar-tab:hover {
@@ -120,6 +122,23 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tab-bar-tab-label-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tab-bar-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .http-method {
@@ -206,7 +225,21 @@ body {
 
 .tab-bar-row {
   display: flex;
-  justify-content: space-between;
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* Área das abas: ocupa o espaço restante e rola; ambiente fica fixo à direita */
+.tab-bar-wrap {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+.tab-bar-env-wrap {
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
 }
 
