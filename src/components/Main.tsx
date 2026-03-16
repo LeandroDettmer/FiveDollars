@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import cropAppIcon from "../../crop-app-icon.png";
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 import { Collection } from "@/types";
 import { generateId } from "@/lib/id";
 import { isTauri, checkForUpdate, getAppVersion } from "@/lib/updater";
@@ -8,6 +9,7 @@ import { useKeyDown } from "@/lib/useKeyDown";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 export function Main() {
+  const { t } = useT();
   const [version, setVersion] = useState("");
   const [newUpdateAvailable, setNewUpdateAvailable] = useState<string | null>(null);
   const { addCollection, openNewTempRequest } = useAppStore();
@@ -48,7 +50,7 @@ export function Main() {
   const handleCreateCollection = () => {
     const newCollection: Collection = {
       id: generateId(),
-      name: "Nova collection",
+      name: t("sidebar.newCollection"),
       items: [],
     };
     addCollection(newCollection);
@@ -64,11 +66,11 @@ export function Main() {
       <div style={{ paddingTop: "25vh" }}>
         <div>
           <img style={{ width: "12vh", borderRadius: "24px" }} src={cropAppIcon} alt="logo" />
-          <p>Versão: v{version}</p>
+          <p>{t("main.version")}: v{version}</p>
           {newUpdateAvailable && newUpdateAvailable !== "" &&
             <>
-              <p>Nova versão disponível: {newUpdateAvailable}</p>
-              <p>Acesse Configurações/Atualizações para atualizar</p>
+              <p>{t("main.newVersionAvailable", { version: newUpdateAvailable })}</p>
+              <p>{t("main.goToSettingsUpdates")}</p>
             </>
           }
         </div>
@@ -77,7 +79,7 @@ export function Main() {
             handleCreateCollection();
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
-            Criar nova collection
+            {t("main.createCollection")}
             <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘C ·  Ctrl+C</span>
           </button>
 
@@ -85,7 +87,7 @@ export function Main() {
             openNewTempRequest();
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
-            Criar nova rota
+            {t("main.createRequest")}
             <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘N ·  Ctrl+N</span>
           </button>
 
@@ -93,7 +95,7 @@ export function Main() {
             (document.querySelector(".sidebar-search-input") as HTMLInputElement)?.focus();
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>search</span>
-            Buscar rotas...
+            {t("main.searchRequests")}
             <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘+K ·  Ctrl+K</span>
           </button>
 

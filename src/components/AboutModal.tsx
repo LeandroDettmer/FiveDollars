@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { isTauri, getAppVersion, checkForUpdate, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
 import { useKeyDown } from "@/lib/useKeyDown";
+import { useT } from "@/lib/i18n";
+import { useAppStore } from "@/store/useAppStore";
 import { ConfirmModal } from "./ConfirmModal";
 import { Export } from "./Export";
 
@@ -11,9 +13,12 @@ interface AboutModalProps {
   version?: string;
 }
 
-type TabId = "author" | "export" | "updateTab";
+type TabId = "author" | "export" | "updateTab" | "language";
 
 export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
+  const { t } = useT();
+  const locale = useAppStore((s) => s.locale ?? "en");
+  const setLocale = useAppStore((s) => s.setLocale);
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const [version, setVersion] = useState(versionProp ?? "0.1.0");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -56,13 +61,13 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       >
         <div className="modal-header">
           <h2 id="about-modal-title" className="modal-title">
-            Configurações
+            {t("about.title")}
           </h2>
           <button
             type="button"
             className="modal-close"
             onClick={onClose}
-            aria-label="Fechar"
+            aria-label={t("about.close")}
           >
             ×
           </button>
@@ -74,14 +79,14 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
               className={`about-modal-tab ${activeTab === "author" ? "about-modal-tab-active" : ""}`}
               onClick={() => setActiveTab("author")}
             >
-              Autor
+              {t("about.tabAuthor")}
             </button>
             <button
               type="button"
               className={`about-modal-tab ${activeTab === "export" ? "about-modal-tab-active" : ""}`}
               onClick={() => setActiveTab("export")}
             >
-              Exportar dados
+              {t("about.tabExport")}
             </button>
             {isTauri() && (
               <button
@@ -89,9 +94,16 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 className={`about-modal-tab ${activeTab === "updateTab" ? "about-modal-tab-active" : ""}`}
                 onClick={() => setActiveTab("updateTab")}
               >
-                Atualizações
+                {t("about.tabUpdates")}
               </button>
             )}
+            <button
+              type="button"
+              className={`about-modal-tab ${activeTab === "language" ? "about-modal-tab-active" : ""}`}
+              onClick={() => setActiveTab("language")}
+            >
+              {t("about.tabLanguage")}
+            </button>
           </nav>
           <div className="about-modal-content">
             {activeTab === "author" && (
@@ -129,24 +141,24 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                         updateStatus.status === "checking" || updateStatus.status === "downloading"
                       }
                     >
-                      {updateStatus.status === "checking" && "Verificando…"}
+                      {updateStatus.status === "checking" && t("about.checking")}
                       {updateStatus.status === "downloading" &&
-                        `Baixando… ${updateStatus.progress ?? 0}%`}
-                      {updateStatus.status === "idle" && "Verificar atualizações"}
-                      {updateStatus.status === "ready" && "Reiniciando…"}
+                        `${t("about.downloading")} ${updateStatus.progress ?? 0}%`}
+                      {updateStatus.status === "idle" && t("about.checkUpdates")}
+                      {updateStatus.status === "ready" && t("about.restarting")}
                       {(updateStatus.status === "none" ||
                         updateStatus.status === "available" ||
                         updateStatus.status === "error") &&
-                        "Verificar atualizações"}
+                        t("about.checkUpdates")}
                     </button>
                     {updateStatus.status === "available" && (
                       <p className="about-update-available">
-                        Nova versão <strong>{updateStatus.version}</strong> disponível.
+                        {t("about.newVersionAvailable", { version: updateStatus.version })}
                         {updateStatus.body && ` ${updateStatus.body}`}
                       </p>
                     )}
                     {updateStatus.status === "none" && (
-                      <p className="about-update-none">Você está na versão mais recente.</p>
+                      <p className="about-update-none">{t("about.upToDate")}</p>
                     )}
                     {updateStatus.status === "error" && (
                       <p className="about-update-error" role="alert">
@@ -157,10 +169,37 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 )}
               </div>
             )}
+            {activeTab === "language" && (
+              <div className="about-author-panel">
+                <h3 className="about-section-title">{t("about.languageTitle")}</h3>
+                <div className="about-language-options">
+                  <label className="about-language-option">
+                    <input
+                      type="radio"
+                      name="locale"
+                      value="en"
+                      checked={locale === "en"}
+                      onChange={() => setLocale("en")}
+                    />
+                    <span>{t("about.languageEnglish")}</span>
+                  </label>
+                  <label className="about-language-option">
+                    <input
+                      type="radio"
+                      name="locale"
+                      value="pt-BR"
+                      checked={locale === "pt-BR"}
+                      onChange={() => setLocale("pt-BR")}
+                    />
+                    <span>{t("about.languagePortuguese")}</span>
+                  </label>
+                </div>
+              </div>
+            )}
             {confirmModalOpen && (
               <ConfirmModal
-                title="Atualização disponível"
-                message={`A versão ${updateStatus?.version} está disponível. Deseja instalar agora?`}
+                title={t("about.updateAvailableTitle")}
+                message={t("about.updateAvailableMessage", { version: updateStatus?.version ?? "" })}
                 onConfirm={() => checkAndInstallUpdate(setUpdateStatus)}
                 onClose={() => setConfirmModalOpen(false)}
               />

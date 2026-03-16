@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Environment } from "@/types";
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 
 /** Primeira opção = sem cor (""), depois paleta predefinida */
 const ENV_COLORS = [
@@ -18,6 +19,7 @@ interface EnvironmentEditorProps {
 }
 
 export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
+  const { t } = useT();
   const { updateEnvironment, removeEnvironment } = useAppStore();
   const [name, setName] = useState(env?.name ?? "");
   const [vars, setVars] = useState<Array<{ key: string; value: string }>>([]);
@@ -135,7 +137,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
         </div>
         <div className="modal-body">
           <div className="env-editor-name">
-            <label htmlFor="env-name">Nome do ambiente</label>
+            <label htmlFor="env-name">{t("env.nameLabel")}</label>
             <input
               id="env-name"
               type="text"
@@ -146,7 +148,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
             />
           </div>
           <div className="env-editor-color">
-            <span className="env-editor-color-label">Cor do ambiente</span>
+            <span className="env-editor-color-label">{t("env.customColorLabel")}</span>
             <div className="env-editor-color-swatches" role="group" aria-label="Selecionar cor">
               {ENV_COLORS.map((hex) => (
                 <button
@@ -180,8 +182,8 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
                 type="button"
                 className="env-swatch env-swatch-add"
                 onClick={handleAddColor}
-                title="Adicionar cor"
-                aria-label="Adicionar cor personalizada"
+                title={t("env.addColor")}
+                aria-label={t("env.addColorAria")}
               >
                 +
               </button>
@@ -213,14 +215,14 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
                       className="btn-secondary env-panel-btn"
                       onClick={handleCustomColorCancel}
                     >
-                      Cancelar
+                      {t("common.cancel")}
                     </button>
                     <button
                       type="button"
                       className="btn-primary env-panel-btn"
                       onClick={handleCustomColorOk}
                     >
-                      OK
+                      {t("env.ok")}
                     </button>
                   </div>
                 </div>
@@ -231,8 +233,8 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
             <table className="env-editor-table">
               <thead>
                 <tr>
-                  <th>Variável</th>
-                  <th>Valor</th>
+                  <th>{t("env.variableHeader")}</th>
+                  <th>{t("common.value")}</th>
                   <th aria-label="Visibilidade" />
                 </tr>
               </thead>
@@ -271,7 +273,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
                         type="button"
                         className="env-remove-var-btn"
                         onClick={() => removeVar(index)}
-                        title="Remover"
+                        title={t("env.removeVariable")}
                       >
                         −
                       </button>
@@ -282,7 +284,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
             </table>
           </div>
           <button type="button" className="env-add-var-btn" onClick={addVar}>
-            + Adicionar variável
+            {t("env.addVariable")}
           </button>
         </div>
         <div className="modal-footer">
@@ -293,16 +295,16 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
               removeEnvironment(env.id);
               onClose();
             }}
-            title="Remover este ambiente"
+            title={t("env.removeEnvironmentTitle")}
           >
-            Remover ambiente
+            {t("env.removeEnvironment")}
           </button>
           <div className="modal-footer-right">
             <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancelar
+              {t("common.cancel")}
             </button>
             <button type="button" className="btn-primary" onClick={save}>
-              Salvar
+              {t("common.save")}
             </button>
           </div>
         </div>

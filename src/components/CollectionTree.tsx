@@ -13,6 +13,7 @@ import {
 } from "@/lib/collectionTreeUtils";
 
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 import { HttpMethodBadge } from "./HttpMethodBadge";
 
 type TreeAction =
@@ -238,6 +239,7 @@ export function CollectionTree({
   } | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const { getCollectionById } = useAppStore();
+  const { t } = useT();
 
   const filteredNodes = useMemo(
     () => (searchQuery ? filterNodesBySearch(nodes, searchQuery) : nodes),
@@ -276,10 +278,10 @@ export function CollectionTree({
 
     switch (action) {
       case "new-folder":
-        next = addFolderToNodes(nodes, [], "Nova pasta");
+        next = addFolderToNodes(nodes, [], t("sidebar.newFolder"));
         break;
       case "new-subfolder":
-        if (node.type === "folder" && path !== null) next = addFolderToNodes(nodes, path, "Nova pasta");
+        if (node.type === "folder" && path !== null) next = addFolderToNodes(nodes, path, t("tree.newSubfolder"));
         break;
       case "move-up":
         if (path !== null) next = moveNodeAtPath(nodes, path, -1);
@@ -366,25 +368,25 @@ export function CollectionTree({
             {contextMenu.path.length === 0 && (
               <>
                 <button type="button" onClick={() => runAction("new-folder")}>
-                  Nova pasta
+                  {t("sidebar.newFolder")}
                 </button>
               </>
             )}
             {contextMenu.node.type === "folder" && contextMenu.node.id && (
               <>
                 <button type="button" onClick={() => runAction("new-subfolder")}>
-                  Nova subpasta
+                  {t("tree.newSubfolder")}
                 </button>
                 <button type="button" onClick={() => {
                   const path: NodePath | null = getPathByNodeId(nodes, contextMenu.node.id);
                   onAddRequestToCollection?.((collectionData ?? { id: _collectionId, name: "", items: [], variables: {} }), path ?? [])
                   setContextMenu(null);
                 }}>
-                  Nova requisição
+                  {t("sidebar.newRequest")}
                 </button>
                 {onRunFolder && (
                   <button type="button" onClick={() => runAction("run")} className="context-menu-run">
-                    Run
+                    {t("tree.run")}
                   </button>
                 )}
               </>
@@ -392,16 +394,16 @@ export function CollectionTree({
             {contextMenu.node.id && (
               <>
                 <button type="button" onClick={() => runAction("move-up")}>
-                  Mover para cima
+                  {t("tree.moveUp")}
                 </button>
                 <button type="button" onClick={() => runAction("move-down")}>
-                  Mover para baixo
+                  {t("tree.moveDown")}
                 </button>
                 <button type="button" onClick={() => runAction("rename")}>
-                  Renomear
+                  {t("sidebar.rename")}
                 </button>
                 <button type="button" onClick={() => runAction("delete")} className="context-menu-danger">
-                  Remover
+                  {t("common.remove")}
                 </button>
               </>
             )}

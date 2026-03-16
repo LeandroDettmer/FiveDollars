@@ -1,4 +1,6 @@
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
+import type { TranslationKeys } from "@/locales/en";
 import { addRequestToNodes } from "@/lib/collectionTreeUtils";
 import type { CollectionNode, RequestConfig } from "@/types";
 import type { NodePath } from "@/lib/collectionTreeUtils";
@@ -15,22 +17,25 @@ function SaveFolderOption({
   path,
   pathLabel,
   onSave,
+  t,
 }: {
   collectionId: string;
   collectionName: string;
   path: NodePath;
   pathLabel: string;
   onSave: (collectionId: string, path: NodePath) => void;
+  t: (key: TranslationKeys, params?: Record<string, string | number>) => string;
 }) {
+  const title = pathLabel ? `${collectionName} > ${pathLabel}` : collectionName;
   return (
     <button
       type="button"
       className="save-request-folder-option"
       onClick={() => onSave(collectionId, path)}
-      title={`Salvar em ${collectionName}${pathLabel ? ` > ${pathLabel}` : ""}`}
+      title={title}
     >
       <span className="material-symbols-outlined save-request-folder-icon" aria-hidden>folder</span>
-      {pathLabel || "root"}
+      {pathLabel || t("saveRequest.root")}
     </button>
   );
 }
@@ -42,6 +47,7 @@ function FolderList({
   pathPrefix,
   pathLabelPrefix,
   onSave,
+  t,
 }: {
   nodes: CollectionNode[];
   collectionId: string;
@@ -49,6 +55,7 @@ function FolderList({
   pathPrefix: NodePath;
   pathLabelPrefix: string;
   onSave: (collectionId: string, path: NodePath) => void;
+  t: (key: TranslationKeys, params?: Record<string, string | number>) => string;
 }) {
   const items: React.ReactNode[] = [];
   nodes.forEach((node, idx) => {
@@ -63,6 +70,7 @@ function FolderList({
           path={path}
           pathLabel={label}
           onSave={onSave}
+          t={t}
         />
       );
       items.push(
@@ -74,6 +82,7 @@ function FolderList({
           pathPrefix={path}
           pathLabelPrefix={label}
           onSave={onSave}
+          t={t}
         />
       );
     }
@@ -82,6 +91,7 @@ function FolderList({
 }
 
 export function SaveRequestModal({ request, tabId, onClose }: SaveRequestModalProps) {
+  const { t } = useT();
   const collections = useAppStore((s) => s.collections);
   const updateCollection = useAppStore((s) => s.updateCollection);
   const removeTempRequest = useAppStore((s) => s.removeTempRequest);
@@ -108,16 +118,16 @@ export function SaveRequestModal({ request, tabId, onClose }: SaveRequestModalPr
       >
         <div className="modal-header">
           <h2 id="save-request-modal-title" className="modal-title">
-            Salvar requisição
+            {t("saveRequest.title")}
           </h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar">
+          <button type="button" className="modal-close" onClick={onClose} aria-label={t("about.close")}>
             ×
           </button>
         </div>
         <div className="modal-body save-request-modal-body">
-          <p className="save-request-modal-hint">Escolha a pasta onde deseja salvar &quot;{request.name}&quot;:</p>
+          <p className="save-request-modal-hint">{t("saveRequest.hint", { name: request.name })}</p>
           {collections.length === 0 ? (
-            <p className="save-request-modal-empty">Nenhuma collection. Crie uma na sidebar primeiro.</p>
+            <p className="save-request-modal-empty">{t("saveRequest.noCollections")}</p>
           ) : (
             <div className="save-request-collections">
               {collections.map((coll) => (
@@ -130,6 +140,7 @@ export function SaveRequestModal({ request, tabId, onClose }: SaveRequestModalPr
                       path={[]}
                       pathLabel=""
                       onSave={handleSave}
+                      t={t}
                     />
                     <FolderList
                       nodes={coll.items}
@@ -138,6 +149,7 @@ export function SaveRequestModal({ request, tabId, onClose }: SaveRequestModalPr
                       pathPrefix={[]}
                       pathLabelPrefix=""
                       onSave={handleSave}
+                      t={t}
                     />
                   </div>
                 </div>

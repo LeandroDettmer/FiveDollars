@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 import { ResponseBodyView } from "../ResponseBodyView";
 import type { ScriptLogEntry } from "@/types";
 
@@ -28,6 +29,7 @@ function formatLogArgs(args: unknown[]): string {
 }
 
 export function ResponsePanel() {
+  const { t } = useT();
   const {
     lastResponse,
     scriptLogs,
@@ -85,14 +87,14 @@ export function ResponsePanel() {
     : null;
   const logsToShow = selectedEntry?.scriptLogs ?? scriptLogs;
   const logsTitle = selectedEntry
-    ? `Logs — ${selectedEntry.method} ${selectedEntry.url}`
-    : "Logs (última requisição)";
+    ? t("response.logsTitle", { method: selectedEntry.method, url: selectedEntry.url })
+    : t("response.logsLastRequest");
   const hasLogsToShow = logsToShow.length > 0 || selectedEntry != null;
 
   if (!lastResponse && !selectedEntry && !sendingRequest) {
     return (
       <div className="response-panel empty">
-        <p>Envie uma requisição para ver a resposta aqui.</p>
+        <p>{t("response.empty")}</p>
       </div>
     );
   }
@@ -101,7 +103,7 @@ export function ResponsePanel() {
     return (
       <div className="response-panel empty response-panel-loading">
         <div className="response-loading-spinner" aria-hidden />
-        <p>Enviando…</p>
+        <p>{t("response.sending")}</p>
       </div>
     );
   }
@@ -124,8 +126,8 @@ export function ResponsePanel() {
             >
               {response.status} {response.statusText}
             </span>
-            <span className="meta-item">Tempo: {response.timeMs} ms</span>
-            <span className="meta-item">Tamanho: {response.sizeBytes} bytes</span>
+            <span className="meta-item">{t("response.time")}: {response.timeMs} ms</span>
+            <span className="meta-item">{t("response.size")}: {response.sizeBytes} bytes</span>
           </div>
           <div className="response-body-wrap">
             <ResponseBodyView
@@ -137,7 +139,7 @@ export function ResponsePanel() {
         </>
       )}
       {!lastResponse && selectedEntry && (
-        <p className="response-panel-hint">Logs da requisição selecionada no histórico.</p>
+        <p className="response-panel-hint">{t("response.logsSelected")}</p>
       )}
       {hasLogsToShow && (
         <>
@@ -148,7 +150,7 @@ export function ResponsePanel() {
             aria-valuemax={MAX_LOGS_HEIGHT}
             className={`response-logs-resize-handle ${draggingLogs ? "response-logs-resize-handle--active" : ""}`}
             onPointerDown={onLogsResizePointerDown}
-            title="Arraste para redimensionar os logs"
+            title={t("response.logsResize")}
           />
           <div
             className="script-logs-panel"
@@ -157,7 +159,7 @@ export function ResponsePanel() {
             <h4 className="script-logs-title">{logsTitle}</h4>
             <div className="script-logs-list">
               {logsToShow.length === 0 ? (
-                <p className="script-logs-empty">Nenhum log nesta execução.</p>
+                <p className="script-logs-empty">{t("response.noLogs")}</p>
               ) : (
                 logsToShow.map((entry: ScriptLogEntry, i: number) => (
                   <div key={i} className={`script-log-line script-log-${entry.type}`}>

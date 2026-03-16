@@ -13,19 +13,10 @@ import { parseVariableParts, VariablePreview } from "@/components/VariablePrevie
 import { VariableHighlightInput } from "@/components/VariableHighlightInput";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
 import { useKeyDown } from "@/lib/useKeyDown";
+import { useT, getDefaultNewRequestName, type Locale } from "@/lib/i18n";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
-
-const defaultRequest: RequestConfig = {
-  id: generateId(),
-  name: "Nova requisição",
-  method: "GET",
-  url: "https://httpbin.org/get",
-  headers: [{ id: generateId(), key: "", value: "", enabled: true }],
-  queryParams: [{ id: generateId(), key: "", value: "", enabled: true }],
-  bodyType: "none",
-};
 
 export function RequestPanel() {
   const {
@@ -46,9 +37,22 @@ export function RequestPanel() {
     setSendingRequest,
     openNewTempRequest,
   } = useAppStore();
-  const [req, setReq] = useState<RequestConfig>(currentRequest ?? defaultRequest);
+  const { t } = useT();
+  const [req, setReq] = useState<RequestConfig>(() => {
+    if (currentRequest) return currentRequest;
+    const locale = (useAppStore.getState().locale ?? "en") as Locale;
+    return {
+      id: generateId(),
+      name: getDefaultNewRequestName(locale),
+      method: "GET",
+      url: "https://httpbin.org/get",
+      headers: [{ id: generateId(), key: "", value: "", enabled: true }],
+      queryParams: [{ id: generateId(), key: "", value: "", enabled: true }],
+      bodyType: "none",
+    };
+  });
   const [scriptsTab, setScriptsTab] = useState<"pre" | "post">("post");
-  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">(defaultRequest?.method === "GET" ? "params" : "body");
+  const [requestTab, setRequestTab] = useState<"params" | "auth" | "headers" | "body" | "scripts">("params");
   const variables = getResolvedVariables(req.id);
   const reqRef = useRef(req);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -225,7 +229,7 @@ export function RequestPanel() {
       if (!isAborted) {
         setLastResponse({
           status: 0,
-          statusText: "Erro",
+          statusText: t("response.error"),
           headers: {},
           body: String(err),
           timeMs: 0,
@@ -330,7 +334,7 @@ export function RequestPanel() {
         <VariableHighlightInput
           value={req.url}
           onChange={(url) => update({ url })}
-          placeholder="URL (use {{baseUrl}} e :id para path params)"
+          placeholder={t("request.urlPlaceholder")}
           variables={variables}
           onBlur={() => {
 
@@ -338,7 +342,7 @@ export function RequestPanel() {
         />
         {sending ? (
           <button type="button" className="send-btn cancel-btn" onClick={handleCancel} onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
-            Cancelar
+            {t("common.cancel")}
           </button>
         ) : (
           <span className="btn-with-tooltip">
@@ -346,10 +350,10 @@ export function RequestPanel() {
               type="button"
               className="send-btn"
               onClick={handleSend}
-              title="Enviar (Ctrl+Enter · ⌘+Enter)"
+              title={t("request.sendShortcut")}
               onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}
             >
-              Enviar
+              {t("request.send")}
             </button>
             <span className="btn-shortcut-tooltip" role="tooltip">Ctrl+Enter · ⌘+Enter</span>
           </span>
@@ -367,21 +371,21 @@ export function RequestPanel() {
           className={`request-tab ${requestTab === "params" ? "request-tab-active" : ""}`}
           onClick={() => setRequestTab("params")}
         >
-          Params
+          {t("request.tabParams")}
         </button>
         <button
           type="button"
           className={`request-tab ${requestTab === "auth" ? "request-tab-active" : ""}`}
           onClick={() => setRequestTab("auth")}
         >
-          Authorization
+          {t("request.tabAuth")}
         </button>
         <button
           type="button"
           className={`request-tab ${requestTab === "headers" ? "request-tab-active" : ""}`}
           onClick={() => setRequestTab("headers")}
         >
-          Headers
+          {t("request.tabHeaders")}
           {req.headers.filter((h) => h.key.trim()).length > 0 && (
             <span className="request-tab-badge">{req.headers.filter((h) => h.key.trim()).length}</span>
           )}
@@ -392,7 +396,7 @@ export function RequestPanel() {
             className={`request-tab ${requestTab === "body" ? "request-tab-active" : ""}`}
             onClick={() => setRequestTab("body")}
           >
-            Body
+            {t("request.tabBody")}
           </button>
         )}
         <button
@@ -400,18 +404,18 @@ export function RequestPanel() {
           className={`request-tab ${requestTab === "scripts" ? "request-tab-active" : ""}`}
           onClick={() => setRequestTab("scripts")}
         >
-          Scripts
+          {t("request.tabScripts")}
         </button>
       </div>
 
       <div className="request-tab-content">
         {requestTab === "params" && (
           <div className="request-section">
-            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Query Params</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>{t("request.queryParams")}</h4>
             {req.queryParams.map((row) => (
               <div key={row.id} className="key-value-row">
                 <input
-                  placeholder="Key"
+                  placeholder={t("common.key")}
                   value={req.queryParams.find((q) => q.id === row.id)?.key ?? ""}
                   onChange={(e) => {
                     handleQueryParamChange(e, row, "key");
@@ -419,7 +423,7 @@ export function RequestPanel() {
 
                 />
                 <input
-                  placeholder="Value"
+                  placeholder={t("common.value")}
                   value={req.queryParams.find((q) => q.id === row.id)?.value ?? ""}
                   onChange={(e) => {
                     handleQueryParamChange(e, row, "value");
@@ -431,13 +435,13 @@ export function RequestPanel() {
               </div>
             ))}
             <button type="button" className="add-row-btn" onClick={() => addRow("queryParams")}>
-              + Parâmetro
+              {t("request.addParam")}
             </button>
             {extractPathParamNames(req.url, req.pathParams).length > 0 && (
               <>
-                <h4 className="request-section-sub" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Path Params</h4>
+                <h4 className="request-section-sub" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>{t("request.pathParams")}</h4>
                 <p className="request-section-hint">
-                  Substitui :nome na URL pelo valor (ex.: :id → 123). Use {"{{var}}"} para variáveis.
+                  {t("request.pathParamsHint")}
                 </p>
                 {(req.pathParams ?? [])
                   .filter(
@@ -448,12 +452,12 @@ export function RequestPanel() {
                   .map((row) => (
                     <div key={row.id} className="key-value-row">
                       <input
-                        placeholder="Nome"
+                        placeholder={t("common.name")}
                         value={row.key}
                         onChange={(e) => updateRow("pathParams", row.id, { key: e.target.value })}
                       />
                       <input
-                        placeholder="Valor"
+                        placeholder={t("common.value")}
                         value={row.value}
                         onChange={(e) => updateRow("pathParams", row.id, { value: e.target.value })}
                       />
@@ -461,7 +465,7 @@ export function RequestPanel() {
                     </div>
                   ))}
                 <button type="button" className="add-row-btn" onClick={() => addRow("pathParams")}>
-                  + Path param
+                  {t("request.addPathParam")}
                 </button>
               </>
             )}
@@ -470,29 +474,29 @@ export function RequestPanel() {
 
         {requestTab === "auth" && (
           <div className="request-section">
-            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Authorization</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>{t("request.tabAuth")}</h4>
             <label className="auth-type-select-wrap">
-              <span className="auth-type-label">Tipo</span>
+              <span className="auth-type-label">{t("request.authType")}</span>
               <select
                 value={req.authType ?? ""}
                 onChange={(e) => update({ authType: (e.target.value || null) as RequestConfig["authType"] })}
                 className="body-type-select"
               >
-                <option value="">Nenhum</option>
-                <option value="basic">Basic Auth</option>
-                <option value="bearer">Bearer Token</option>
-                <option value="apikey">API Key</option>
+                <option value="">{t("request.authNone")}</option>
+                <option value="basic">{t("request.authBasic")}</option>
+                <option value="bearer">{t("request.authBearer")}</option>
+                <option value="apikey">{t("request.authApiKey")}</option>
               </select>
             </label>
             <p className="request-section-hint">
-              As variáveis {"{{nome}}"} são resolvidas pelo ambiente selecionado no envio.
+              {t("request.authHint")}
             </p>
             {(req.authType === "basic" || req.authType === "bearer" || req.authType === "apikey") && (
               <>
                 {req.authType === "basic" && (
                   <div className="auth-fields">
                     <label className="auth-field">
-                      <span>Username</span>
+                      <span>{t("request.username")}</span>
                     </label>
 
                     <VariableHighlightInput
@@ -503,7 +507,7 @@ export function RequestPanel() {
                     />
 
                     <label className="auth-field auth-field-with-toggle">
-                      <span>Password</span>
+                      <span>{t("request.password")}</span>
                     </label>
 
                     <div className="auth-input-row">
@@ -523,7 +527,7 @@ export function RequestPanel() {
                   <>
                     <div className="auth-fields">
                       <label className="auth-field">
-                        <span>Token</span>
+                        <span>{t("request.token")}</span>
                       </label>
 
                       <VariableHighlightInput
@@ -539,7 +543,7 @@ export function RequestPanel() {
                 {req.authType === "apikey" && (
                   <div className="auth-fields">
                     <label className="auth-field">
-                      <span>Key (header name)</span>
+                      <span>{t("request.keyHeaderName")}</span>
                     </label>
 
                     <VariableHighlightInput
@@ -550,7 +554,7 @@ export function RequestPanel() {
                     />
 
                     <label className="auth-field auth-field-with-toggle">
-                      <span>Value</span>
+                      <span>{t("common.value")}</span>
                     </label>
 
                     <div className="auth-input-row">
@@ -571,7 +575,7 @@ export function RequestPanel() {
 
         {requestTab === "headers" && (
           <div className="request-section">
-            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Headers</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>{t("request.tabHeaders")}</h4>
             {req.headers.map((row) => (
               <div key={row.id} className="header-row-wrap">
                 <div className="key-value-row">
@@ -592,7 +596,7 @@ export function RequestPanel() {
               </div>
             ))}
             <button type="button" className="add-row-btn" onClick={() => addRow("headers")}>
-              + Header
+              {t("request.addHeader")}
             </button>
           </div>
         )}
@@ -600,15 +604,15 @@ export function RequestPanel() {
         {requestTab === "body" && req.method !== "GET" && (
           <div className="request-section">
             <div className="body-section-header">
-              <h4>Body</h4>
+              <h4>{t("request.tabBody")}</h4>
               <select
                 value={req.bodyType}
                 onChange={(e) => update({ bodyType: e.target.value as RequestConfig["bodyType"] })}
                 className="body-type-select"
               >
-                <option value="none">Nenhum</option>
-                <option value="json">JSON</option>
-                <option value="raw">Raw</option>
+                <option value="none">{t("request.bodyTypeNone")}</option>
+                <option value="json">{t("request.bodyTypeJson")}</option>
+                <option value="raw">{t("request.bodyTypeRaw")}</option>
               </select>
               {req.bodyType === "json" && (
                 <span className="btn-with-tooltip">
@@ -616,9 +620,9 @@ export function RequestPanel() {
                     type="button"
                     className="body-format-btn"
                     onClick={formatBodyJson}
-                    title="Identar JSON (Ctrl+Shift+F · ⌘+Shift+F)"
+                    title={t("request.formatJsonShortcut")}
                   >
-                    Formatar
+                    {t("request.formatJson")}
                   </button>
                   <span className="btn-shortcut-tooltip" role="tooltip">Ctrl+Shift+F · ⌘+Shift+F</span>
                 </span>
@@ -630,7 +634,7 @@ export function RequestPanel() {
                 value={req.body ?? ""}
                 onChange={(body) => update({ body })}
                 mode={req.bodyType === "json" ? "json" : "raw"}
-                placeholder={req.bodyType === "json" ? '{"key": "value"}' : "Texto"}
+                placeholder={req.bodyType === "json" ? t("request.bodyPlaceholderJson") : t("request.bodyPlaceholderRaw")}
                 resizeable={true}
               />
             )}
@@ -639,33 +643,33 @@ export function RequestPanel() {
 
         {requestTab === "scripts" && (
           <div className="request-section">
-            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>Scripts</h4>
+            <h4 onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>{t("request.tabScripts")}</h4>
             <div className="script-tabs">
               <button
                 type="button"
                 className={`script-tab ${scriptsTab === "pre" ? "script-tab-active" : ""}`}
                 onClick={() => setScriptsTab("pre")}
               >
-                Pre-request
+                {t("request.scriptPreRequest")}
               </button>
               <button
                 type="button"
                 className={`script-tab ${scriptsTab === "post" ? "script-tab-active" : ""}`}
                 onClick={() => setScriptsTab("post")}
               >
-                Post-response
+                {t("request.scriptPostResponse")}
               </button>
             </div>
             {scriptsTab === "pre" && (
               <>
                 <p className="request-section-hint">
-                  Executado antes do envio. fv.environment.get/set (ambiente); se a requisição for de uma collection, use fv.collectionVariables.get/set para gravar na collection.
+                  {t("request.scriptPreHint")}
                 </p>
                 <textarea
                   className="script-textarea"
                   value={req.preRequestScript ?? ""}
                   onChange={(e) => update({ preRequestScript: e.target.value })}
-                  placeholder={`// Exemplo: definir timestamp\nfv.environment.set("timestamp", Date.now());`}
+                  placeholder={t("request.scriptPrePlaceholder")}
                   spellCheck={false}
                   rows={6}
                 />
@@ -674,13 +678,13 @@ export function RequestPanel() {
             {scriptsTab === "post" && (
               <>
                 <p className="request-section-hint">
-                  Executado após a resposta. fv.response.json(); fv.environment.set (ambiente); fv.collectionVariables.set (variáveis da collection, quando a requisição pertence a uma).
+                  {t("request.scriptPostHint")}
                 </p>
                 <textarea
                   className="script-textarea"
                   value={req.postResponseScript ?? ""}
                   onChange={(e) => update({ postResponseScript: e.target.value })}
-                  placeholder={`const responseJson = fv.response.json();\nif (responseJson?.access_token) {\n  fv.environment.set("access_token", responseJson.access_token);\n}`}
+                  placeholder={t("request.scriptPostPlaceholder")}
                   spellCheck={false}
                   rows={6}
                 />

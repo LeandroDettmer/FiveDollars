@@ -5,6 +5,8 @@ export interface PersistedData {
   environments: Environment[];
   currentEnvId: string | null;
   history: HistoryEntry[];
+  /** UI language; optional for backward compatibility. */
+  locale?: string;
 }
 
 export const DEFAULT_PERSISTED: PersistedData = {
@@ -12,4 +14,5 @@ export const DEFAULT_PERSISTED: PersistedData = {
   environments: [],
   currentEnvId: null,
   history: [],
+  locale: "en",
 };

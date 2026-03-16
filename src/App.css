@@ -2784,6 +2784,32 @@ body {
   color: var(--danger, #c53030);
 }
 
+.about-section-title {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.about-language-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.about-language-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.about-language-option input {
+  margin: 0;
+}
+
 .about-export-panel {
   display: flex;
   flex-direction: column;

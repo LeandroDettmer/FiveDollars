@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { HttpMethodBadge } from "../HttpMethodBadge";
+import { useT } from "@/lib/i18n";
 import type { RequestConfig, RunnerConfigFormState } from "@/types";
 
 /** Converte JSON do arquivo em array de objetos (variáveis por iteração). */
@@ -56,6 +57,7 @@ export function RunnerConfigPanel({
   initialFormState = null,
   onFormStateChange,
 }: RunnerConfigPanelProps) {
+  const { t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [iterations, setIterations] = useState(() => initialFormState?.iterations ?? 1);
   const [delayMs, setDelayMs] = useState(() => initialFormState?.delayMs ?? 0);
@@ -110,7 +112,7 @@ export function RunnerConfigPanel({
       } else {
         setDataFileRows(null);
         setDataFileName(null);
-        setFileError("Use um JSON com array de objetos ou um único objeto. Ex.: [{ \"baseUrl\": \"...\" }, ...]");
+        setFileError(t("runner.fileError"));
       }
     };
     reader.readAsText(file, "utf-8");
@@ -144,11 +146,11 @@ export function RunnerConfigPanel({
     <div className="runner-config-panel">
       <div className="runner-panel-header">
         <h2 className="runner-panel-title">
-          Configurar Run — {folderName}
+          {t("runner.configTitle", { folderName })}
         </h2>
         <div className="runner-panel-header-actions">
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -156,25 +158,25 @@ export function RunnerConfigPanel({
             onClick={handleRun}
             disabled={selectedRequests.length === 0}
           >
-            Executar {selectedRequests.length > 0 ? `(${selectedRequests.length})` : ""}
+            {t("runner.execute")} {selectedRequests.length > 0 ? `(${selectedRequests.length})` : ""}
           </button>
         </div>
       </div>
       <div className="runner-config-panel-body">
         <section className="runner-config-section">
           <div className="runner-config-sequence-header">
-            <h3 className="runner-config-section-title">Selecionar requisições</h3>
+            <h3 className="runner-config-section-title">{t("runner.selectRequests")}</h3>
             <div className="runner-config-sequence-actions">
               <button type="button" className="runner-config-select-all-btn" onClick={selectAll}>
-                Marcar todos
+                {t("runner.selectAll")}
               </button>
               <button type="button" className="runner-config-select-all-btn" onClick={deselectAll}>
-                Desmarcar todos
+                {t("runner.deselectAll")}
               </button>
             </div>
           </div>
           <p className="runner-config-hint">
-            Só as requisições marcadas serão executadas. Selecione ao menos uma.
+            {t("runner.selectRequestsHint")}
           </p>
           <ul className="runner-config-sequence">
             {requests.map((r) => (
@@ -194,15 +196,15 @@ export function RunnerConfigPanel({
             ))}
           </ul>
           {selectedRequests.length === 0 && (
-            <p className="runner-config-error">Selecione ao menos uma requisição para executar.</p>
+            <p className="runner-config-error">{t("runner.selectOneRequired")}</p>
           )}
         </section>
 
         <section className="runner-config-section">
-          <h3 className="runner-config-section-title">Configuração</h3>
+          <h3 className="runner-config-section-title">{t("runner.configSection")}</h3>
           <div className="runner-config-row">
             <label>
-              Iterações
+              {t("runner.iterations")}
               <input
                 type="number"
                 min={1}
@@ -214,7 +216,7 @@ export function RunnerConfigPanel({
           </div>
           <div className="runner-config-row">
             <label>
-              Atraso entre requisições (ms)
+              {t("runner.delayBetween")}
               <input
                 type="number"
                 min={0}
@@ -224,16 +226,16 @@ export function RunnerConfigPanel({
             </label>
           </div>
           <div className="runner-config-row">
-            <span className="runner-config-label">Arquivo de dados (JSON)</span>
+            <span className="runner-config-label">{t("runner.dataFile")}</span>
             <p className="runner-config-hint">
-              Apenas JSON. Use um array de objetos: cada objeto vira variáveis em uma iteração.
+              {t("runner.dataFileHint")}
             </p>
             <button
               type="button"
               className="btn-secondary runner-config-select-file"
               onClick={handleSelectFile}
             >
-              Selecionar arquivo
+              {t("runner.selectFile")}
             </button>
             <input
               ref={fileInputRef}
@@ -245,7 +247,7 @@ export function RunnerConfigPanel({
             />
             {dataFileName && (
               <span className="runner-config-file-name" title={dataFileName}>
-                {dataFileName} ({dataFileRows?.length ?? 0} iteração(ões))
+                {t("runner.iterationsCount", { fileName: dataFileName, count: String(dataFileRows?.length ?? 0) })}
               </span>
             )}
             {fileError && <p className="runner-config-error">{fileError}</p>}
@@ -258,10 +260,10 @@ export function RunnerConfigPanel({
                 checked={includeResponseBody}
                 onChange={(e) => setIncludeResponseBody(e.target.checked)}
               />
-              Incluir corpo da resposta no histórico
+              {t("runner.includeResponseBody")}
             </label>
             <p className="runner-config-hint">
-              Se desmarcado, só o status (código e tempo) é salvo. O retorno (payload) sempre aparece na execução atual.
+              {t("runner.includeResponseBodyHint")}
             </p>
           </div>
         </section>

@@ -21,18 +21,21 @@ import {
   getRequestById,
 } from "@/lib/collectionTreeUtils";
 import { generateId } from "@/lib/id";
+import { getDefaultNewRequestName, type Locale } from "@/lib/i18n";
 
 function persist(state: {
   collections: Collection[];
   environments: Environment[];
   currentEnv: Environment | null;
   history: HistoryEntry[];
+  locale?: string;
 }) {
   const data: PersistedData = {
     collections: state.collections,
     environments: state.environments,
     currentEnvId: state.currentEnv?.id ?? null,
     history: state.history,
+    locale: (state.locale ?? "en") as Locale,
   };
   saveAppData(data);
 }
@@ -108,6 +111,8 @@ interface AppState {
   getActiveTab: () => Tab | null;
   getCollectionById: (id: string) => Collection | null;
   refreshTabs: () => void;
+  locale: string;
+  setLocale: (locale: Locale) => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -132,6 +137,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   tempRequests: {},
   runnerPanelPendingConfig: null,
   runnerPanelRun: null,
+  locale: "en",
+
+  setLocale: (locale) => {
+    set({ locale });
+    persist(get());
+  },
 
   getActiveTab: () => {
     const { tabs, activeTabId } = get();
@@ -325,9 +336,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   openNewTempRequest: () => {
+    const locale = (get().locale ?? "en") as Locale;
     const defaultRequest: RequestConfig = {
       id: generateId(),
-      name: "Nova requisição",
+      name: getDefaultNewRequestName(locale),
       method: "GET",
       url: "https://httpbin.org/get",
       headers: [{ id: generateId(), key: "", value: "", enabled: true }],
@@ -430,7 +442,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setStateFromPersisted: (data) => {
-    const actualStoreState = get();  
+    const actualStoreState = get();
 
     set({
       collections: data?.collections || actualStoreState.collections,
@@ -438,6 +450,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentEnv:
         data?.environments?.find?.((e) => e.id === data?.currentEnvId) ?? actualStoreState.currentEnv,
       history: data?.history || actualStoreState.history,
+      locale: (data?.locale ?? "en") as Locale,
     });
     persist(get());
   },

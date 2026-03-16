@@ -9,6 +9,7 @@ import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
 import { useClickOutside } from "@/lib/useClickOutside";
 import { generateId } from "@/lib/id";
+import { useT } from "@/lib/i18n";
 import type { Collection, Environment, RequestConfig } from "@/types";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 import {
@@ -38,6 +39,7 @@ export function SidebarPanel() {
     setTempRequest,
     closeTabsByRequestId,
   } = useAppStore();
+  const { t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [editingEnv, setEditingEnv] = useState<Environment | null>(null);
@@ -90,7 +92,7 @@ export function SidebarPanel() {
 
   const createNewRequest = (): RequestConfig => ({
     id: generateId(),
-    name: "Nova requisição",
+    name: t("sidebar.newRequest"),
     method: "GET",
     url: "",
     headers: [],
@@ -120,7 +122,7 @@ export function SidebarPanel() {
 
   const handleAddFolderToCollection = (coll: Collection) => {
     setCollectionMenuOpenId(null);
-    const newItems = addFolderToNodes(coll.items, [], "Nova pasta");
+    const newItems = addFolderToNodes(coll.items, [], t("sidebar.newFolder"));
     updateCollection(coll.id, { items: newItems });
     setCollapsedCollectionIds((prev) => {
       const next = new Set(prev);
@@ -161,7 +163,7 @@ export function SidebarPanel() {
   const handleCreateCollection = () => {
     const newCollection: Collection = {
       id: generateId(),
-      name: "Nova collection",
+      name: t("sidebar.newCollection"),
       items: [],
     };
     addCollection(newCollection);
@@ -193,7 +195,7 @@ export function SidebarPanel() {
           addCollection(result.collection);
         }
       } catch (err) {
-        setImportError(err instanceof Error ? err.message : "Erro ao importar");
+        setImportError(err instanceof Error ? err.message : t("import.errorImport"));
       }
     };
     reader.readAsText(file, "utf-8");
@@ -231,12 +233,12 @@ export function SidebarPanel() {
                     type="button"
                     className="new-collection-btn"
                     onClick={handleCreateCollection}
-                    title="Nova collection"
+                    title={t("sidebar.newCollection")}
                   >
-                    Nova collection
+                    {t("sidebar.newCollection")}
                   </button>
                   <button type="button" className="import-btn" onClick={handleImportClick}>
-                    Importar
+                    {t("sidebar.import")}
                   </button>
                 </div>
               </div>
@@ -244,10 +246,10 @@ export function SidebarPanel() {
                 <input
                   type="search"
                   className="sidebar-search-input"
-                  placeholder="Buscar rotas..."
+                  placeholder={t("sidebar.searchPlaceholder")}
                   value={collectionSearch}
                   onChange={(e) => setCollectionSearch(e.target.value)}
-                  aria-label="Buscar rotas na collection"
+                  aria-label={t("sidebar.searchAriaLabel")}
                 >
                 </input>
                 {collectionSearch.length > 0 && (
@@ -255,8 +257,8 @@ export function SidebarPanel() {
                     type="button"
                     className="sidebar-search-clear"
                     onClick={() => setCollectionSearch("")}
-                    aria-label="Limpar busca"
-                    title="Limpar busca"
+                    aria-label={t("sidebar.clearSearch")}
+                    title={t("sidebar.clearSearch")}
                   >
                     ×
                   </button>
@@ -272,9 +274,9 @@ export function SidebarPanel() {
                     setCollapsedCollections(true);
                     setFolderViewKey((k) => k + 1);
                   }}
-                  title="Recolher todas as pastas"
+                  title={t("sidebar.collapseAllFolders")}
                 >
-                  Recolher
+                  {t("sidebar.collapseAll")}
                 </button>
                 <button
                   type="button"
@@ -285,9 +287,9 @@ export function SidebarPanel() {
                     setCollapsedCollections(false);
                     setFolderViewKey((k) => k + 1);
                   }}
-                  title="Expandir todas as pastas"
+                  title={t("sidebar.expandAllFolders")}
                 >
-                  Expandir
+                  {t("sidebar.expandAll")}
                 </button>
               </div>
             </>
@@ -303,7 +305,7 @@ export function SidebarPanel() {
               <span style={{ fontSize: "1.5vh " }} className="section-toggle-icon material-symbols-outlined" aria-hidden>
                 {collapsedCollections ? "keyboard_arrow_right" : "keyboard_arrow_down"}
               </span>
-              Collections
+              {t("sidebar.collections")}
             </button>
             {!collapsedCollections && (
               <></>
@@ -322,7 +324,7 @@ export function SidebarPanel() {
               {importError && <p className="sidebar-error">{importError}</p>}
               {collections.length === 0 ? (
                 <p className="sidebar-hint">
-                  Importe: backup FiveDollars (Sobre → Exportar), Postman (JSON) ou Insomnia (JSON/YAML).
+                  {t("sidebar.importHint")}
                 </p>
               ) : (
                 <div className="collections-list">
@@ -346,7 +348,7 @@ export function SidebarPanel() {
                             type="button"
                             className="collection-header-toggle"
                             onClick={() => toggleCollectionCollapsed(coll.id)}
-                            title={isCollapsed ? "Expandir collection" : "Recolher collection"}
+                            title={isCollapsed ? t("sidebar.expandCollection") : t("sidebar.collapseCollection")}
                             aria-expanded={!isCollapsed}
                             disabled={renamingCollectionId === coll.id}
                           >
@@ -383,7 +385,7 @@ export function SidebarPanel() {
                                 e.stopPropagation();
                                 setCollectionMenuOpenId((id) => (id === coll.id ? null : coll.id));
                               }}
-                              title="Opções da collection"
+                              title={t("sidebar.collectionOptions")}
                               aria-expanded={collectionMenuOpenId === coll.id}
                             >
                               ⋯
@@ -391,21 +393,21 @@ export function SidebarPanel() {
                             {collectionMenuOpenId === coll.id && (
                               <div className="collection-dropdown">
                                 <button type="button" onClick={() => handleAddRequestToCollection(coll)}>
-                                  Nova requisição
+                                  {t("sidebar.newRequest")}
                                 </button>
                                 <button type="button" onClick={() => handleAddFolderToCollection(coll)}>
-                                  Nova pasta
+                                  {t("sidebar.newFolder")}
                                 </button>
                                 <hr />
                                 <button type="button" onClick={() => handleRenameCollection(coll)}>
-                                  Renomear
+                                  {t("sidebar.rename")}
                                 </button>
                                 <button type="button" onClick={() => handleDuplicateCollection(coll)}>
-                                  Duplicar
+                                  {t("sidebar.duplicate")}
                                 </button>
                                 <hr />
                                 <button type="button" className="collection-dropdown-danger" onClick={() => handleRemoveCollection(coll)}>
-                                  Remover
+                                  {t("common.remove")}
                                 </button>
                               </div>
                             )}
@@ -468,14 +470,14 @@ export function SidebarPanel() {
               <span style={{ fontSize: "1.5vh " }} className="section-toggle-icon material-symbols-outlined" aria-hidden>
                 {collapsedEnvs ? "keyboard_arrow_right" : "keyboard_arrow_down"}
               </span>
-              Environments
+              {t("sidebar.environments")}
             </button>
             {!collapsedEnvs && (
               <button
                 type="button"
                 className="env-add-env-btn"
                 onClick={handleAddEnvironment}
-                title="Novo ambiente"
+                title={t("sidebar.newEnvironment")}
               >
                 +
               </button>
@@ -485,7 +487,7 @@ export function SidebarPanel() {
             <>
               {environments.length === 0 ? (
                 <p className="sidebar-hint">
-                  Clique em + para criar um ambiente. Use {"{{nome}}"} nas requisições.
+                  {t("sidebar.envHint")}
                 </p>
               ) : (
                 <ul className="env-list">
@@ -496,7 +498,7 @@ export function SidebarPanel() {
                         className={`env-list-item ${currentEnv?.id === env.id ? "active" : ""}`}
                         onClick={() => handleEnvClick(env)}
                         onDoubleClick={(e) => handleEnvDoubleClick(env, e)}
-                        title="Clique para ativar; duplo clique para editar variáveis"
+                        title={t("tabBar.envActive")}
                       >
                         <span
                           className="env-dot"
@@ -521,9 +523,9 @@ export function SidebarPanel() {
           onContextMenu={preventContextMenu}
         >
           <div className="history-section-header">
-            <h3>Histórico</h3>
-            <button type="button" className="clear-history-btn" onClick={clearHistory} title="Limpar histórico">
-              Limpar
+            <h3>{t("sidebar.history")}</h3>
+            <button type="button" className="clear-history-btn" onClick={clearHistory} title={t("sidebar.clearHistory")}>
+              {t("sidebar.clear")}
             </button>
           </div>
           <ul className="history-list" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
@@ -572,21 +574,21 @@ export function SidebarPanel() {
                     setSelectedHistoryEntryId(selectedHistoryEntryId === entry.id ? null : entry.id);
                   }
                 }}
-                title={entry.scriptLogs?.length ? "Clique para ver os logs desta requisição" : "Clique para ver os logs"}
+                title={entry.scriptLogs?.length ? t("sidebar.historyLogsTitle") : t("sidebar.historyLogsTitle")}
               >
                 <HttpMethodBadge method={entry.method} className="history-method" />
                 <span className="history-url" title={entry.url}>
                   {entry.url}
                 </span>
                 {entry.scriptLogs?.length ? (
-                  <span className="history-logs-badge" title={`${entry.scriptLogs.length} log(s)`}>
+                  <span className="history-logs-badge" title={t("sidebar.historyLogsCount", { count: String(entry.scriptLogs.length) })}>
                     {entry.scriptLogs.length}
                   </span>
                 ) : null}
               </li>
             ))}
             {history.length === 0 && (
-              <li className="sidebar-hint">Nenhuma requisição ainda.</li>
+              <li className="sidebar-hint">{t("sidebar.noRequestsYet")}</li>
             )}
           </ul>
         </section>
@@ -597,7 +599,7 @@ export function SidebarPanel() {
           type="button"
           className="sidebar-about-btn"
           onClick={() => setAboutModalOpen(true)}
-          title="Sobre e exportar dados"
+          title={t("sidebar.aboutButton")}
         >
           <span className="material-icons sidebar-about-btn-icon" aria-hidden>settings</span>
         </button>
@@ -612,10 +614,10 @@ export function SidebarPanel() {
 
       {collectionToRemove && (
         <ConfirmModal
-          title="Remover collection"
-          message={`Tem certeza que deseja remover "${collectionToRemove.name}"? Esta ação não pode ser desfeita.`}
-          confirmLabel="Remover"
-          cancelLabel="Cancelar"
+          title={t("sidebar.removeCollectionTitle")}
+          message={t("sidebar.removeCollectionMessage", { name: collectionToRemove.name })}
+          confirmLabel={t("common.remove")}
+          cancelLabel={t("common.cancel")}
           danger
           onConfirm={() => removeCollection(collectionToRemove.id)}
           onClose={() => setCollectionToRemove(null)}

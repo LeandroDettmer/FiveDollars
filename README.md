@@ -1,95 +1,95 @@
 # FiveDollars API Client
 
-**API Client** para Desktop e Web — alternativa ao Postman/Insomnia. Cliente de requisições HTTP com **React** e **Tauri** As requisições são enviadas pelo plugin HTTP do Tauri no processo nativo, evitando CORS do navegador.
+**API Client** for Desktop and Web — an alternative to Postman/Insomnia. HTTP request client built with **React** and **Tauri**. Requests are sent via Tauri's HTTP plugin in the native process, avoiding browser CORS.
 
-![Interface do FiveDollars - Collections, Environments, requisição e resposta](docs/images/overview.png)
-
----
-
-## O que o app oferece
-
-- **Collections** — organize requisições em pastas; importe collections **Postman v2.1** e **Insomnia** (JSON/YAML).
-- **Environments** — ambientes com variáveis (`{{baseUrl}}`, `{{token}}`, etc.) e **cores para marcar importância ou tipo** (ex.: vermelho para Produção, verde para Local).
-- **Runner** — execute várias requisições de uma pasta em sequência, com iterações, delay, arquivo de dados JSON e opção de salvar resposta no histórico.
-- **Scripts** — Pre-request e Post-response por requisição (tokens dinâmicos, extrair dados da resposta, gravar em variáveis).
-- **Requisições** — GET, POST, PUT, PATCH, DELETE; headers, query/path params, body (JSON, form, raw); auth Basic, Bearer, API Key.
+![FiveDollars interface - Collections, Environments, request and response](docs/images/overview.png)
 
 ---
 
-## Environments (Ambientes) e cores
+## What the app offers
 
-Crie ambientes na sidebar e defina variáveis (ex.: `baseUrl`, `token`). Use `{{nome}}` na URL, headers ou body; o ambiente ativo é aplicado antes do request.
+- **Collections** — organize requests in folders; import **Postman v2.1** and **Insomnia** collections (JSON/YAML).
+- **Environments** — environments with variables (`{{baseUrl}}`, `{{token}}`, etc.) and **colors to tag importance or type** (e.g. red for Production, green for Local).
+- **Runner** — run multiple requests from a folder in sequence, with iterations, delay, JSON data file, and option to save response in history.
+- **Scripts** — Pre-request and Post-response per request (dynamic tokens, extract data from response, write to variables).
+- **Requests** — GET, POST, PUT, PATCH, DELETE; headers, query/path params, body (JSON, form, raw); Basic, Bearer, API Key auth.
 
-Cada ambiente pode ter uma **cor** para você **tagar importância ou tipo** (produção, homologação, local, etc.) e identificar rapidamente na lista. Clique no ambiente para ativar; duplo clique para editar nome, variáveis e cor.
+---
 
-![Environments com cores para tagar importância](docs/images/environments.png)
+## Environments and colors
 
-Exemplo: URL `{{baseUrl}}/api/users` com ambiente `{ "baseUrl": "https://api.exemplo.com" }` vira `https://api.exemplo.com/api/users`.
+Create environments in the sidebar and define variables (e.g. `baseUrl`, `token`). Use `{{name}}` in URL, headers or body; the active environment is applied before the request.
+
+Each environment can have a **color** so you can **tag importance or type** (production, staging, local, etc.) and spot it quickly in the list. Click an environment to activate; double-click to edit name, variables and color.
+
+![Environments with colors to tag importance](docs/images/environments.png)
+
+Example: URL `{{baseUrl}}/api/users` with environment `{ "baseUrl": "https://api.example.com" }` becomes `https://api.example.com/api/users`.
 
 ---
 
 ## Runner
 
-Execute várias requisições de uma pasta em sequência:
+Run multiple requests from a folder in sequence:
 
-- **Seleção** — escolha quais requisições rodar (marcar/desmarcar).
-- **Iterações** — rode N vezes ou use um **arquivo de dados** (JSON com array de objetos); cada objeto vira um conjunto de variáveis por iteração.
-- **Delay** — intervalo em ms entre requisições.
-- **Corpo da resposta** — opção para incluir ou não o body nas entradas do histórico do run.
+- **Selection** — choose which requests to run (check/uncheck).
+- **Iterations** — run N times or use a **data file** (JSON array of objects); each object becomes a set of variables per iteration.
+- **Delay** — interval in ms between requests.
+- **Response body** — option to include or exclude the body in run history entries.
 
-Abra o Runner pela pasta na sidebar (ex.: menu da pasta → "Run") e configure no painel antes de executar.
+Open the Runner from a folder in the sidebar (e.g. folder menu → "Run") and configure in the panel before executing.
 
-### Configurar execução (pasta)
+### Configure run (folder)
 
-![Configurar Run - Folder](docs/images/runner-config.png)
+![Configure Run - Folder](docs/images/runner-config.png)
 
-### Runner em execução
+### Runner in progress
 
-![Runner em execução](docs/images/runner-running.png)
-
----
-
-## Importação de collections
-
-- **Postman v2.1**: exporte a collection como JSON (Collection v2.1) e use **Importar** na sidebar.
-- **Insomnia**: importe collections Insomnia (JSON ou YAML).
-
-Após importar, pastas e requisições aparecem na sidebar; clique numa requisição para carregar e enviar.
+![Runner running](docs/images/runner-running.png)
 
 ---
 
-## Scripts: Pre-request e Post-response
+## Importing collections
 
-Por requisição (aba **Scripts** no painel da requisição):
+- **Postman v2.1**: export the collection as JSON (Collection v2.1) and use **Import** in the sidebar.
+- **Insomnia**: import Insomnia collections (JSON or YAML).
 
-- **Pre-request**: executado **antes** do envio.
+After importing, folders and requests appear in the sidebar; click a request to load and send it.
+
+---
+
+## Scripts: Pre-request and Post-response
+
+Per request (**Scripts** tab in the request panel):
+
+- **Pre-request**: runs **before** sending.
   - API: `fv.environment.get(key)` / `fv.environment.set(key, value)`.
-  - Se a requisição pertencer a uma collection: `fv.collectionVariables.get(key)` / `fv.collectionVariables.set(key, value)`.
-  - Valores definidos com `set` são aplicados ao ambiente ativo (ou à collection) e usados na mesma requisição.
-- **Post-response**: executado **depois** de receber a resposta.
-  - API: `fv.response` (`.json()`, `.status`, `.statusText`, `.headers`, `.body`), `fv.environment.set(...)` e, se houver collection, `fv.collectionVariables.set(...)`.
+  - If the request belongs to a collection: `fv.collectionVariables.get(key)` / `fv.collectionVariables.set(key, value)`.
+  - Values set with `set` are applied to the active environment (or the collection) and used in the same request.
+- **Post-response**: runs **after** receiving the response.
+  - API: `fv.response` (`.json()`, `.status`, `.statusText`, `.headers`, `.body`), `fv.environment.set(...)` and, if there is a collection, `fv.collectionVariables.set(...)`.
 
-Útil para tokens dinâmicos, timestamps, extrair dados da resposta e gravar em variáveis para as próximas requisições. Logs dos scripts aparecem na interface quando disponível.
-
----
-
-## Requisições
-
-Métodos: GET, POST, PUT, PATCH, DELETE. Suporte a headers, query params, path params e body (JSON, form, raw). Auth: Basic, Bearer, API Key (valores podem usar `{{var}}`).
+Useful for dynamic tokens, timestamps, extracting data from the response and writing to variables for the next requests. Script logs appear in the UI when available.
 
 ---
 
-# Para desenvolvedores
+## Requests
 
-## Pré-requisitos
+Methods: GET, POST, PUT, PATCH, DELETE. Support for headers, query params, path params and body (JSON, form, raw). Auth: Basic, Bearer, API Key (values can use `{{var}}`).
+
+---
+
+# For developers
+
+## Prerequisites
 
 - **Node.js** 18+
-- **Rust** (para o Tauri): [rustup.rs](https://rustup.rs)
-- **npm** ou outro gerenciador de pacotes
+- **Rust** (for Tauri): [rustup.rs](https://rustup.rs)
+- **npm** or another package manager
 
-### Linux (Ubuntu/Debian): dependências de sistema
+### Linux (Ubuntu/Debian): system dependencies
 
-Antes de `npm run tauri dev` ou `npm run tauri build`, instale as bibliotecas que o Tauri/WebKit usa:
+Before `npm run tauri dev` or `npm run tauri build`, install the libraries used by Tauri/WebKit:
 
 ```bash
 sudo apt-get update
@@ -108,25 +108,25 @@ sudo apt-get install -y \
 
 ---
 
-## Como rodar o repositório
+## How to run the repository
 
 ```bash
 npm install
 npm run tauri dev
 ```
 
-O primeiro build do Rust pode demorar alguns minutos.
+The first Rust build may take a few minutes.
 
 ---
 
-## Gerar executável (app instalável)
+## Build installable app
 
-### 1. Ícone (opcional)
+### 1. Icon (optional)
 
-Use uma imagem **1024×1024 px** (PNG) e gere os ícones:
+Use a **1024×1024 px** image (PNG) and generate the icons:
 
 ```bash
-npm run tauri icon caminho/para/sua-imagem-1024.png
+npm run tauri icon path/to/your-image-1024.png
 ```
 
 ### 2. Build
@@ -136,68 +136,70 @@ npm install
 npm run tauri build
 ```
 
-### 3. Onde está o executável
+### 3. Where to find the executable
 
-| Plataforma | Pasta (em `src-tauri/`) | Arquivos |
-|------------|-------------------------|----------|
-| **Windows** | `target/release/bundle/msi/` e `target/release/bundle/nsis/` | `.msi`, `.exe` |
-| **macOS**   | `target/release/bundle/dmg/` e `target/release/bundle/macos/` | `.dmg`, `.app` |
-| **Linux**   | `target/release/bundle/deb/` ou `target/release/bundle/appimage/` | `.deb`, `.AppImage` |
-
----
-
-## Release no GitHub (download: Mac, Windows, Linux)
-
-O repositório tem um workflow que **gera o app para macOS, Windows e Linux** e **anexa ao Release** quando você publica um release.
-
-### Versão (para quem for fazer release)
-
-A versão precisa estar igual em `package.json` e `src-tauri/tauri.conf.json`. Use os scripts (qualquer dev pode usar):
-
-| Comando | Efeito |
-|--------|--------|
-| `npm run patch` | Sobe o patch: `0.1.4` → `0.1.5` (atualiza os dois arquivos) |
-| `npm run unpatch` | Desce o patch: `0.1.5` → `0.1.4` (útil para corrigir antes de publicar) |
-
-Depois de rodar `npm run patch` (ou `unpatch`), faça commit das alterações antes de criar a tag.
-
-### Passos do release
-
-1. **Bump da versão**  
-   `npm run patch` (ou edite manualmente os dois arquivos).
-
-2. **Commit e push**  
-   `git add package.json src-tauri/tauri.conf.json` → commit → push para o `main`.
-
-3. **Publicar o release**  
-   No GitHub: **Releases** → **Create a new release** → escolha ou crie uma tag (ex.: `v0.1.5`) → **Publish release**.  
-   Ou use **Actions** → **Release** → **Run workflow** e informe a tag (ex.: `v0.1.5`).
-
-4. **O que acontece**  
-   O GitHub Actions roda o job **Release** em paralelo para **macOS**, **Linux** e **Windows**.  
-   Ao terminar, o release da tag recebe os instaladores: **FiveDollars-macos.dmg**, **FiveDollars-windows.msi** (e/ou **.exe**), **FiveDollars-linux.AppImage** (e/ou **.deb**).
-
-5. **Onde baixar**  
-   No repositório: **Releases** → escolha a tag → baixe o arquivo do seu sistema.
-
-- **macOS:** abra o `.dmg`, arraste o app para Aplicativos. Se aparecer *"FiveDollars is damaged"* (o app não é assinado com certificado Apple), use **botão direito no app** → **Abrir** → **Abrir** na confirmação. Alternativa no Terminal: `xattr -cr /Applications/FiveDollars.app`.
-- **Windows:** execute o `.msi` ou o `.exe` do instalador.
-- **Linux:** use o `.AppImage` (dar permissão de execução se precisar) ou instale o `.deb`.
+| Platform  | Folder (under `src-tauri/`)     | Files        |
+|-----------|----------------------------------|--------------|
+| **Windows** | `target/release/bundle/msi/` and `target/release/bundle/nsis/` | `.msi`, `.exe` |
+| **macOS**   | `target/release/bundle/dmg/` and `target/release/bundle/macos/`  | `.dmg`, `.app` |
+| **Linux**   | `target/release/bundle/deb/` or `target/release/bundle/appimage/` | `.deb`, `.AppImage` |
 
 ---
 
-## Estrutura do projeto
+## GitHub Release (download: Mac, Windows, Linux)
 
-- **`src/`** – frontend React
+The repository has a workflow that **builds the app for macOS, Windows and Linux** and **attaches them to the Release** when you publish a release.
+
+### Version (for release maintainers)
+
+The version must match in `package.json` and `src-tauri/tauri.conf.json`. Use the scripts (any dev can use):
+
+| Command           | Effect |
+|-------------------|--------|
+| `npm run patch`   | Bump patch: `0.1.4` → `0.1.5` (updates both files) |
+| `npm run unpatch` | Lower patch: `0.1.5` → `0.1.4` (useful to fix before publishing) |
+
+After running `npm run patch` (or `unpatch`), commit the changes before creating the tag.
+
+### Release steps
+
+1. **Bump version**  
+   Run `npm run patch` (or edit both files manually).
+
+2. **Commit and push**  
+   `git add package.json src-tauri/tauri.conf.json` → commit → push to `main`.
+
+3. **Publish the release**  
+   On GitHub: **Releases** → **Create a new release** → choose or create a tag (e.g. `v0.1.5`) → **Publish release**.  
+   Or use **Actions** → **Release** → **Run workflow** and enter the tag (e.g. `v0.1.5`).
+
+4. **What happens**  
+   GitHub Actions runs the **Release** job in parallel for **macOS**, **Linux** and **Windows**.  
+   When done, the release for that tag gets the installers: **FiveDollars-macos.dmg**, **FiveDollars-windows.msi** (and/or **.exe**), **FiveDollars-linux.AppImage** (and/or **.deb**).
+
+5. **Where to download**  
+   In the repository: **Releases** → choose the tag → download the file for your system.
+
+- **macOS:** open the `.dmg`, drag the app to Applications. If you see *"FiveDollars is damaged"* (the app is not signed with an Apple certificate), use **right-click on the app** → **Open** → **Open** in the confirmation. Alternative in Terminal: `xattr -cr /Applications/FiveDollars.app`.
+- **Windows:** run the `.msi` or `.exe` installer.
+- **Linux:** use the `.AppImage` (grant execute permission if needed) or install the `.deb`.
+
+---
+
+## Project structure
+
+- **`src/`** – React frontend
   - **`components/`** – RequestPanel, ResponsePanel, Sidebar, CollectionTree, EnvironmentEditor, RunnerPanel, RunnerConfigPanel, RunnerContent, BodyEditor, etc.
-  - **`store/`** – Zustand (estado global)
-  - **`lib/`** – `http.ts` (fetch via Tauri), `resolveEnv.ts` (substituição de `{{var}}`), `importCollection.ts`, `runPostResponseScript.ts` (pre/post scripts), `urlUtils.ts`, parsers Postman/Insomnia
-  - **`types/`** – tipos (collections, requests, environments)
-- **`src-tauri/`** – backend Rust (Tauri 2 + plugin HTTP)
-- **`App.css`** – tema dark (estilo VS Code), layout em colunas
+  - **`store/`** – Zustand (global state)
+  - **`lib/`** – `http.ts` (fetch via Tauri), `resolveEnv.ts` (`{{var}}` substitution), `importCollection.ts`, `runPostResponseScript.ts` (pre/post scripts), `urlUtils.ts`, Postman/Insomnia parsers
+  - **`types/`** – types (collections, requests, environments)
+  - **`locales/`** – i18n (e.g. `en.ts`, `pt-BR.ts`)
+- **`src-tauri/`** – Rust backend (Tauri 2 + HTTP plugin)
+- **`App.css`** – dark theme (VS Code style), column layout
 
 ---
 
-### ❗ Common Errors
- - *"FiveDollars is damaged"*
-  - Rode no Terminal: `xattr -cr /Applications/FiveDollars.app`
+### Common errors
+
+- *"FiveDollars is damaged"*  
+  Run in Terminal: `xattr -cr /Applications/FiveDollars.app`

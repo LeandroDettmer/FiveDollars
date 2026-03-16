@@ -1,3 +1,5 @@
+import { useT } from "@/lib/i18n";
+
 interface ConfirmModalProps {
   title: string;
   message: string;
@@ -13,14 +15,17 @@ interface ConfirmModalProps {
 export function ConfirmModal({
   title,
   message,
-  confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
+  confirmLabel,
+  cancelLabel,
   danger = false,
   confirmDisabled = false,
   onConfirm,
   onClose,
   children,
 }: ConfirmModalProps) {
+  const { t } = useT();
+  const confirmLabelResolved = confirmLabel ?? t("confirm.defaultConfirm");
+  const cancelLabelResolved = cancelLabel ?? t("common.cancel");
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -39,7 +44,7 @@ export function ConfirmModal({
           <h2 id="confirm-modal-title" className="modal-title">
             {title}
           </h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar">
+          <button type="button" className="modal-close" onClick={onClose} aria-label={t("about.close")}>
             ×
           </button>
         </div>
@@ -54,7 +59,7 @@ export function ConfirmModal({
         <div className="modal-footer">
           <div className="modal-footer-right">
             <button type="button" className="btn-secondary" onClick={onClose}>
-              {cancelLabel}
+              {cancelLabelResolved}
             </button>
             <button
               type="button"
@@ -63,7 +68,7 @@ export function ConfirmModal({
               aria-disabled={confirmDisabled}
               disabled={confirmDisabled}
             >
-              {confirmLabel}
+              {confirmLabelResolved}
             </button>
           </div>
         </div>

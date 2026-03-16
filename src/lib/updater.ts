@@ -4,6 +4,7 @@
  */
 
 import { useAppStore } from "@/store/useAppStore";
+import { getMessage, type Locale } from "@/lib/i18n";
 
 export function isTauri(): boolean {
   return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
@@ -30,7 +31,10 @@ export async function getAppVersion(): Promise<string> {
 }
 
 export async function checkForUpdate(): Promise<UpdateStatus> {
-  if (!isTauri()) return { status: "error", message: "Atualização só está disponível na versão desktop." };
+  if (!isTauri()) {
+    const locale = (useAppStore.getState().locale ?? "en") as Locale;
+    return { status: "error", message: getMessage(locale, "updater.desktopOnly") };
+  }
   const { check } = await import("@tauri-apps/plugin-updater");
   const update = await check();
 
@@ -46,7 +50,8 @@ export async function checkAndInstallUpdate(
   onStatus: (s: UpdateStatus) => void
 ): Promise<boolean> {
   if (!isTauri()) {
-    onStatus({ status: "error", message: "Atualização só está disponível na versão desktop." });
+    const locale = (useAppStore.getState().locale ?? "en") as Locale;
+    onStatus({ status: "error", message: getMessage(locale, "updater.desktopOnly") });
     return false;
   }
 

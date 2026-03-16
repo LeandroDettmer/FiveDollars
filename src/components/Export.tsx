@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 import type { Collection } from "@/types";
 import { collectionToPostmanV21 } from "@/lib/exportPostmanV21";
 import { isTauri } from "@/lib/updater";
@@ -24,6 +25,7 @@ const exportTypes: ExportType[] = ["collections", "environments"];
 
 
 export function Export() {
+  const { t } = useT();
   const { collections, environments, history } = useAppStore();
 
   const [selectedExports, setSelectedExports] = useState<ExportType[]>([]);
@@ -104,10 +106,10 @@ export function Export() {
     <>
       {modalSelectExportsOpen && (
         <ConfirmModal
-          title="Exportar dados"
-          message="Selecione os dados que você deseja exportar."
-          confirmLabel="Exportar"
-          cancelLabel="Cancelar"
+          title={t("export.title")}
+          message={t("export.modalMessage")}
+          confirmLabel={t("export.export")}
+          cancelLabel={t("common.cancel")}
           confirmDisabled={selectedExports.length === 0 ? true : false}
           onConfirm={() => handleExportBackup()}
           onClose={() => handleOpenModalSelectExports()}
@@ -135,26 +137,26 @@ export function Export() {
         <div className="about-export-options">
           <div className="about-export-option">
             <p className="about-export-option-desc">
-              <strong>Backup FiveDollars</strong> — collections, ambientes e histórico. Use para backup ou para importar depois no app.
+              {t("export.backupDesc")}
             </p>
             <button
               type="button"
               className="btn-primary"
               onClick={handleOpenModalSelectExports}
             >
-              Exportar backup FiveDollars
+              {t("export.backupFiveDollars")}
             </button>
           </div>
           <div className="about-export-option">
             <p className="about-export-option-desc">
-              <strong>Postman v2.1</strong> — exporta a primeira collection em formato Postman. Use no Postman ou em outras ferramentas.
+              {t("export.postmanDesc")}
             </p>
             <button
               type="button"
               className="btn-secondary"
               onClick={handleExportPostman}
             >
-              Exportar Postman v2.1
+              {t("export.postmanV21")}
             </button>
           </div>
         </div>

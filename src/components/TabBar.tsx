@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useKeyDown } from "@/lib/useKeyDown";
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 import { Card } from "./Card";
 import { Dropdown } from "./Dropdown";
 import { HttpMethodBadge } from "./HttpMethodBadge";
@@ -15,6 +16,7 @@ function tabLabel(tab: Tab): string {
 }
 
 export function TabBar() {
+  const { t } = useT();
   const tabs = useAppStore((s) => s.tabs);
   const activeTabId = useAppStore((s) => s.activeTabId);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
@@ -124,8 +126,8 @@ export function TabBar() {
                 e.stopPropagation();
                 closeTab(tab.id);
               }}
-              aria-label={`Fechar ${tabLabel(tab)}`}
-              title="Fechar aba"
+              aria-label={t("tabBar.closeTab", { label: tabLabel(tab) })}
+              title={t("tabBar.closeTabTitle")}
             >
               ×
             </button>
@@ -145,8 +147,8 @@ export function TabBar() {
             as="button"
             type="button"
             className="tab-bar-env-card"
-            aria-label="Ambiente ativo; clique para trocar"
-            title={currentEnv ? currentEnv.name : "Nenhum ambiente"}
+            aria-label={t("tabBar.envActive")}
+            title={currentEnv ? currentEnv.name : t("tabBar.noEnv")}
             {...props}
           >
             <span
@@ -155,7 +157,7 @@ export function TabBar() {
                 background: currentEnv?.color?.trim() ? currentEnv.color : "#888",
               }}
             />
-            <span className="tab-bar-env-name">{currentEnv?.name ?? "Nenhum ambiente"}</span>
+            <span className="tab-bar-env-name">{currentEnv?.name ?? t("tabBar.noEnv")}</span>
             <span className="tab-bar-env-chevron material-symbols-outlined" aria-hidden>
               {envDropdownOpen ? "expand_less" : "expand_more"}
             </span>
@@ -226,7 +228,7 @@ export function TabBar() {
                 setSaveModalOpen(true);
               }}
             >
-              Salvar requisição...
+              {t("tabBar.saveRequest")}
             </button>
           </div>
         </>

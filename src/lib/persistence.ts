@@ -8,9 +8,14 @@ function isTauri(): boolean {
 }
 
 function parsePersistedData(raw: string | null): PersistedData {
-  if (!raw) {
-    return { collections: [], environments: [], currentEnvId: null, history: [] };
-  }
+  const defaultData: PersistedData = {
+    collections: [],
+    environments: [],
+    currentEnvId: null,
+    history: [],
+    locale: "en",
+  };
+  if (!raw) return defaultData;
   try {
     const data = JSON.parse(raw) as Partial<PersistedData>;
     return {
@@ -18,9 +23,10 @@ function parsePersistedData(raw: string | null): PersistedData {
       environments: Array.isArray(data.environments) ? data.environments : [],
       currentEnvId: typeof data.currentEnvId === "string" ? data.currentEnvId : null,
       history: Array.isArray(data.history) ? data.history : [],
+      locale: typeof data.locale === "string" ? data.locale : "en",
     };
   } catch {
-    return { collections: [], environments: [], currentEnvId: null, history: [] };
+    return defaultData;
   }
 }
 
@@ -30,12 +36,12 @@ export async function loadAppData(): Promise<PersistedData> {
       const raw = await invoke<string>("load_app_data");
       return parsePersistedData(raw || null);
     } catch {
-      return { collections: [], environments: [], currentEnvId: null, history: [] };
+      return parsePersistedData(null);
     }
   }
   // Web: carregar do localStorage (persiste ao recarregar/reiniciar o servidor)
   if (typeof localStorage === "undefined") {
-    return { collections: [], environments: [], currentEnvId: null, history: [] };
+    return parsePersistedData(null);
   }
   return parsePersistedData(localStorage.getItem(WEB_STORAGE_KEY));
 }

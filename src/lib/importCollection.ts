@@ -7,6 +7,8 @@ import { parsePostmanCollectionV21, type PostmanCollectionV21 } from "./parsePos
 import { parseInsomniaCollection, type InsomniaCollectionDoc } from "./parseInsomnia";
 import type { Collection } from "@/types";
 import type { PersistedData } from "@/types/persisted";
+import { useAppStore } from "@/store/useAppStore";
+import { getMessage, type Locale } from "@/lib/i18n";
 
 export type ImportFormat = "postman-v2.1" | "insomnia-5.0" | "fivedollars-backup";
 
@@ -56,9 +58,11 @@ export function importCollectionFromText(text: string, filename: string): Import
   const lower = filename.toLowerCase();
   const isYaml = lower.endsWith(".yaml") || lower.endsWith(".yml");
 
+  const locale = (useAppStore.getState().locale ?? "en") as Locale;
+
   if (isYaml) {
     const doc = yaml.load(text) as unknown;
-    if (!doc || typeof doc !== "object") throw new Error("Arquivo YAML inválido ou vazio.");
+    if (!doc || typeof doc !== "object") throw new Error(getMessage(locale, "import.invalidYaml"));
     const collection = parseInsomniaCollection(doc);
     return { type: "collection", collection, format: "insomnia-5.0" };
   }
@@ -67,11 +71,11 @@ export function importCollectionFromText(text: string, filename: string): Import
   try {
     obj = JSON.parse(text);
   } catch {
-    throw new Error("Arquivo JSON inválido.");
+    throw new Error(getMessage(locale, "import.invalidJson"));
   }
 
   if (typeof obj !== "object" || obj === null) {
-    throw new Error("Arquivo JSON inválido.");
+    throw new Error(getMessage(locale, "import.invalidJson"));
   }
 
   if (isFiveDollarsBackup(obj)) {
@@ -94,7 +98,5 @@ export function importCollectionFromText(text: string, filename: string): Import
     return { type: "collection", collection: parseInsomniaCollection(obj), format: "insomnia-5.0" };
   }
 
-  throw new Error(
-    "Formato não reconhecido. Use: (1) Backup FiveDollars (arquivo exportado em Sobre → Exportar dados), (2) Postman (JSON) ou (3) Insomnia (JSON/YAML)."
-  );
+  throw new Error(getMessage(locale, "import.unknownFormat"));
 }

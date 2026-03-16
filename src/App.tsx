@@ -6,12 +6,14 @@ import { ResizableMainArea } from "@/components/ResizableMainArea";
 import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
+import { useT } from "@/lib/i18n";
 import type { RunnerTab } from "@/types";
 import { Main } from "./components/Main";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 import "./App.css";
 
 function App() {
+  const { t } = useT();
   const { setStateFromPersisted, tabs, activeTabId } = useAppStore();
 
   useEffect(() => {
@@ -23,7 +25,7 @@ function App() {
   return (
     <>
       <header className="app-header" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
-        FiveDollars <span>— API Client | Desktop | Web</span>
+        {t("app.title")} <span>— {t("app.subtitle")}</span>
       </header>
       <div className="app-layout">
         <ResizableSidebar className="sidebar">

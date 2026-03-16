@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sendRequest } from "@/lib/http";
 import { useAppStore } from "@/store/useAppStore";
+import { useT } from "@/lib/i18n";
 import type { RequestConfig, RunnerTabResult } from "@/types";
 import type { HttpMethod } from "@/types";
 import { HttpMethodBadge } from "./HttpMethodBadge";
@@ -34,6 +35,7 @@ export function RunnerContent({
   initialRunning = false,
   onPersistResults,
 }: RunnerContentProps) {
+  const { t } = useT();
   const addRunnerRun = useAppStore((s) => s.addRunnerRun);
   const runnerHistory = useAppStore((s) => s.runnerHistory);
   const [expandedResultIndex, setExpandedResultIndex] = useState<number | null>(null);
@@ -184,11 +186,11 @@ export function RunnerContent({
   if (!run) {
     return (
       <div className="runner-panel-empty">
-        <h2 className="runner-panel-title">Runner</h2>
-        <p className="runner-panel-hint">Execute uma pasta (Run) na sidebar para ver as execuções aqui.</p>
+        <h2 className="runner-panel-title">{t("runner.panelTitle")}</h2>
+        <p className="runner-panel-hint">{t("runner.emptyHint")}</p>
         {runnerHistory.length > 0 && (
           <div className="runner-history-wrap">
-            <p className="runner-section-label">Histórico de execuções</p>
+            <p className="runner-section-label">{t("runner.runHistory")}</p>
             <ul className="runner-history-list">
               {runnerHistory.map((entry) => (
                 <li key={entry.id} className="runner-history-item">
@@ -248,7 +250,7 @@ export function RunnerContent({
         {onClose && (
           <div className="runner-panel-header-actions">
             <button type="button" className="btn-primary" onClick={onClose}>
-              Fechar
+              {t("runner.close")}
             </button>
           </div>
         )}
@@ -256,22 +258,22 @@ export function RunnerContent({
       <div className="runner-progress">
         {running ? (
           <span>
-            Executando {currentRunIndex + 1}/{totalRuns}…
+            {t("runner.executing", { current: String(currentRunIndex + 1), total: String(totalRuns) })}
           </span>
         ) : (
           <span>
-            Concluído: {doneCount} ok, {errorCount} erro(s)
+            {t("runner.doneSummary", { ok: String(doneCount), errors: String(errorCount) })}
           </span>
         )}
         {running && (
           <button type="button" className="btn-secondary runner-cancel" onClick={handleCancel}>
-            Cancelar
+            {t("common.cancel")}
           </button>
         )}
       </div>
       <div className="runner-panel-scroll">
         <div className="runner-list-wrap">
-          <p className="runner-section-label">Esta execução</p>
+          <p className="runner-section-label">{t("runner.thisRun")}</p>
           <ul className="runner-list">
           {results.map((r, idx) => (
             <li key={idx} className={`runner-list-item runner-list-item--${r.status}`}>
