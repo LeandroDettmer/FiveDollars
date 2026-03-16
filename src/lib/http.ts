@@ -1,5 +1,8 @@
 import type { RequestConfig, RequestResponse, KeyValue } from "@/types";
 import { resolveEnvInString } from "./resolveEnv";
+import pkg from "../../package.json";
+
+const USER_AGENT = `FiveDollars/${pkg.version ?? "0.0.0"}`;
 
 const DEV_PROXY_PATH = "/__dev-proxy";
 
@@ -102,7 +105,11 @@ export async function sendRequest(
   const urlResolved = resolveEnvInString(urlWithPath, variables);
   const headersFromConfig = keyValueToRecord(config.headers, variables);
   const authHeaders = buildAuthHeaders(config, variables);
-  const headers = { ...headersFromConfig, ...authHeaders };
+  const headers = {
+    "User-Agent": headersFromConfig["User-Agent"] ?? USER_AGENT,
+    ...headersFromConfig,
+    ...authHeaders,
+  };
   const queryParams = config.queryParams.filter((q) => q.key.trim() && q.enabled !== false);
   const url = new URL(urlResolved);
   queryParams.forEach((q) =>
