@@ -274,7 +274,7 @@ export function SidebarPanel() {
                   }}
                   title="Recolher todas as pastas"
                 >
-                  Recolher todas
+                  Recolher
                 </button>
                 <button
                   type="button"
@@ -287,7 +287,7 @@ export function SidebarPanel() {
                   }}
                   title="Expandir todas as pastas"
                 >
-                  Expandir todas
+                  Expandir
                 </button>
               </div>
             </>
