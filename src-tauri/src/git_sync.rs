@@ -14,21 +14,28 @@ pub struct GitRepoInfo {
 }
 
 fn ensure_repo_path(path: Option<String>) -> Result<PathBuf, String> {
-    if let Some(p) = path {
-        let pb = PathBuf::from(p);
-        if pb.join(".git").exists() {
-            return Ok(pb);
-        } else {
-            return Err("Caminho informado não é um repositório Git (sem .git)".to_string());
-        }
-    }
+    let start_dir = match path {
+        Some(p) => PathBuf::from(p),
+        None => std::env::current_dir().map_err(|e| e.to_string())?,
+    };
 
-    // Fallback: usar diretório atual do processo.
-    let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
-    if cwd.join(".git").exists() {
-        Ok(cwd)
+    // Usa git para encontrar a raiz do repo a partir do diretório informado,
+    // subindo automaticamente pelos diretórios pai se necessário.
+    let output = Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .current_dir(&start_dir)
+        .output()
+        .map_err(|e| format!("Erro ao executar git: {e}"))?;
+
+    if output.status.success() {
+        let root = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        Ok(PathBuf::from(root))
     } else {
-        Err("Diretório atual não é um repositório Git (sem .git)".to_string())
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(format!(
+            "A pasta selecionada não pertence a um repositório Git. ({})",
+            stderr.trim()
+        ))
     }
 }
 

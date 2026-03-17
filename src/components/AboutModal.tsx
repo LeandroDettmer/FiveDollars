@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { isTauri, getAppVersion, checkForUpdate, checkAndInstallUpdate, type UpdateStatus } from "@/lib/updater";
 import { useKeyDown } from "@/lib/useKeyDown";
 import { useT } from "@/lib/i18n";
@@ -56,6 +57,43 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
 
   const handleDetectGitRepo = async () => {
     if (!isTauri()) return;
+    setGitError(null);
+
+    const selectedPath = await openDialog({ directory: true, multiple: false, title: "Selecionar pasta do repositório Git" });
+    if (!selectedPath) return;
+
+    setGitLoading(true);
+    try {
+      const info = await invoke<{
+        path: string;
+        branch: string;
+        is_clean: boolean;
+        has_fivedollars_folder: boolean;
+        has_collections_file: boolean;
+      }>("detect_git_repo", { path: selectedPath });
+
+      setGitRepo({
+        path: info.path,
+        branch: info.branch,
+        isClean: info.is_clean,
+        hasFivedollarsFolder: info.has_fivedollars_folder,
+        hasCollectionsFile: info.has_collections_file,
+      });
+      setGitSyncStatus({
+        lastSyncedAt: gitSyncStatus?.lastSyncedAt ?? null,
+        lastAction: gitSyncStatus?.lastAction ?? null,
+        errorMessage: undefined,
+      });
+    } catch (e) {
+      console.error(e);
+      setGitError((e as Error).message ?? String(e));
+    } finally {
+      setGitLoading(false);
+    }
+  };
+
+  const handleRefreshGitRepo = async () => {
+    if (!isTauri() || !gitRepo) return;
     setGitLoading(true);
     setGitError(null);
     try {
@@ -65,7 +103,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
         is_clean: boolean;
         has_fivedollars_folder: boolean;
         has_collections_file: boolean;
-      }>("detect_git_repo", { path: null });
+      }>("detect_git_repo", { path: gitRepo.path });
 
       setGitRepo({
         path: info.path,
@@ -365,7 +403,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                       type="button"
                       className="btn-secondary"
                       style={{ marginTop: "8px" }}
-                      onClick={handleDetectGitRepo}
+                      onClick={handleRefreshGitRepo}
                       disabled={gitLoading}
                     >
                       Recarregar status do repo
