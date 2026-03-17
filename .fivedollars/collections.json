@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "collections": [
+    {
+      "id": "7c717bf4-2a86-48f8-9be2-5f26fe17534e",
+      "name": "teste",
+      "items": [
+        {
+          "id": "99e0257d-33c8-4cd6-83b8-a32834de5fcf",
+          "name": "New request",
+          "type": "request",
+          "request": {
+            "id": "99e0257d-33c8-4cd6-83b8-a32834de5fcf",
+            "name": "New request",
+            "method": "GET",
+            "url": "https://httpbin.org/get",
+            "headers": [
+              {
+                "id": "7edfb184-84dd-4c21-ad3a-13bb7451229a",
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "queryParams": [
+              {
+                "id": "5c3351c4-efb4-42e8-a647-72527437a559",
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "bodyType": "none",
+            "pathParams": []
+          }
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "appVersion": "0.1.15",
+    "lastUpdatedAt": 1773785297950
+  }
+}
