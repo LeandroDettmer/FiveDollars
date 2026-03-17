@@ -20,6 +20,12 @@ export interface PersistedData {
   gitRepo?: GitRepoInfo | null;
   /** Informações sobre o último sync Git das collections (opcional). */
   gitSyncStatus?: GitSyncStatus | null;
+  /** Modo ativo de collections: "offline" (local) ou "synced" (do repo Git). */
+  collectionsMode?: "offline" | "synced";
+  /** Snapshot das collections do perfil offline (preservado ao trocar para synced). */
+  offlineCollections?: Collection[];
+  /** Snapshot das collections do perfil sincronizado com o repo Git. */
+  syncedCollections?: Collection[];
 }
 
 export const DEFAULT_PERSISTED: PersistedData = {
@@ -31,4 +37,7 @@ export const DEFAULT_PERSISTED: PersistedData = {
   pinnedTabs: [],
   gitRepo: null,
   gitSyncStatus: null,
+  collectionsMode: "offline",
+  offlineCollections: [],
+  syncedCollections: [],
 };

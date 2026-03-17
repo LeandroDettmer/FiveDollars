@@ -37,6 +37,9 @@ function persist(state: {
   pinnedTabs: PinnedTabData[];
   gitRepo?: GitRepoInfo | null;
   gitSyncStatus?: GitSyncStatus | null;
+  collectionsMode?: "offline" | "synced";
+  offlineCollections?: Collection[];
+  syncedCollections?: Collection[];
 }) {
   const pinnedTabs: PinnedTabData[] = (state.tabs ?? [])
     .filter((t): t is RequestTab => t.pinned === true && t.type === "request" && !t.isTemp)
@@ -57,6 +60,9 @@ function persist(state: {
     pinnedTabs,
     gitRepo: state.gitRepo ?? null,
     gitSyncStatus: state.gitSyncStatus ?? null,
+    collectionsMode: state.collectionsMode ?? "offline",
+    offlineCollections: state.offlineCollections ?? [],
+    syncedCollections: state.syncedCollections ?? [],
   };
   saveAppData(data);
 }
@@ -90,6 +96,12 @@ interface AppState {
   gitRepo: GitRepoInfo | null;
   /** Status do último sync Git realizado pelo app. */
   gitSyncStatus: GitSyncStatus | null;
+  /** Modo ativo de collections: "offline" (local) ou "synced" (do repo Git). */
+  collectionsMode: "offline" | "synced";
+  /** Snapshot das collections do perfil offline (preservado ao trocar para synced). */
+  offlineCollections: Collection[];
+  /** Snapshot das collections do perfil sincronizado com o repo Git. */
+  syncedCollections: Collection[];
   openTab: (tab: Tab) => void;
   closeTab: (tabId: string) => void;
   /** Fecha todas as abas que exibem a requisição com o id dado (ex.: ao remover da árvore). */
@@ -148,6 +160,10 @@ interface AppState {
   pinnedTabs: PinnedTabData[];
   setGitRepo: (info: GitRepoInfo | null) => void;
   setGitSyncStatus: (status: GitSyncStatus | null) => void;
+  /** Alterna entre perfil offline e sincronizado, preservando cada conjunto. */
+  setCollectionsMode: (mode: "offline" | "synced") => void;
+  /** Atualiza o snapshot syncedCollections sem alterar o modo ativo. */
+  setSyncedCollections: (collections: Collection[]) => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -176,6 +192,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   pinnedTabs: [],
   gitRepo: null,
   gitSyncStatus: null,
+  collectionsMode: "offline",
+  offlineCollections: [],
+  syncedCollections: [],
 
   setLocale: (locale) => {
     set({ locale });
@@ -512,6 +531,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       pinnedTabs: data?.pinnedTabs ?? [],
       gitRepo: data?.gitRepo ?? null,
       gitSyncStatus: data?.gitSyncStatus ?? null,
+      collectionsMode: data?.collectionsMode ?? "offline",
+      offlineCollections: data?.offlineCollections ?? [],
+      syncedCollections: data?.syncedCollections ?? [],
     });
 
     const restoredCollections = get().collections;
@@ -556,6 +578,38 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setGitSyncStatus: (status) => {
     set({ gitSyncStatus: status });
+    persist(get());
+  },
+
+  setCollectionsMode: (mode) => {
+    const s = get();
+    if (s.collectionsMode === mode) return;
+    if (mode === "synced") {
+      // Salva o conjunto atual como offline, ativa o synced
+      set({
+        collectionsMode: "synced",
+        offlineCollections: s.collections,
+        collections: s.syncedCollections,
+      });
+    } else {
+      // Salva o conjunto atual como synced, ativa o offline
+      set({
+        collectionsMode: "offline",
+        syncedCollections: s.collections,
+        collections: s.offlineCollections,
+      });
+    }
+    persist(get());
+  },
+
+  setSyncedCollections: (collections) => {
+    const s = get();
+    if (s.collectionsMode === "synced") {
+      // Se já está em modo synced, atualiza também o conjunto ativo
+      set({ syncedCollections: collections, collections });
+    } else {
+      set({ syncedCollections: collections });
+    }
     persist(get());
   },
 

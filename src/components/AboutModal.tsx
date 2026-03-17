@@ -9,6 +9,8 @@ import { serializeCollectionsForGit, parseCollectionsFromGit } from "@/lib/gitCo
 import { ConfirmModal } from "./ConfirmModal";
 import { Export } from "./Export";
 
+type GitConfirmAction = "load" | "save" | "saveAndCommit";
+
 const APP_AUTHOR = "Leandro Dettmer";
 
 interface AboutModalProps {
@@ -27,13 +29,17 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const setGitRepo = useAppStore((s) => s.setGitRepo);
   const setGitSyncStatus = useAppStore((s) => s.setGitSyncStatus);
   const collections = useAppStore((s) => s.collections);
-  const setStateFromPersisted = useAppStore((s) => s.setStateFromPersisted);
+  const collectionsMode = useAppStore((s) => s.collectionsMode);
+  const setCollectionsMode = useAppStore((s) => s.setCollectionsMode);
+  const setSyncedCollections = useAppStore((s) => s.setSyncedCollections);
+  const syncedCollections = useAppStore((s) => s.syncedCollections);
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const [version, setVersion] = useState(versionProp ?? "0.1.0");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({ status: "idle", version: "" });
   const [gitLoading, setGitLoading] = useState(false);
   const [gitError, setGitError] = useState<string | null>(null);
+  const [gitConfirmAction, setGitConfirmAction] = useState<GitConfirmAction | null>(null);
 
   useEffect(() => {
     if (isTauri()) {
@@ -127,20 +133,14 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
 
   const handleLoadFromRepo = async () => {
     if (!isTauri() || !gitRepo) return;
+    setGitConfirmAction(null);
     setGitLoading(true);
     setGitError(null);
     try {
       const raw = await invoke<string>("read_git_collections", { repoPath: gitRepo.path });
       const { collections: repoCollections } = parseCollectionsFromGit(raw);
-      // Substitui apenas as collections no estado atual, preservando outros campos.
-      setStateFromPersisted({
-        collections: repoCollections,
-        environments: undefined as any,
-        currentEnvId: null,
-        history: undefined as any,
-        locale,
-        pinnedTabs: undefined as any,
-      } as any);
+      // Salva no perfil syncedCollections sem tocar no perfil offline.
+      setSyncedCollections(repoCollections);
       setGitSyncStatus({
         lastSyncedAt: Date.now(),
         lastAction: "loaded_from_repo",
@@ -161,6 +161,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
 
   const handleSaveToRepo = async (withCommit: boolean) => {
     if (!isTauri() || !gitRepo) return;
+    setGitConfirmAction(null);
     setGitLoading(true);
     setGitError(null);
     try {
@@ -333,7 +334,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                       onClick={handleDetectGitRepo}
                       disabled={gitLoading}
                     >
-                      {gitLoading ? "Detectando..." : "Vincular repositório atual"}
+                      {gitLoading ? "Detectando..." : "Selecionar repositório Git"}
                     </button>
                     {gitError && (
                       <p className="about-update-error" role="alert">
@@ -359,30 +360,66 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                       <strong>collections.json:</strong>{" "}
                       {gitRepo.hasCollectionsFile ? "encontrado" : "ainda não existe"}
                     </p>
+
+                    <div className="git-profile-toggle" style={{ marginTop: "16px", marginBottom: "4px" }}>
+                      <span className="git-profile-label">Perfil ativo:</span>
+                      <div className="git-profile-switch" role="group" aria-label="Perfil de collections">
+                        <button
+                          type="button"
+                          className={`git-profile-btn ${collectionsMode === "offline" ? "git-profile-btn-active" : ""}`}
+                          onClick={() => setCollectionsMode("offline")}
+                          disabled={collectionsMode === "offline"}
+                          title="Trabalhar com suas collections locais (não afetadas pelo sync)"
+                        >
+                          Offline
+                        </button>
+                        <button
+                          type="button"
+                          className={`git-profile-btn ${collectionsMode === "synced" ? "git-profile-btn-active" : ""}`}
+                          onClick={() => setCollectionsMode("synced")}
+                          disabled={collectionsMode === "synced" || syncedCollections.length === 0}
+                          title={syncedCollections.length === 0 ? "Carregue as collections do repo primeiro" : "Trabalhar com as collections sincronizadas com o repo"}
+                        >
+                          Sincronizado
+                        </button>
+                      </div>
+                      {collectionsMode === "synced" && (
+                        <span className="git-profile-badge git-profile-badge-synced">● sincronizado</span>
+                      )}
+                      {collectionsMode === "offline" && (
+                        <span className="git-profile-badge git-profile-badge-offline">● offline</span>
+                      )}
+                    </div>
+                    {syncedCollections.length === 0 && collectionsMode === "offline" && (
+                      <p style={{ fontSize: "12px", color: "var(--text-muted, #888)", margin: "4px 0 12px" }}>
+                        Carregue as collections do repo para habilitar o perfil Sincronizado.
+                      </p>
+                    )}
+
                     <div style={{ marginTop: "12px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       <button
                         type="button"
                         className="btn-secondary"
-                        onClick={handleLoadFromRepo}
+                        onClick={() => setGitConfirmAction("load")}
                         disabled={gitLoading || !gitRepo.hasCollectionsFile}
                       >
-                        {gitLoading ? "Carregando..." : "Carregar collections do repo"}
+                        {gitLoading && gitConfirmAction === null ? "Carregando..." : "Carregar collections do repo"}
                       </button>
                       <button
                         type="button"
                         className="btn-primary"
-                        onClick={() => handleSaveToRepo(false)}
+                        onClick={() => setGitConfirmAction("save")}
                         disabled={gitLoading}
                       >
-                        {gitLoading ? "Salvando..." : "Salvar collections no repo"}
+                        {gitLoading && gitConfirmAction === null ? "Salvando..." : "Salvar collections no repo"}
                       </button>
                       <button
                         type="button"
                         className="btn-primary"
-                        onClick={() => handleSaveToRepo(true)}
+                        onClick={() => setGitConfirmAction("saveAndCommit")}
                         disabled={gitLoading}
                       >
-                        {gitLoading ? "Salvando..." : "Salvar e commitar"}
+                        {gitLoading && gitConfirmAction === null ? "Salvando..." : "Salvar e commitar"}
                       </button>
                     </div>
                     {gitSyncStatus && (
@@ -438,6 +475,64 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                   </label>
                 </div>
               </div>
+            )}
+            {gitConfirmAction === "load" && (
+              <ConfirmModal
+                title="Carregar collections do repo"
+                message=""
+                confirmLabel="Carregar"
+                onConfirm={handleLoadFromRepo}
+                onClose={() => setGitConfirmAction(null)}
+              >
+                <p style={{ margin: "0 0 8px" }}>
+                  As collections do repositório serão carregadas para o perfil <strong>Sincronizado</strong>.
+                </p>
+                <p style={{ margin: "0 0 8px" }}>
+                  Seu perfil <strong>Offline</strong> não será afetado.
+                </p>
+                {collectionsMode === "synced" && (
+                  <p style={{ margin: "0", color: "var(--color-warning, #e5a020)" }}>
+                    ⚠ Você está no perfil Sincronizado — as collections ativas serão substituídas.
+                  </p>
+                )}
+              </ConfirmModal>
+            )}
+            {gitConfirmAction === "save" && (
+              <ConfirmModal
+                title="Salvar collections no repo"
+                message=""
+                confirmLabel="Salvar"
+                onConfirm={() => handleSaveToRepo(false)}
+                onClose={() => setGitConfirmAction(null)}
+              >
+                <p style={{ margin: "0 0 8px" }}>
+                  As collections do perfil <strong>{collectionsMode === "synced" ? "Sincronizado" : "Offline"}</strong> serão escritas em{" "}
+                  <code>.fivedollars/collections.json</code> no repositório vinculado.
+                </p>
+                <p style={{ margin: "0" }}>
+                  Nenhum commit será criado automaticamente.
+                </p>
+              </ConfirmModal>
+            )}
+            {gitConfirmAction === "saveAndCommit" && (
+              <ConfirmModal
+                title="Salvar e commitar"
+                message=""
+                confirmLabel="Salvar e commitar"
+                onConfirm={() => handleSaveToRepo(true)}
+                onClose={() => setGitConfirmAction(null)}
+              >
+                <p style={{ margin: "0 0 8px" }}>
+                  As collections do perfil <strong>{collectionsMode === "synced" ? "Sincronizado" : "Offline"}</strong> serão salvas em{" "}
+                  <code>.fivedollars/collections.json</code> e um commit será criado automaticamente com a mensagem:
+                </p>
+                <p style={{ margin: "0 0 8px", fontFamily: "monospace", fontSize: "12px", background: "var(--bg-secondary, #1e1e1e)", padding: "6px 8px", borderRadius: "4px" }}>
+                  chore(fivedollars): update collections
+                </p>
+                <p style={{ margin: "0" }}>
+                  Apenas o arquivo <code>.fivedollars/collections.json</code> será incluído no commit.
+                </p>
+              </ConfirmModal>
             )}
             {confirmModalOpen && (
               <ConfirmModal

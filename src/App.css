@@ -2878,6 +2878,67 @@ body {
   color: var(--text);
 }
 
+.git-profile-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.git-profile-label {
+  font-size: 13px;
+  color: var(--text-muted, #aaa);
+  white-space: nowrap;
+}
+
+.git-profile-switch {
+  display: flex;
+  border: 1px solid var(--border, #444);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.git-profile-btn {
+  padding: 5px 14px;
+  font-size: 13px;
+  background: transparent;
+  color: var(--text, #ccc);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.git-profile-btn:hover:not(:disabled) {
+  background: var(--bg-hover, #2a2a2a);
+}
+
+.git-profile-btn-active {
+  background: var(--accent, #007acc);
+  color: #fff;
+  cursor: default;
+}
+
+.git-profile-btn:disabled:not(.git-profile-btn-active) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.git-profile-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.git-profile-badge-synced {
+  background: color-mix(in srgb, var(--accent, #007acc) 20%, transparent);
+  color: var(--accent, #007acc);
+}
+
+.git-profile-badge-offline {
+  background: color-mix(in srgb, #888 20%, transparent);
+  color: #aaa;
+}
+
 .about-language-options {
   display: flex;
   flex-direction: column;

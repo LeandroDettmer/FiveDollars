@@ -26,6 +26,11 @@ function parsePersistedData(raw: string | null): PersistedData {
       history: Array.isArray(data.history) ? data.history : [],
       locale: typeof data.locale === "string" ? data.locale : "en",
       pinnedTabs: Array.isArray(data.pinnedTabs) ? data.pinnedTabs : [],
+      gitRepo: data.gitRepo ?? null,
+      gitSyncStatus: data.gitSyncStatus ?? null,
+      collectionsMode: data.collectionsMode === "synced" ? "synced" : "offline",
+      offlineCollections: Array.isArray(data.offlineCollections) ? data.offlineCollections : [],
+      syncedCollections: Array.isArray(data.syncedCollections) ? data.syncedCollections : [],
     };
   } catch {
     return defaultData;
