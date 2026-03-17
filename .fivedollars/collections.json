@@ -6,12 +6,40 @@
       "name": "teste",
       "items": [
         {
+          "id": "9018342c-daee-4891-a6b2-8c34508fb836",
+          "name": "2",
+          "type": "request",
+          "request": {
+            "id": "9018342c-daee-4891-a6b2-8c34508fb836",
+            "name": "2",
+            "method": "GET",
+            "url": "https://httpbin.org/get",
+            "headers": [
+              {
+                "id": "29659591-793f-4a8c-a65a-09e8e3cdb4d6",
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "queryParams": [
+              {
+                "id": "0e96ed22-c1e2-4dfd-9d2d-3095fb24ca56",
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "bodyType": "none"
+          }
+        },
+        {
           "id": "99e0257d-33c8-4cd6-83b8-a32834de5fcf",
-          "name": "New request",
+          "name": "1",
           "type": "request",
           "request": {
             "id": "99e0257d-33c8-4cd6-83b8-a32834de5fcf",
-            "name": "New request",
+            "name": "1",
             "method": "GET",
             "url": "https://httpbin.org/get",
             "headers": [
@@ -39,6 +67,6 @@
   ],
   "meta": {
     "appVersion": "0.1.15",
-    "lastUpdatedAt": 1773785297950
+    "lastUpdatedAt": 1773786212094
   }
 }
