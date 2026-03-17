@@ -123,6 +123,7 @@ body {
   max-width: 300px;
   min-width: 150px;
   flex-shrink: 1;
+  user-select: none;
 }
 
 .tab-bar-tab:hover {
@@ -858,10 +859,16 @@ body {
 }
 
 .collection-block {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow: visible;
   background: var(--bg-tertiary);
+}
+
+.collection-block--dragging {
+  opacity: 0.4;
+  cursor: grabbing;
 }
 
 .collection-header {
@@ -2685,8 +2692,14 @@ body {
 }
 
 .env-list-row {
+  position: relative;
   list-style: none;
   margin: 0;
+}
+
+.env-list-row--dragging {
+  opacity: 0.4;
+  cursor: grabbing;
 }
 
 /* Variáveis do ambiente ativo na sidebar */

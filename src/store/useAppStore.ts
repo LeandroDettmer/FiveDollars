@@ -117,6 +117,7 @@ interface AppState {
   addCollection: (coll: Collection) => void;
   removeCollection: (id: string) => void;
   updateCollection: (id: string, patch: Partial<Pick<Collection, "name" | "items" | "variables">>) => void;
+  reorderCollections: (collections: Collection[]) => void;
   updateRequestInCollection: (requestId: string, request: RequestConfig) => void;
   addEnvironment: (env: Omit<Environment, "id">) => Environment;
   updateEnvironment: (id: string, patch: Partial<Environment>) => void;
@@ -558,6 +559,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         c.id === id ? { ...c, ...patch } : c
       ),
     }));
+    persist(get());
+  },
+
+  reorderCollections: (collections) => {
+    set({ collections });
     persist(get());
   },
 

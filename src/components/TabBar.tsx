@@ -140,6 +140,7 @@ export function TabBar() {
                 aria-selected={tab.id === activeTabId}
                 className={tabClass}
                 onClick={() => setActiveTab(tab.id)}
+                onMouseDown={preventRightClickSelect}
                 draggable
                 onDragStart={(e) => handleTabDragStart(e, tab.id)}
                 onDragOver={(e) => handleTabDragOver(e, tab.id)}

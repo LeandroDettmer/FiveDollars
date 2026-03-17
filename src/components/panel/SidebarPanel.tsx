@@ -22,10 +22,12 @@ export function SidebarPanel() {
     environments,
     currentEnv,
     setCurrentEnv,
+    setEnvironments,
     collections,
     addCollection,
     removeCollection,
     updateCollection,
+    reorderCollections,
     addEnvironment,
     currentRequest,
     openTab,
@@ -57,6 +59,98 @@ export function SidebarPanel() {
   const collectionMenuRef = useRef<HTMLDivElement>(null);
   const hasInitializedCollectionsRef = useRef(false);
   useClickOutside(collectionMenuRef, () => setCollectionMenuOpenId(null), !!collectionMenuOpenId);
+
+  const [draggingCollId, setDraggingCollId] = useState<string | null>(null);
+  const [dragOverCollId, setDragOverCollId] = useState<string | null>(null);
+  const [dragOverCollPos, setDragOverCollPos] = useState<"before" | "after">("before");
+
+  const [draggingEnvId, setDraggingEnvId] = useState<string | null>(null);
+  const [dragOverEnvId, setDragOverEnvId] = useState<string | null>(null);
+  const [dragOverEnvPos, setDragOverEnvPos] = useState<"before" | "after">("before");
+
+  const handleCollDragStart = (e: React.DragEvent, collId: string) => {
+    e.dataTransfer.setData("application/x-collection-id", collId);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggingCollId(collId);
+  };
+
+  const handleCollDragOver = (e: React.DragEvent, collId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const pos = e.clientY - rect.top < rect.height / 2 ? "before" : "after";
+    setDragOverCollId(collId);
+    setDragOverCollPos(pos);
+  };
+
+  const handleCollDrop = (e: React.DragEvent, targetCollId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceCollId = e.dataTransfer.getData("application/x-collection-id");
+    const pos = dragOverCollPos;
+    setDraggingCollId(null);
+    setDragOverCollId(null);
+    if (!sourceCollId || sourceCollId === targetCollId) return;
+
+    const sourceIdx = collections.findIndex((c) => c.id === sourceCollId);
+    const targetIdx = collections.findIndex((c) => c.id === targetCollId);
+    if (sourceIdx < 0 || targetIdx < 0) return;
+
+    const newColls = [...collections];
+    const [moved] = newColls.splice(sourceIdx, 1);
+    const insertAt = pos === "before" ? targetIdx : targetIdx + 1;
+    const adjusted = sourceIdx < targetIdx ? insertAt - 1 : insertAt;
+    newColls.splice(Math.max(0, adjusted), 0, moved);
+    reorderCollections(newColls);
+  };
+
+  const handleCollDragEnd = () => {
+    setDraggingCollId(null);
+    setDragOverCollId(null);
+  };
+
+  const handleEnvDragStart = (e: React.DragEvent, envId: string) => {
+    e.dataTransfer.setData("application/x-env-id", envId);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggingEnvId(envId);
+  };
+
+  const handleEnvDragOver = (e: React.DragEvent, envId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const pos = e.clientY - rect.top < rect.height / 2 ? "before" : "after";
+    setDragOverEnvId(envId);
+    setDragOverEnvPos(pos);
+  };
+
+  const handleEnvDrop = (e: React.DragEvent, targetEnvId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const sourceEnvId = e.dataTransfer.getData("application/x-env-id");
+    const pos = dragOverEnvPos;
+    setDraggingEnvId(null);
+    setDragOverEnvId(null);
+    if (!sourceEnvId || sourceEnvId === targetEnvId) return;
+
+    const sourceIdx = environments.findIndex((env) => env.id === sourceEnvId);
+    const targetIdx = environments.findIndex((env) => env.id === targetEnvId);
+    if (sourceIdx < 0 || targetIdx < 0) return;
+
+    const newEnvs = [...environments];
+    const [moved] = newEnvs.splice(sourceIdx, 1);
+    const insertAt = pos === "before" ? targetIdx : targetIdx + 1;
+    const adjusted = sourceIdx < targetIdx ? insertAt - 1 : insertAt;
+    newEnvs.splice(Math.max(0, adjusted), 0, moved);
+    setEnvironments(newEnvs);
+  };
+
+  const handleEnvDragEnd = () => {
+    setDraggingEnvId(null);
+    setDragOverEnvId(null);
+  };
 
   useEffect(() => {
     if (collectionSearch.length > 0) {
@@ -330,8 +424,24 @@ export function SidebarPanel() {
                 <div className="collections-list">
                   {collections.map((coll) => {
                     const isCollapsed = collapsedCollectionIds.has(coll.id);
+                    const isDragging = draggingCollId === coll.id;
+                    const isDropTarget = dragOverCollId === coll.id;
+                    let blockClass = `collection-block${isCollapsed ? " collection-block--collapsed" : ""}`;
+                    if (isDragging) blockClass += " collection-block--dragging";
+                    if (isDropTarget && dragOverCollPos === "before") blockClass += " drag-over-before";
+                    if (isDropTarget && dragOverCollPos === "after") blockClass += " drag-over-after";
+
                     return (
-                      <div key={coll.id} className={`collection-block ${isCollapsed ? "collection-block--collapsed" : ""}`}>
+                      <div
+                        key={coll.id}
+                        className={blockClass}
+                        draggable
+                        onDragStart={(e) => handleCollDragStart(e, coll.id)}
+                        onDragOver={(e) => handleCollDragOver(e, coll.id)}
+                        onDragLeave={() => setDragOverCollId(null)}
+                        onDrop={(e) => handleCollDrop(e, coll.id)}
+                        onDragEnd={handleCollDragEnd}
+                      >
                         {/* ao clicar com botao direito, abrir menu de opcoes da collection */}
                         <div className="collection-header" onContextMenu={(e) => {
                           e.preventDefault();
@@ -491,26 +601,44 @@ export function SidebarPanel() {
                 </p>
               ) : (
                 <ul className="env-list">
-                  {environments.map((env) => (
-                    <li key={env.id} className="env-list-row">
-                      <button
-                        type="button"
-                        className={`env-list-item ${currentEnv?.id === env.id ? "active" : ""}`}
-                        onClick={() => handleEnvClick(env)}
-                        onDoubleClick={(e) => handleEnvDoubleClick(env, e)}
-                        title={t("tabBar.envActive")}
+                  {environments.map((env) => {
+                    const isDraggingEnv = draggingEnvId === env.id;
+                    const isDropTargetEnv = dragOverEnvId === env.id;
+                    let rowClass = "env-list-row";
+                    if (isDraggingEnv) rowClass += " env-list-row--dragging";
+                    if (isDropTargetEnv && dragOverEnvPos === "before") rowClass += " drag-over-before";
+                    if (isDropTargetEnv && dragOverEnvPos === "after") rowClass += " drag-over-after";
+
+                    return (
+                      <li
+                        key={env.id}
+                        className={rowClass}
+                        draggable
+                        onDragStart={(e) => handleEnvDragStart(e, env.id)}
+                        onDragOver={(e) => handleEnvDragOver(e, env.id)}
+                        onDragLeave={() => setDragOverEnvId(null)}
+                        onDrop={(e) => handleEnvDrop(e, env.id)}
+                        onDragEnd={handleEnvDragEnd}
                       >
-                        <span
-                          className="env-dot"
-                          style={{ background: (env.color && env.color.trim()) ? env.color : ENV_COLORS[1] }}
-                        />
-                        <span className="env-name">{env.name}</span>
-                        <span className="env-check" aria-hidden>
-                          {currentEnv?.id === env.id ? "✓" : ""}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+                        <button
+                          type="button"
+                          className={`env-list-item ${currentEnv?.id === env.id ? "active" : ""}`}
+                          onClick={() => handleEnvClick(env)}
+                          onDoubleClick={(e) => handleEnvDoubleClick(env, e)}
+                          title={t("tabBar.envActive")}
+                        >
+                          <span
+                            className="env-dot"
+                            style={{ background: (env.color && env.color.trim()) ? env.color : ENV_COLORS[1] }}
+                          />
+                          <span className="env-name">{env.name}</span>
+                          <span className="env-check" aria-hidden>
+                            {currentEnv?.id === env.id ? "✓" : ""}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </>
