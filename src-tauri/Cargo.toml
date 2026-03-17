@@ -15,6 +15,7 @@ tauri-plugin-http = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 serde_json = "1"
+serde = { version = "1", features = ["derive"] }
 
 [features]
 default = ["custom-protocol"]

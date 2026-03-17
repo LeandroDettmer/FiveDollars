@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use tauri::AppHandle;
 use tauri::Manager;
 
+mod git_sync;
+
 const DATA_FILE: &str = "data.json";
 
 fn data_path(app: &AppHandle) -> Result<PathBuf, String> {
@@ -48,7 +50,15 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![load_app_data, save_app_data, write_backup_file])
+        .invoke_handler(tauri::generate_handler![
+            load_app_data,
+            save_app_data,
+            write_backup_file,
+            git_sync::detect_git_repo,
+            git_sync::read_git_collections,
+            git_sync::write_git_collections,
+            git_sync::git_commit_collections
+        ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar FiveDollars");
 }

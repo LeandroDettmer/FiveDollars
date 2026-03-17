@@ -174,3 +174,27 @@ export interface PinnedTabData {
 
 
 export type Tab = RequestTab | RunnerTab;
+
+/** Informações básicas sobre o repositório Git vinculado ao FiveDollars. */
+export interface GitRepoInfo {
+  /** Caminho absoluto do repositório na máquina local. */
+  path: string;
+  /** Nome do branch atual (ex.: main, develop). */
+  branch: string;
+  /** true se git status estiver limpo (sem mudanças pendentes). */
+  isClean: boolean;
+  /** true se a pasta .fivedollars existir na raiz do repo. */
+  hasFivedollarsFolder: boolean;
+  /** true se o arquivo .fivedollars/collections.json existir. */
+  hasCollectionsFile: boolean;
+}
+
+/** Informações de último sync Git das collections. */
+export interface GitSyncStatus {
+  /** Timestamp do último sync bem-sucedido (ms desde epoch). */
+  lastSyncedAt: number | null;
+  /** Descrição curta da última ação (ex.: \"saved_to_repo\", \"loaded_from_repo\"). */
+  lastAction: string | null;
+  /** Mensagem de erro, se a última operação falhou. */
+  errorMessage?: string;
+}

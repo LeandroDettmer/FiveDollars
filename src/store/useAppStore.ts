@@ -13,6 +13,8 @@ import type {
   RunnerTabRun,
   HttpMethod,
   PinnedTabData,
+  GitRepoInfo,
+  GitSyncStatus,
 } from "@/types";
 import type { PersistedData } from "@/types/persisted";
 import { saveAppData } from "@/lib/persistence";
@@ -33,6 +35,8 @@ function persist(state: {
   locale?: string;
   tabs?: Tab[];
   pinnedTabs: PinnedTabData[];
+  gitRepo?: GitRepoInfo | null;
+  gitSyncStatus?: GitSyncStatus | null;
 }) {
   const pinnedTabs: PinnedTabData[] = (state.tabs ?? [])
     .filter((t): t is RequestTab => t.pinned === true && t.type === "request" && !t.isTemp)
@@ -51,6 +55,8 @@ function persist(state: {
     history: state.history,
     locale: (state.locale ?? "en") as Locale,
     pinnedTabs,
+    gitRepo: state.gitRepo ?? null,
+    gitSyncStatus: state.gitSyncStatus ?? null,
   };
   saveAppData(data);
 }
@@ -80,6 +86,10 @@ interface AppState {
   tabRequestCache: Record<string, TabRequestCache>;
   /** Requisições temporárias (Ctrl+N): não estão em nenhuma collection. */
   tempRequests: Record<string, RequestConfig>;
+  /** Informações sobre o repositório Git vinculado para sync de collections. */
+  gitRepo: GitRepoInfo | null;
+  /** Status do último sync Git realizado pelo app. */
+  gitSyncStatus: GitSyncStatus | null;
   openTab: (tab: Tab) => void;
   closeTab: (tabId: string) => void;
   /** Fecha todas as abas que exibem a requisição com o id dado (ex.: ao remover da árvore). */
@@ -136,6 +146,8 @@ interface AppState {
   locale: string;
   setLocale: (locale: Locale) => void;
   pinnedTabs: PinnedTabData[];
+  setGitRepo: (info: GitRepoInfo | null) => void;
+  setGitSyncStatus: (status: GitSyncStatus | null) => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -162,6 +174,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   runnerPanelRun: null,
   locale: "en",
   pinnedTabs: [],
+  gitRepo: null,
+  gitSyncStatus: null,
 
   setLocale: (locale) => {
     set({ locale });
@@ -496,6 +510,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       history: data?.history || actualStoreState.history,
       locale: (data?.locale ?? "en") as Locale,
       pinnedTabs: data?.pinnedTabs ?? [],
+      gitRepo: data?.gitRepo ?? null,
+      gitSyncStatus: data?.gitSyncStatus ?? null,
     });
 
     const restoredCollections = get().collections;
@@ -530,6 +546,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     }
 
+    persist(get());
+  },
+
+  setGitRepo: (info) => {
+    set({ gitRepo: info });
+    persist(get());
+  },
+
+  setGitSyncStatus: (status) => {
+    set({ gitSyncStatus: status });
     persist(get());
   },
 
