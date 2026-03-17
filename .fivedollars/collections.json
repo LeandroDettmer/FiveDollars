@@ -2,6 +2,16 @@
   "version": 1,
   "collections": [
     {
+      "id": "30e0ef0d-874b-4cda-b6ee-3d80d97e872b",
+      "name": "New collection",
+      "items": []
+    },
+    {
+      "id": "ad50720a-626b-4d59-a063-a58feb574157",
+      "name": "SYNC",
+      "items": []
+    },
+    {
       "id": "7c717bf4-2a86-48f8-9be2-5f26fe17534e",
       "name": "teste",
       "items": [
@@ -67,6 +77,6 @@
   ],
   "meta": {
     "appVersion": "0.1.15",
-    "lastUpdatedAt": 1773786212094
+    "lastUpdatedAt": 1773787857338
   }
 }
