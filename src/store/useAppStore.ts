@@ -40,6 +40,7 @@ function persist(state: {
   collectionsMode?: "offline" | "synced";
   offlineCollections?: Collection[];
   syncedCollections?: Collection[];
+  knownRepoPaths?: string[];
 }) {
   const pinnedTabs: PinnedTabData[] = (state.tabs ?? [])
     .filter((t): t is RequestTab => t.pinned === true && t.type === "request" && !t.isTemp)
@@ -63,6 +64,7 @@ function persist(state: {
     collectionsMode: state.collectionsMode ?? "offline",
     offlineCollections: state.offlineCollections ?? [],
     syncedCollections: state.syncedCollections ?? [],
+    knownRepoPaths: state.knownRepoPaths ?? [],
   };
   saveAppData(data);
 }
@@ -102,6 +104,8 @@ interface AppState {
   offlineCollections: Collection[];
   /** Snapshot das collections do perfil sincronizado com o repo Git. */
   syncedCollections: Collection[];
+  /** Lista de caminhos de raiz de repositórios conhecidos (para seletor repo/branch). */
+  knownRepoPaths: string[];
   openTab: (tab: Tab) => void;
   closeTab: (tabId: string) => void;
   /** Fecha todas as abas que exibem a requisição com o id dado (ex.: ao remover da árvore). */
@@ -164,6 +168,11 @@ interface AppState {
   setCollectionsMode: (mode: "offline" | "synced") => void;
   /** Atualiza o snapshot syncedCollections sem alterar o modo ativo. */
   setSyncedCollections: (collections: Collection[]) => void;
+  setKnownRepoPaths: (paths: string[]) => void;
+  /** Adiciona um path à lista de repos conhecidos (evita duplicata). */
+  addKnownRepo: (path: string) => void;
+  /** Remove um path da lista de repos conhecidos. */
+  removeKnownRepo: (path: string) => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -195,6 +204,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   collectionsMode: "offline",
   offlineCollections: [],
   syncedCollections: [],
+  knownRepoPaths: [],
 
   setLocale: (locale) => {
     set({ locale });
@@ -534,6 +544,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       collectionsMode: data?.collectionsMode ?? "offline",
       offlineCollections: data?.offlineCollections ?? [],
       syncedCollections: data?.syncedCollections ?? [],
+      knownRepoPaths: (() => {
+        const list = data?.knownRepoPaths ?? [];
+        const currentPath = data?.gitRepo?.path;
+        if (currentPath && !list.includes(currentPath)) return [currentPath, ...list];
+        return list;
+      })(),
     });
 
     const restoredCollections = get().collections;
@@ -610,6 +626,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     } else {
       set({ syncedCollections: collections });
     }
+    persist(get());
+  },
+
+  setKnownRepoPaths: (paths) => {
+    set({ knownRepoPaths: paths });
+    persist(get());
+  },
+
+  addKnownRepo: (path) => {
+    const s = get();
+    const normalized = path.trim();
+    if (!normalized || s.knownRepoPaths.includes(normalized)) return;
+    set({ knownRepoPaths: [...s.knownRepoPaths, normalized] });
+    persist(get());
+  },
+
+  removeKnownRepo: (path) => {
+    set((s) => ({
+      knownRepoPaths: s.knownRepoPaths.filter((p) => p !== path),
+    }));
     persist(get());
   },
 

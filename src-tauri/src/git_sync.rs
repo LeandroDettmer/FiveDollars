@@ -77,6 +77,54 @@ pub fn detect_git_repo(path: Option<String>) -> Result<GitRepoInfo, String> {
     })
 }
 
+#[derive(Serialize)]
+pub struct GitBranchesInfo {
+    pub current: String,
+    pub all: Vec<String>,
+}
+
+#[tauri::command]
+pub fn list_git_branches(repo_path: String) -> Result<GitBranchesInfo, String> {
+    let repo = PathBuf::from(&repo_path);
+    if !repo.join(".git").exists() {
+        return Err("Caminho informado não é um repositório Git (sem .git)".to_string());
+    }
+    let output = run_git(&repo, &["branch"])?;
+    let mut current = String::new();
+    let mut all = Vec::new();
+    for line in output.lines() {
+        let line = line.trim();
+        let (name, is_current) = if line.starts_with("* ") {
+            (line.trim_start_matches("* ").trim(), true)
+        } else {
+            (line.trim(), false)
+        };
+        if !name.is_empty() {
+            all.push(name.to_string());
+            if is_current {
+                current = name.to_string();
+            }
+        }
+    }
+    if current.is_empty() && !all.is_empty() {
+        current = all.first().cloned().unwrap_or_default();
+    }
+    Ok(GitBranchesInfo { current, all })
+}
+
+#[tauri::command]
+pub fn git_checkout_branch(repo_path: String, branch: String) -> Result<(), String> {
+    let repo = PathBuf::from(&repo_path);
+    if !repo.join(".git").exists() {
+        return Err("Caminho informado não é um repositório Git (sem .git)".to_string());
+    }
+    if branch.is_empty() {
+        return Err("Nome do branch não pode ser vazio.".to_string());
+    }
+    run_git(&repo, &["checkout", &branch])?;
+    Ok(())
+}
+
 #[tauri::command]
 pub fn read_git_collections(repo_path: String) -> Result<String, String> {
     let repo = PathBuf::from(repo_path);

@@ -26,6 +26,8 @@ export interface PersistedData {
   offlineCollections?: Collection[];
   /** Snapshot das collections do perfil sincronizado com o repo Git. */
   syncedCollections?: Collection[];
+  /** Lista de caminhos de raiz de repositórios conhecidos (para seletor repo/branch). */
+  knownRepoPaths?: string[];
 }
 
 export const DEFAULT_PERSISTED: PersistedData = {
@@ -40,4 +42,5 @@ export const DEFAULT_PERSISTED: PersistedData = {
   collectionsMode: "offline",
   offlineCollections: [],
   syncedCollections: [],
+  knownRepoPaths: [],
 };

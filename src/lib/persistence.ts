@@ -15,6 +15,7 @@ function parsePersistedData(raw: string | null): PersistedData {
     history: [],
     locale: "en",
     pinnedTabs: [],
+    knownRepoPaths: [],
   };
   if (!raw) return defaultData;
   try {
@@ -31,6 +32,9 @@ function parsePersistedData(raw: string | null): PersistedData {
       collectionsMode: data.collectionsMode === "synced" ? "synced" : "offline",
       offlineCollections: Array.isArray(data.offlineCollections) ? data.offlineCollections : [],
       syncedCollections: Array.isArray(data.syncedCollections) ? data.syncedCollections : [],
+      knownRepoPaths: Array.isArray(data.knownRepoPaths)
+        ? data.knownRepoPaths.filter((p): p is string => typeof p === "string")
+        : [],
     };
   } catch {
     return defaultData;

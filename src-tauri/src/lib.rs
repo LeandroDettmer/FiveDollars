@@ -55,6 +55,8 @@ pub fn run() {
             save_app_data,
             write_backup_file,
             git_sync::detect_git_repo,
+            git_sync::list_git_branches,
+            git_sync::git_checkout_branch,
             git_sync::read_git_collections,
             git_sync::write_git_collections,
             git_sync::git_commit_collections

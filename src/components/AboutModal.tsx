@@ -33,6 +33,8 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const setCollectionsMode = useAppStore((s) => s.setCollectionsMode);
   const setSyncedCollections = useAppStore((s) => s.setSyncedCollections);
   const syncedCollections = useAppStore((s) => s.syncedCollections);
+  const knownRepoPaths = useAppStore((s) => s.knownRepoPaths);
+  const addKnownRepo = useAppStore((s) => s.addKnownRepo);
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const [version, setVersion] = useState(versionProp ?? "0.1.0");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -40,6 +42,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const [gitLoading, setGitLoading] = useState(false);
   const [gitError, setGitError] = useState<string | null>(null);
   const [gitConfirmAction, setGitConfirmAction] = useState<GitConfirmAction | null>(null);
+  const [gitBranches, setGitBranches] = useState<{ current: string; all: string[] } | null>(null);
 
   useEffect(() => {
     if (isTauri()) {
@@ -48,6 +51,32 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       setVersion(versionProp);
     }
   }, [versionProp]);
+
+  // Auto-refresh repo status ao abrir a aba Git quando já existe um repo vinculado
+  useEffect(() => {
+    if (!isTauri() || activeTab !== "git" || !gitRepo?.path) return;
+    let cancelled = false;
+    invoke<{ path: string; branch: string; is_clean: boolean; has_fivedollars_folder: boolean; has_collections_file: boolean }>("detect_git_repo", { path: gitRepo.path })
+      .then((info) => {
+        if (cancelled) return;
+        setGitRepo({
+          path: info.path,
+          branch: info.branch,
+          isClean: info.is_clean,
+          hasFivedollarsFolder: info.has_fivedollars_folder,
+          hasCollectionsFile: info.has_collections_file,
+        });
+      })
+      .catch(() => {});
+    invoke<{ current: string; all: string[] }>("list_git_branches", { repoPath: gitRepo.path })
+      .then((b) => {
+        if (!cancelled) setGitBranches(b);
+      })
+      .catch(() => {
+        if (!cancelled) setGitBranches(null);
+      });
+    return () => { cancelled = true; };
+  }, [activeTab, gitRepo?.path]);
 
   const handleCheckUpdate = async () => {
     setUpdateStatus({ status: "idle" });
@@ -85,11 +114,72 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
         hasFivedollarsFolder: info.has_fivedollars_folder,
         hasCollectionsFile: info.has_collections_file,
       });
+      addKnownRepo(info.path);
       setGitSyncStatus({
         lastSyncedAt: gitSyncStatus?.lastSyncedAt ?? null,
         lastAction: gitSyncStatus?.lastAction ?? null,
         errorMessage: undefined,
       });
+      const branches = await invoke<{ current: string; all: string[] }>("list_git_branches", { repoPath: info.path });
+      setGitBranches(branches);
+    } catch (e) {
+      console.error(e);
+      setGitError((e as Error).message ?? String(e));
+    } finally {
+      setGitLoading(false);
+    }
+  };
+
+  const handleSelectRepo = async (path: string) => {
+    if (!isTauri() || path === gitRepo?.path) return;
+    setGitLoading(true);
+    setGitError(null);
+    try {
+      const info = await invoke<{
+        path: string;
+        branch: string;
+        is_clean: boolean;
+        has_fivedollars_folder: boolean;
+        has_collections_file: boolean;
+      }>("detect_git_repo", { path });
+      setGitRepo({
+        path: info.path,
+        branch: info.branch,
+        isClean: info.is_clean,
+        hasFivedollarsFolder: info.has_fivedollars_folder,
+        hasCollectionsFile: info.has_collections_file,
+      });
+      const branches = await invoke<{ current: string; all: string[] }>("list_git_branches", { repoPath: info.path });
+      setGitBranches(branches);
+    } catch (e) {
+      console.error(e);
+      setGitError((e as Error).message ?? String(e));
+    } finally {
+      setGitLoading(false);
+    }
+  };
+
+  const handleSelectBranch = async (branch: string) => {
+    if (!isTauri() || !gitRepo || branch === gitRepo.branch) return;
+    setGitLoading(true);
+    setGitError(null);
+    try {
+      await invoke("git_checkout_branch", { repoPath: gitRepo.path, branch });
+      const info = await invoke<{
+        path: string;
+        branch: string;
+        is_clean: boolean;
+        has_fivedollars_folder: boolean;
+        has_collections_file: boolean;
+      }>("detect_git_repo", { path: gitRepo.path });
+      setGitRepo({
+        path: info.path,
+        branch: info.branch,
+        isClean: info.is_clean,
+        hasFivedollarsFolder: info.has_fivedollars_folder,
+        hasCollectionsFile: info.has_collections_file,
+      });
+      setGitBranches((prev) => prev ? { ...prev, current: info.branch } : null);
     } catch (e) {
       console.error(e);
       setGitError((e as Error).message ?? String(e));
@@ -123,6 +213,8 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
         lastAction: gitSyncStatus?.lastAction ?? null,
         errorMessage: undefined,
       });
+      const branches = await invoke<{ current: string; all: string[] }>("list_git_branches", { repoPath: gitRepo.path });
+      setGitBranches(branches);
     } catch (e) {
       console.error(e);
       setGitError((e as Error).message ?? String(e));
@@ -327,14 +419,14 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 <h3 className="about-section-title">Git sync (.fivedollars)</h3>
                 {!gitRepo && (
                   <div className="about-update-section">
-                    <p>Vincule um repositório Git local para salvar e carregar suas collections.</p>
+                    <p>Adicione um repositório Git local para salvar e carregar suas collections.</p>
                     <button
                       type="button"
                       className="btn-primary about-update-btn"
                       onClick={handleDetectGitRepo}
                       disabled={gitLoading}
                     >
-                      {gitLoading ? "Detectando..." : "Selecionar repositório Git"}
+                      {gitLoading ? "Detectando..." : "Adicionar repositório"}
                     </button>
                     {gitError && (
                       <p className="about-update-error" role="alert">
@@ -345,21 +437,67 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 )}
                 {gitRepo && (
                   <div className="about-update-section">
-                    <p>
-                      <strong>Repo:</strong> {gitRepo.path}
-                    </p>
-                    <p>
-                      <strong>Branch:</strong> {gitRepo.branch}{" "}
+                    <div className="git-repo-branch-row" style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <label className="git-profile-label" style={{ minWidth: "80px" }}>Repositório:</label>
+                        <select
+                          className="git-select"
+                          value={gitRepo.path}
+                          onChange={(e) => handleSelectRepo(e.target.value)}
+                          disabled={gitLoading}
+                          style={{ flex: "1", minWidth: "120px", maxWidth: "100%", padding: "6px 8px", fontSize: "13px", background: "var(--bg-secondary)", color: "var(--text)", border: "1px solid var(--border)" }}
+                        >
+                          {(knownRepoPaths.includes(gitRepo.path) ? knownRepoPaths : [gitRepo.path, ...knownRepoPaths]).map((p) => (
+                            <option key={p} value={p}>
+                              {p.split(/[/\\]/).filter(Boolean).pop() ?? p}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={handleDetectGitRepo}
+                          disabled={gitLoading}
+                        >
+                          Adicionar repo
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <label className="git-profile-label" style={{ minWidth: "80px" }}>Branch:</label>
+                        <select
+                          className="git-select"
+                          value={gitRepo.branch}
+                          onChange={(e) => handleSelectBranch(e.target.value)}
+                          disabled={gitLoading || !(gitBranches?.all?.length ?? 0)}
+                          style={{ flex: "1", minWidth: "120px", maxWidth: "100%", padding: "6px 8px", fontSize: "13px", background: "var(--bg-secondary)", color: "var(--text)", border: "1px solid var(--border)" }}
+                        >
+                          {(gitBranches?.all?.length ? gitBranches.all : [gitRepo.branch]).map((b) => (
+                            <option key={b} value={b}>
+                              {b === gitRepo.branch ? `${b} (atual)` : b}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: "13px", marginBottom: "8px" }}>
+                      <strong>Branch atual:</strong> {gitRepo.branch}{" "}
                       {gitRepo.isClean ? "(clean)" : "(com mudanças)"}
                     </p>
-                    <p>
-                      <strong>.fivedollars:</strong>{" "}
-                      {gitRepo.hasFivedollarsFolder ? "encontrada" : "será criada ao salvar"}
-                    </p>
-                    <p>
-                      <strong>collections.json:</strong>{" "}
-                      {gitRepo.hasCollectionsFile ? "encontrado" : "ainda não existe"}
-                    </p>
+                    {!gitRepo.hasFivedollarsFolder && (
+                      <p style={{ fontSize: "12px", color: "var(--text-muted, #888)", marginBottom: "6px" }}>
+                        Este repositório ainda não tem pasta .fivedollars; será criada ao salvar.
+                      </p>
+                    )}
+                    {gitRepo.hasFivedollarsFolder && !gitRepo.hasCollectionsFile && (
+                      <p style={{ fontSize: "12px", color: "var(--text-muted, #888)", marginBottom: "6px" }}>
+                        Não há collections.json no repo; carregar não disponível até haver um. Será criado ao salvar.
+                      </p>
+                    )}
+                    {gitRepo.hasCollectionsFile && (
+                      <p style={{ fontSize: "12px", color: "var(--accent, #007acc)", marginBottom: "6px" }}>
+                        Pronto para syncar (carregar/salvar).
+                      </p>
+                    )}
 
                     <div className="git-profile-toggle" style={{ marginTop: "16px", marginBottom: "4px" }}>
                       <span className="git-profile-label">Perfil ativo:</span>
