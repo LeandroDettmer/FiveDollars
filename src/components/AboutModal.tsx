@@ -43,6 +43,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const [gitError, setGitError] = useState<string | null>(null);
   const [gitConfirmAction, setGitConfirmAction] = useState<GitConfirmAction | null>(null);
   const [gitBranches, setGitBranches] = useState<{ current: string; all: string[] } | null>(null);
+  const [commitMessage, setCommitMessage] = useState("chore: update collections");
 
   useEffect(() => {
     if (isTauri()) {
@@ -251,7 +252,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
     }
   };
 
-  const handleSaveToRepo = async (withCommit: boolean) => {
+  const handleSaveToRepo = async (withCommit: boolean, message?: string | null) => {
     if (!isTauri() || !gitRepo) return;
     setGitConfirmAction(null);
     setGitLoading(true);
@@ -260,7 +261,10 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       const payload = serializeCollectionsForGit(collections, version);
       await invoke("write_git_collections", { repoPath: gitRepo.path, payload });
       if (withCommit) {
-        await invoke("git_commit_collections", { repoPath: gitRepo.path, message: null });
+        await invoke("git_commit_collections", {
+          repoPath: gitRepo.path,
+          message: (message != null && message.trim() !== "") ? message.trim() : null,
+        });
       }
       setGitSyncStatus({
         lastSyncedAt: Date.now(),
@@ -554,7 +558,10 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                       <button
                         type="button"
                         className="btn-primary"
-                        onClick={() => setGitConfirmAction("saveAndCommit")}
+                        onClick={() => {
+                          setCommitMessage("chore: update collections");
+                          setGitConfirmAction("saveAndCommit");
+                        }}
                         disabled={gitLoading}
                       >
                         {gitLoading && gitConfirmAction === null ? "Salvando..." : "Salvar e commitar"}
@@ -657,18 +664,36 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 title="Salvar e commitar"
                 message=""
                 confirmLabel="Salvar e commitar"
-                onConfirm={() => handleSaveToRepo(true)}
+                onConfirm={() => handleSaveToRepo(true, commitMessage)}
                 onClose={() => setGitConfirmAction(null)}
               >
                 <p style={{ margin: "0 0 8px" }}>
                   As collections do perfil <strong>{collectionsMode === "synced" ? "Sincronizado" : "Offline"}</strong> serão salvas em{" "}
-                  <code>.fivedollars/collections.json</code> e um commit será criado automaticamente com a mensagem:
+                  <code>.fivedollars/collections.json</code> e um commit será criado. Apenas esse arquivo será incluído no commit.
                 </p>
-                <p style={{ margin: "0 0 8px", fontFamily: "monospace", fontSize: "12px", background: "var(--bg-secondary, #1e1e1e)", padding: "6px 8px", borderRadius: "4px" }}>
-                  chore(fivedollars): update collections
-                </p>
-                <p style={{ margin: "0" }}>
-                  Apenas o arquivo <code>.fivedollars/collections.json</code> será incluído no commit.
+                <label style={{ display: "block", margin: "12px 0 4px", fontSize: "13px", fontWeight: 600 }}>
+                  Mensagem do commit
+                </label>
+                <textarea
+                  value={commitMessage}
+                  onChange={(e) => setCommitMessage(e.target.value)}
+                  placeholder="chore: update collections"
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    fontSize: "13px",
+                    fontFamily: "monospace",
+                    background: "var(--bg-secondary, #1e1e1e)",
+                    color: "var(--text)",
+                    border: "1px solid var(--border, #444)",
+                    borderRadius: "4px",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <p style={{ margin: "8px 0 0", fontSize: "12px", color: "var(--text-muted, #888)" }}>
+                  Em repositórios com hooks (ex.: Husky), use o formato exigido pelo projeto ou o hook pode falhar.
                 </p>
               </ConfirmModal>
             )}

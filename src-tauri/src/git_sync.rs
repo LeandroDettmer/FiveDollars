@@ -1,8 +1,22 @@
+use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::fs;
 
 use serde::Serialize;
+
+/// PATH com diretórios onde Node/npx costumam estar, para hooks (ex.: Husky) funcionarem.
+fn git_path_env() -> String {
+    let existing = env::var("PATH").unwrap_or_default();
+    let mut prefix = String::from("/usr/local/bin:/opt/homebrew/bin");
+    if let Some(home) = env::var_os("HOME") {
+        let home_str = home.to_string_lossy();
+        if !home_str.is_empty() {
+            prefix.push_str(&format!(":{}/.nvm/versions/node/current/bin", home_str));
+        }
+    }
+    format!("{prefix}:{existing}")
+}
 
 #[derive(Serialize)]
 pub struct GitRepoInfo {
@@ -24,6 +38,7 @@ fn ensure_repo_path(path: Option<String>) -> Result<PathBuf, String> {
     let output = Command::new("git")
         .args(["rev-parse", "--show-toplevel"])
         .current_dir(&start_dir)
+        .env("PATH", git_path_env())
         .output()
         .map_err(|e| format!("Erro ao executar git: {e}"))?;
 
@@ -43,6 +58,7 @@ fn run_git(repo_path: &Path, args: &[&str]) -> Result<String, String> {
     let output = Command::new("git")
         .args(args)
         .current_dir(repo_path)
+        .env("PATH", git_path_env())
         .output()
         .map_err(|e| format!("Erro ao executar git: {e}"))?;
 
