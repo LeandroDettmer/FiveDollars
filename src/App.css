@@ -2030,8 +2030,10 @@ body {
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
+  gap: 6px;
 }
 
+.response-search-btn,
 .response-copy-btn {
   padding: 4px 10px;
   font-size: 11px;
@@ -2041,6 +2043,7 @@ body {
   color: var(--text-muted);
   cursor: pointer;
 }
+.response-search-btn:hover,
 .response-copy-btn:hover {
   color: var(--text);
   border-color: var(--text-muted);
@@ -2081,6 +2084,16 @@ body {
 .response-body-view .cm-gutters {
   border-right: 1px solid var(--border);
   background: var(--bg-secondary);
+}
+
+/* Painel de busca do CodeMirror: topo e alinhado à direita */
+.response-body-view .cm-panels-top,
+.response-body-view .cm-panels-top .cm-panel {
+  justify-content: flex-end;
+}
+.response-body-view .cm-panel.cm-search {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .response-body-raw-wrap {

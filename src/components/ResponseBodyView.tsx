@@ -1,7 +1,11 @@
-import { useMemo, useState, useRef, useEffect } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
 import { loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
+import { keymap } from "@codemirror/view";
+import { search, openSearchPanel, searchKeymap, closeSearchPanel } from "@codemirror/search";
+import { useT } from "@/lib/i18n";
+import { useKeyDown } from "@/lib/useKeyDown";
 
 interface ResponseBodyViewProps {
   content: string;
@@ -10,9 +14,34 @@ interface ResponseBodyViewProps {
 }
 
 export function ResponseBodyView({ content, isJson, className }: ResponseBodyViewProps) {
+  const { t } = useT();
   const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
   const [wrapHeight, setWrapHeight] = useState(300);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const handleOpenSearch = useCallback(() => {
+    const view = editorRef.current?.view;
+    if (view) {
+      view.focus();
+      openSearchPanel(view);
+      setSearchOpen(true);
+    }
+  }, []);
+
+  useKeyDown(["f", "F"], (e) => {
+    const view = editorRef.current?.view;
+    if ((e.metaKey || e.ctrlKey) && view) {
+      e.preventDefault();
+      if (searchOpen) {
+        closeSearchPanel(view);
+        setSearchOpen(false);
+      } else {
+        handleOpenSearch();
+      }
+    }
+  });
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -28,7 +57,10 @@ export function ResponseBodyView({ content, isJson, className }: ResponseBodyVie
   const extensions = useMemo(() => {
     if (isJson) {
       const jsonLang = loadLanguage("json");
-      return jsonLang ? [jsonLang] : [];
+      const list = jsonLang
+        ? [jsonLang, search({ top: true }), keymap.of([...searchKeymap])]
+        : [search({ top: true }), keymap.of([...searchKeymap])];
+      return list;
     }
     return [];
   }, [isJson]);
@@ -60,29 +92,40 @@ export function ResponseBodyView({ content, isJson, className }: ResponseBodyVie
         <div className="response-body-toolbar">
           <button
             type="button"
+            className="response-search-btn"
+            onClick={handleOpenSearch}
+            title={t("response.searchTitle")}
+            aria-label={t("response.searchTitle")}
+          >
+            {t("response.search")}
+          </button>
+          <button
+            type="button"
             className="response-copy-btn"
             onClick={handleCopy}
-            title="Copiar resposta"
+            title={t("response.copyTitle")}
           >
-            {copied ? "✓ Copiado" : "Copiar"}
+            {copied ? t("response.copied") : t("response.copy")}
           </button>
         </div>
         <div ref={wrapRef} className="response-body-cm-wrap">
           <CodeMirror
+            ref={editorRef}
             value={displayContent}
             height={`${wrapHeight}px`}
             minHeight="120px"
             theme={vscodeDark}
-          extensions={extensions}
-          editable={false}
-          readOnly={true}
-          basicSetup={{
-            lineNumbers: true,
-            highlightActiveLineGutter: false,
-            highlightActiveLine: false,
-            foldGutter: true,
-            bracketMatching: true,
-          }}
+            extensions={extensions}
+            editable={false}
+            readOnly={true}
+            basicSetup={{
+              lineNumbers: true,
+              highlightActiveLineGutter: false,
+              highlightActiveLine: false,
+              foldGutter: true,
+              bracketMatching: true,
+              searchKeymap: true,
+            }}
           />
         </div>
       </div>
@@ -96,9 +139,9 @@ export function ResponseBodyView({ content, isJson, className }: ResponseBodyVie
           type="button"
           className="response-copy-btn"
           onClick={handleCopy}
-          title="Copiar resposta"
+          title={t("response.copyTitle")}
         >
-          {copied ? "✓ Copiado" : "Copiar"}
+          {copied ? t("response.copied") : t("response.copy")}
         </button>
       </div>
       <div className="response-body-raw-wrap">

@@ -119,6 +119,11 @@ export const ptBR: Record<TranslationKeys, string> = {
   "response.logsLastRequest": "Logs (última requisição)",
   "response.noLogs": "Nenhum log nesta execução.",
   "response.error": "Erro",
+  "response.search": "Buscar",
+  "response.searchTitle": "Buscar na resposta (Ctrl+F)",
+  "response.copy": "Copiar",
+  "response.copyTitle": "Copiar resposta",
+  "response.copied": "Copiado",
 
   "tabBar.closeTab": "Fechar {label}",
   "tabBar.closeTabTitle": "Fechar aba",

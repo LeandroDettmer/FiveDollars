@@ -124,6 +124,11 @@ export const en = {
   "response.logsLastRequest": "Logs (last request)",
   "response.noLogs": "No logs in this run.",
   "response.error": "Error",
+  "response.search": "Search",
+  "response.searchTitle": "Search in response (Ctrl+F)",
+  "response.copy": "Copy",
+  "response.copyTitle": "Copy response",
+  "response.copied": "Copied",
 
   // Tab bar
   "tabBar.closeTab": "Close {label}",
