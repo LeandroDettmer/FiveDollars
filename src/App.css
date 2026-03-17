@@ -103,6 +103,7 @@ body {
   min-height: 0;
   min-width: 0;
   flex: 1;
+  border-radius: 10px;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -119,8 +120,8 @@ body {
   border-bottom: 2px solid transparent;
   cursor: pointer;
   white-space: nowrap;
-  max-width: 200px;
-  min-width: 72px;
+  max-width: 300px;
+  min-width: 150px;
   flex-shrink: 1;
 }
 
@@ -208,6 +209,33 @@ body {
   color: var(--text);
 }
 
+.tab-bar-tab--pinned {
+  border-bottom-color: var(--text-muted);
+  opacity: 0.9;
+}
+
+.tab-bar-tab-pin {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  opacity: 0.8;
+  transform: rotate(45deg);
+  display: inline-flex;
+}
+
+.tab-bar-tab--dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.tab-bar-tab--drop-before {
+  box-shadow: -2px 0 0 var(--accent);
+}
+
+.tab-bar-tab--drop-after {
+  box-shadow: 2px 0 0 var(--accent);
+}
+
 /* Card genérico (reutilizável) */
 .ui-card {
   border: 1px solid var(--border);
@@ -272,7 +300,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
+  margin-left: 10px;
+  padding: 10px 10px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -1048,6 +1077,38 @@ body {
   background: var(--bg-secondary);
   outline: 1px dashed var(--border);
   outline-offset: -2px;
+}
+
+.collection-folder-row {
+  position: relative;
+}
+
+.collection-request-row {
+  position: relative;
+}
+
+.drag-over-before::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.drag-over-after::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 10;
+  pointer-events: none;
 }
 
 .collection-folder-btn {

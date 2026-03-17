@@ -14,6 +14,7 @@ function parsePersistedData(raw: string | null): PersistedData {
     currentEnvId: null,
     history: [],
     locale: "en",
+    pinnedTabs: [],
   };
   if (!raw) return defaultData;
   try {
@@ -24,6 +25,7 @@ function parsePersistedData(raw: string | null): PersistedData {
       currentEnvId: typeof data.currentEnvId === "string" ? data.currentEnvId : null,
       history: Array.isArray(data.history) ? data.history : [],
       locale: typeof data.locale === "string" ? data.locale : "en",
+      pinnedTabs: Array.isArray(data.pinnedTabs) ? data.pinnedTabs : [],
     };
   } catch {
     return defaultData;
@@ -43,6 +45,7 @@ export async function loadAppData(): Promise<PersistedData> {
   if (typeof localStorage === "undefined") {
     return parsePersistedData(null);
   }
+
   return parsePersistedData(localStorage.getItem(WEB_STORAGE_KEY));
 }
 

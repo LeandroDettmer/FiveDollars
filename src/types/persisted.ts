@@ -1,4 +1,4 @@
-import type { Collection, Environment, HistoryEntry } from "./index";
+import type { Collection, Environment, HistoryEntry, PinnedTabData } from "./index";
 
 export interface PersistedData {
   collections: Collection[];
@@ -7,6 +7,8 @@ export interface PersistedData {
   history: HistoryEntry[];
   /** UI language; optional for backward compatibility. */
   locale?: string;
+  /** Abas fixadas para restaurar ao reabrir o app; opcional para compatibilidade. */
+  pinnedTabs?: PinnedTabData[];
 }
 
 export const DEFAULT_PERSISTED: PersistedData = {
@@ -15,4 +17,5 @@ export const DEFAULT_PERSISTED: PersistedData = {
   currentEnvId: null,
   history: [],
   locale: "en",
+  pinnedTabs: [],
 };

@@ -6,6 +6,7 @@ import {
   removeNodeAtPath,
   moveNodeAtPath,
   moveNodeToFolder,
+  moveNodeRelativeTo,
   renameNodeAtPath,
   getPathByNodeId,
   getRequestsFromFolder,
@@ -37,6 +38,7 @@ function NodeItem({
   onContextMenu,
   onUpdateItems,
   onDropOnFolder,
+  onReorderNode,
   editingNodeId,
   onRename,
   defaultFolderOpen = false,
@@ -50,6 +52,7 @@ function NodeItem({
   onContextMenu: (e: React.MouseEvent, path: NodePath, node: CollectionNode) => void;
   onUpdateItems: (items: CollectionNode[]) => void;
   onDropOnFolder?: (sourceNodeId: string, targetFolderId: string) => void;
+  onReorderNode?: (sourceNodeId: string, targetNodeId: string, position: "before" | "after") => void;
   editingNodeId: string | null;
   onRename: (nodeId: string, newName: string) => void;
   defaultFolderOpen?: boolean;
@@ -57,7 +60,7 @@ function NodeItem({
   forceOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultFolderOpen);
-  const [dragOver, setDragOver] = useState(false);
+  const [dragOverPos, setDragOverPos] = useState<"before" | "after" | "into" | null>(null);
   const isEditing = editingNodeId === node.id;
   const [editValue, setEditValue] = useState(node.name);
 
@@ -71,79 +74,105 @@ function NodeItem({
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleFolderDragOver = (e: React.DragEvent) => {
+  const getDragPosition = (e: React.DragEvent, el: HTMLElement, isFolder: boolean): "before" | "after" | "into" => {
+    const rect = el.getBoundingClientRect();
+    const ratio = (e.clientY - rect.top) / rect.height;
+    if (isFolder) {
+      if (ratio < 0.25) return "before";
+      if (ratio > 0.75) return "after";
+      return "into";
+    }
+    return ratio < 0.5 ? "before" : "after";
+  };
+
+  const handleRowDragOver = (e: React.DragEvent, isFolder: boolean) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
-    setDragOver(true);
+    const pos = getDragPosition(e, e.currentTarget as HTMLElement, isFolder);
+    setDragOverPos(pos);
   };
 
-  const handleFolderDragLeave = (e: React.DragEvent) => {
+  const handleRowDragLeave = (e: React.DragEvent) => {
     e.stopPropagation();
     if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
-      setDragOver(false);
+      setDragOverPos(null);
     }
   };
 
-  const handleFolderDrop = (e: React.DragEvent) => {
+  const handleRowDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOver(false);
+    const pos = dragOverPos;
+    setDragOverPos(null);
     const sourceNodeId = e.dataTransfer.getData(DRAG_NODE_ID_KEY);
-    if (!sourceNodeId || !onDropOnFolder || sourceNodeId === node.id) return;
-    onDropOnFolder(sourceNodeId, node.id);
+    if (!sourceNodeId || sourceNodeId === node.id) return;
+    if (pos === "into" && onDropOnFolder) {
+      onDropOnFolder(sourceNodeId, node.id);
+    } else if ((pos === "before" || pos === "after") && onReorderNode) {
+      onReorderNode(sourceNodeId, node.id, pos);
+    }
   };
 
   const preventRightClickSelect = (e: React.MouseEvent) => {
     if (e.button === 2) e.preventDefault();
   };
 
+  const rowClass = (extra?: string) => {
+    const before = dragOverPos === "before" ? "drag-over-before" : "";
+    const after = dragOverPos === "after" ? "drag-over-after" : "";
+    return [extra, before, after].filter(Boolean).join(" ");
+  };
+
   if (node.type === "folder") {
     return (
       <div
-        className={`collection-folder ${dragOver ? "collection-folder-drag-over" : ""}`}
+        className="collection-folder"
         onContextMenu={(e) => onContextMenu(e, path, node)}
         onMouseDown={preventRightClickSelect}
-        onDragOver={handleFolderDragOver}
-        onDragLeave={handleFolderDragLeave}
-        onDrop={handleFolderDrop}
       >
-        <button
-          type="button"
-          className="collection-folder-btn"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          draggable
-          onDragStart={handleDragStart}
+        <div
+          className={rowClass(`collection-folder-row${dragOverPos === "into" ? " collection-folder-drag-over" : ""}`)}
+          onDragOver={(e) => handleRowDragOver(e, true)}
+          onDragLeave={handleRowDragLeave}
+          onDrop={handleRowDrop}
         >
-          <span style={{ fontSize: "1.3vh" }} className="collection-folder-icon material-symbols-outlined" aria-hidden>
-            {open ? "keyboard_arrow_down" : "keyboard_arrow_right"} 
-          </span>
-          
-          <span style={{ fontSize: "1.3vh", marginLeft: -4 }} className="collection-folder-icon material-symbols-outlined" aria-hidden>folder</span>
-          
-          {isEditing ? (
-            <input
-              className="collection-tree-rename-input"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onBlur={() => submitRename(editValue)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submitRename(editValue);
-                if (e.key === "Escape") onRename(node.id, node.name);
-              }}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-            />
-          ) : (
-            <div onDoubleClick={(e) => {
-              console.log(e)
-              e.preventDefault();
-              e.stopPropagation();
-              setEditingNodeId(node.id);
-            }}>{node.name}</div>
-          )}
-        </button>
+          <button
+            type="button"
+            className="collection-folder-btn"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            draggable
+            onDragStart={handleDragStart}
+          >
+            <span style={{ fontSize: "1.3vh" }} className="collection-folder-icon material-symbols-outlined" aria-hidden>
+              {open ? "keyboard_arrow_down" : "keyboard_arrow_right"} 
+            </span>
+            
+            <span style={{ fontSize: "1.3vh", marginLeft: -4 }} className="collection-folder-icon material-symbols-outlined" aria-hidden>folder</span>
+            
+            {isEditing ? (
+              <input
+                className="collection-tree-rename-input"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={() => submitRename(editValue)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitRename(editValue);
+                  if (e.key === "Escape") onRename(node.id, node.name);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+            ) : (
+              <div onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setEditingNodeId(node.id);
+              }}>{node.name}</div>
+            )}
+          </button>
+        </div>
         {open && (
           <div className="collection-folder-children">
             {node.children.map((child, idx) => (
@@ -157,6 +186,7 @@ function NodeItem({
                 onContextMenu={onContextMenu}
                 onUpdateItems={onUpdateItems}
                 onDropOnFolder={onDropOnFolder}
+                onReorderNode={onReorderNode}
                 editingNodeId={editingNodeId}
                 onRename={onRename}
                 defaultFolderOpen={defaultFolderOpen}
@@ -171,40 +201,47 @@ function NodeItem({
 
   const isActive = currentRequestId != null && node.request.id === currentRequestId;
   return (
-    <button
-      type="button"
-      className={`collection-request-btn ${isActive ? "collection-request-btn--active" : ""}`}
-      style={{ paddingLeft: 12 + depth * 8}}
-      onClick={() => onSelectRequest(node.request)}
-      onContextMenu={(e) => onContextMenu(e, path, node)}
-      onMouseDown={preventRightClickSelect}
-      draggable
-      onDragStart={handleDragStart}
+    <div
+      className={rowClass("collection-request-row")}
+      onDragOver={(e) => handleRowDragOver(e, false)}
+      onDragLeave={handleRowDragLeave}
+      onDrop={handleRowDrop}
     >
-      {isEditing ? (
-        <input
-          className="collection-tree-rename-input"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={() => submitRename(editValue)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") submitRename(editValue);
-            if (e.key === "Escape") onRename(node.id, node.name);
-          }}
-          onClick={(e) => e.stopPropagation()}
-          autoFocus
-        />
-      ) : (
-        <div onDoubleClick={(e) => {
-          setEditingNodeId(node.id);
-          e.preventDefault();
-          e.stopPropagation();
-        }}>
-          <HttpMethodBadge method={node.request.method} className="collection-request-method" />
-          <span className="collection-request-name">{node.name}</span>
-        </div>
-      )}
-    </button>
+      <button
+        type="button"
+        className={`collection-request-btn ${isActive ? "collection-request-btn--active" : ""}`}
+        style={{ paddingLeft: 12 + depth * 8 }}
+        onClick={() => onSelectRequest(node.request)}
+        onContextMenu={(e) => onContextMenu(e, path, node)}
+        onMouseDown={preventRightClickSelect}
+        draggable
+        onDragStart={handleDragStart}
+      >
+        {isEditing ? (
+          <input
+            className="collection-tree-rename-input"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={() => submitRename(editValue)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitRename(editValue);
+              if (e.key === "Escape") onRename(node.id, node.name);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            autoFocus
+          />
+        ) : (
+          <div onDoubleClick={(e) => {
+            setEditingNodeId(node.id);
+            e.preventDefault();
+            e.stopPropagation();
+          }}>
+            <HttpMethodBadge method={node.request.method} className="collection-request-method" />
+            <span className="collection-request-name">{node.name}</span>
+          </div>
+        )}
+      </button>
+    </div>
   );
 }
 
@@ -327,6 +364,12 @@ export function CollectionTree({
     if (next !== nodes) onUpdateItems(next);
   };
 
+  const handleReorderNode = (sourceNodeId: string, targetNodeId: string, position: "before" | "after") => {
+    if (!onUpdateItems) return;
+    const next = moveNodeRelativeTo(nodes, sourceNodeId, targetNodeId, position);
+    if (next !== nodes) onUpdateItems(next);
+  };
+
   if (nodes.length === 0) return null;
 
   return (
@@ -348,6 +391,7 @@ export function CollectionTree({
           onContextMenu={handleContextMenu}
           onUpdateItems={onUpdateItems ?? (() => { })}
           onDropOnFolder={onUpdateItems ? handleDropOnFolder : undefined}
+          onReorderNode={onUpdateItems ? handleReorderNode : undefined}
           editingNodeId={editingNodeId}
           onRename={handleRename}
           defaultFolderOpen={defaultFolderOpen}

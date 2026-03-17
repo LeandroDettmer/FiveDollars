@@ -129,6 +129,8 @@ export interface RequestTab {
   url: string;
   /** Requisição temporária (Ctrl+N): não está em nenhuma pasta/collection. */
   isTemp?: boolean;
+  /** Aba fixada: permanece aberta e não pode ser fechada acidentalmente. */
+  pinned?: boolean;
 }
 
 /** Estado do formulário de config do Runner (para restaurar ao voltar na aba). */
@@ -146,6 +148,8 @@ export interface RunnerTab {
   id: string;
   type: "runner";
   label: string;
+  /** Aba fixada: permanece aberta e não pode ser fechada acidentalmente. */
+  pinned?: boolean;
   /** Tela de configurar run. */
   pendingConfig: { folderName: string; requests: RequestConfig[] } | null;
   /** Execução em andamento ou concluída. */
@@ -157,5 +161,16 @@ export interface RunnerTab {
   /** Estado do formulário de config (checkboxes, iterações, delay, arquivo, etc.). */
   configFormState: RunnerConfigFormState | null;
 }
+
+
+/** Dados mínimos de uma aba fixada para restaurar na próxima abertura. */
+export interface PinnedTabData {
+  id: string;
+  requestId: string;
+  label: string;
+  method: HttpMethod;
+  url: string;
+}
+
 
 export type Tab = RequestTab | RunnerTab;

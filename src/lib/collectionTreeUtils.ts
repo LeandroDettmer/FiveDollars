@@ -278,6 +278,43 @@ export function moveNodeToFolder(
   return root;
 }
 
+/** Move um nó para antes ou depois de outro nó na árvore (reordenação por drag-and-drop). */
+export function moveNodeRelativeTo(
+  nodes: CollectionNode[],
+  sourceNodeId: string,
+  targetNodeId: string,
+  position: "before" | "after"
+): CollectionNode[] {
+  if (sourceNodeId === targetNodeId) return nodes;
+  const sourcePath = getPathByNodeId(nodes, sourceNodeId);
+  const targetPath = getPathByNodeId(nodes, targetNodeId);
+  if (!sourcePath || !targetPath) return nodes;
+
+  const root = cloneNodes(nodes);
+
+  const srcParentPath = sourcePath.slice(0, -1);
+  const srcIdx = sourcePath[sourcePath.length - 1];
+  const srcList =
+    srcParentPath.length === 0
+      ? root
+      : (getNodeAtPath(root, srcParentPath) as { children: CollectionNode[] }).children;
+  if (srcIdx < 0 || srcIdx >= srcList.length) return nodes;
+  const [sourceNode] = srcList.splice(srcIdx, 1);
+
+  const newTargetPath = getPathByNodeId(root, targetNodeId);
+  if (!newTargetPath) return nodes;
+  const tgtParentPath = newTargetPath.slice(0, -1);
+  const tgtIdx = newTargetPath[newTargetPath.length - 1];
+  const tgtList =
+    tgtParentPath.length === 0
+      ? root
+      : (getNodeAtPath(root, tgtParentPath) as { children: CollectionNode[] }).children;
+
+  const insertIdx = position === "before" ? tgtIdx : tgtIdx + 1;
+  tgtList.splice(insertIdx, 0, sourceNode);
+  return root;
+}
+
 /** Coleta todas as requisições de uma pasta (e subpastas) em ordem, para o Runner. */
 export function getRequestsFromFolder(node: CollectionNode): RequestConfig[] {
   if (node.type === "request") return [node.request];

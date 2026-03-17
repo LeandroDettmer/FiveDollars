@@ -11,6 +11,8 @@ import type {
   RequestTab,
   RunnerTab,
   RunnerTabRun,
+  HttpMethod,
+  PinnedTabData,
 } from "@/types";
 import type { PersistedData } from "@/types/persisted";
 import { saveAppData } from "@/lib/persistence";
@@ -29,13 +31,26 @@ function persist(state: {
   currentEnv: Environment | null;
   history: HistoryEntry[];
   locale?: string;
+  tabs?: Tab[];
+  pinnedTabs: PinnedTabData[];
 }) {
+  const pinnedTabs: PinnedTabData[] = (state.tabs ?? [])
+    .filter((t): t is RequestTab => t.pinned === true && t.type === "request" && !t.isTemp)
+    .map((t) => ({
+      id: t.id,
+      requestId: t.requestId,
+      label: t.label,
+      method: t.method,
+      url: t.url,
+    }));
+
   const data: PersistedData = {
     collections: state.collections,
     environments: state.environments,
     currentEnvId: state.currentEnv?.id ?? null,
     history: state.history,
     locale: (state.locale ?? "en") as Locale,
+    pinnedTabs,
   };
   saveAppData(data);
 }
@@ -70,6 +85,12 @@ interface AppState {
   /** Fecha todas as abas que exibem a requisição com o id dado (ex.: ao remover da árvore). */
   closeTabsByRequestId: (requestId: string) => void;
   setActiveTab: (tabId: string) => void;
+  /** Reordena as abas (drag-and-drop). */
+  reorderTabs: (tabs: Tab[]) => void;
+  /** Fixa uma aba (impede fechamento). */
+  pinTab: (tabId: string) => void;
+  /** Desfixa uma aba. */
+  unpinTab: (tabId: string) => void;
   /** Atualiza estado da aba runner (pendingConfig / run / runResults / runRunning / configFormState). */
   updateRunnerTab: (tabId: string, patch: Partial<Pick<RunnerTab, "pendingConfig" | "run" | "runResults" | "runRunning" | "configFormState">>) => void;
   /** Atualiza outros campos da aba de requisição (ex.: isTemp ao salvar). */
@@ -113,6 +134,7 @@ interface AppState {
   refreshTabs: () => void;
   locale: string;
   setLocale: (locale: Locale) => void;
+  pinnedTabs: PinnedTabData[];
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -138,6 +160,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   runnerPanelPendingConfig: null,
   runnerPanelRun: null,
   locale: "en",
+  pinnedTabs: [],
 
   setLocale: (locale) => {
     set({ locale });
@@ -193,6 +216,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeTab: (tabId) => {
     const s = get();
     const closingTab = s.tabs.find((t) => t.id === tabId);
+    if (closingTab?.pinned) return;
     if (closingTab?.type === "request" && closingTab.isTemp) {
       set((state) => {
         const nextTemp = { ...state.tempRequests };
@@ -335,6 +359,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
+  reorderTabs: (tabs) => {
+    set({ tabs });
+    persist(get());
+  },
+
+  pinTab: (tabId) => {
+    set((s) => ({
+      tabs: s.tabs.map((t) => (t.id === tabId ? { ...t, pinned: true } : t)),
+    }));
+    persist(get());
+  },
+
+  unpinTab: (tabId) => {
+    set((s) => ({
+      tabs: s.tabs.map((t) => (t.id === tabId ? { ...t, pinned: false } : t)),
+    }));
+    persist(get());
+  },
+
   openNewTempRequest: () => {
     const locale = (get().locale ?? "en") as Locale;
     const defaultRequest: RequestConfig = {
@@ -451,7 +494,41 @@ export const useAppStore = create<AppState>((set, get) => ({
         data?.environments?.find?.((e) => e.id === data?.currentEnvId) ?? actualStoreState.currentEnv,
       history: data?.history || actualStoreState.history,
       locale: (data?.locale ?? "en") as Locale,
+      pinnedTabs: data?.pinnedTabs ?? [],
     });
+
+    const restoredCollections = get().collections;
+
+    const pinnedTabsData = data?.pinnedTabs ?? [];
+
+    if (pinnedTabsData.length > 0) {
+      const restoredTabs: RequestTab[] = pinnedTabsData
+        .filter((pt) => getRequestById(restoredCollections, pt.requestId) !== null)
+        .map((pt) => ({
+          id: pt.id,
+          type: "request" as const,
+          requestId: pt.requestId,
+          label: pt.label,
+          method: pt.method as HttpMethod,
+          url: pt.url,
+          pinned: true,
+        }));
+
+      if (restoredTabs.length > 0) {
+        const firstTab = restoredTabs[0];
+        const firstRequest = getRequestById(restoredCollections, firstTab.requestId);
+        set({
+          tabs: restoredTabs,
+          activeTabId: firstTab.id,
+          currentRequest: firstRequest,
+          tabRequestCache: restoredTabs.reduce<Record<string, { lastResponse: null; scriptLogs: []; sendingRequest: false }>>(
+            (acc, t) => ({ ...acc, [t.id]: { lastResponse: null, scriptLogs: [], sendingRequest: false } }),
+            {}
+          ),
+        });
+      }
+    }
+
     persist(get());
   },
 
