@@ -606,6 +606,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         collectionsMode: "synced",
         offlineCollections: s.collections,
         collections: s.syncedCollections,
+        pinnedTabs: [],
+        tabs: [],
       });
     } else {
       // Salva o conjunto atual como synced, ativa o offline
@@ -613,6 +615,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         collectionsMode: "offline",
         syncedCollections: s.collections,
         collections: s.offlineCollections,
+        pinnedTabs: [],
+        tabs: [],
       });
     }
     persist(get());

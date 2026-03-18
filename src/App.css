@@ -1,8 +1,5 @@
 /* FiveDollars - Tema dark (estilo VS Code / Obsidian) */
 
-html {
-  transition: zoom 0.15s ease;
-}
 
 :root {
   --bg-primary: #1e1e1e;

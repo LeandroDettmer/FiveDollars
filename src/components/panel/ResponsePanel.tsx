@@ -138,10 +138,10 @@ export function ResponsePanel() {
           </div>
         </>
       )}
-      {!lastResponse && selectedEntry && (
+      {!lastResponse && selectedEntry && logsToShow.length > 0 && (
         <p className="response-panel-hint">{t("response.logsSelected")}</p>
       )}
-      {hasLogsToShow && (
+      {hasLogsToShow && logsToShow.length > 0 && (
         <>
           <div
             role="separator"

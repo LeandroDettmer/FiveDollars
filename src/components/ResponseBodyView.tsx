@@ -32,7 +32,7 @@ export function ResponseBodyView({ content, isJson, className }: ResponseBodyVie
 
   useKeyDown(["f", "F"], (e) => {
     const view = editorRef.current?.view;
-    if ((e.metaKey || e.ctrlKey) && view) {
+    if ((e.metaKey || e.ctrlKey) && view && !e.shiftKey) {
       e.preventDefault();
       if (searchOpen) {
         closeSearchPanel(view);

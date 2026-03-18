@@ -1,10 +1,15 @@
 import { useEffect } from "react";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 const ZOOM_KEY = "app-zoom";
 const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 2.0;
 const ZOOM_DEFAULT = 1.0;
+
+function isTauri(): boolean {
+  return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -23,12 +28,25 @@ function readZoom(): number {
   return ZOOM_DEFAULT;
 }
 
-function applyZoom(zoom: number) {
-  document.documentElement.style.zoom = String(zoom);
+let currentZoom = ZOOM_DEFAULT;
+
+async function applyZoom(zoom: number) {
+  currentZoom = zoom;
   try {
     localStorage.setItem(ZOOM_KEY, String(zoom));
   } catch {
     // ignore
+  }
+
+  if (isTauri()) {
+    try {
+      await getCurrentWebview().setZoom(zoom);
+    } catch {
+      // fallback para CSS caso a permissão não esteja configurada
+      document.documentElement.style.zoom = String(zoom);
+    }
+  } else {
+    document.documentElement.style.zoom = String(zoom);
   }
 }
 
@@ -43,12 +61,10 @@ export function useZoom() {
       if (key === "=" || key === "+" || key === "-" || key === "0") {
         e.preventDefault();
 
-        const current = parseFloat(document.documentElement.style.zoom || "1");
-
         if (key === "=" || key === "+") {
-          applyZoom(clamp(parseFloat((current + ZOOM_STEP).toFixed(1)), ZOOM_MIN, ZOOM_MAX));
+          applyZoom(clamp(parseFloat((currentZoom + ZOOM_STEP).toFixed(1)), ZOOM_MIN, ZOOM_MAX));
         } else if (key === "-") {
-          applyZoom(clamp(parseFloat((current - ZOOM_STEP).toFixed(1)), ZOOM_MIN, ZOOM_MAX));
+          applyZoom(clamp(parseFloat((currentZoom - ZOOM_STEP).toFixed(1)), ZOOM_MIN, ZOOM_MAX));
         } else if (key === "0") {
           applyZoom(ZOOM_DEFAULT);
         }
