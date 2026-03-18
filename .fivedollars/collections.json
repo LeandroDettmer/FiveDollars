@@ -17,11 +17,11 @@
       "items": [
         {
           "id": "9018342c-daee-4891-a6b2-8c34508fb836",
-          "name": "2",
+          "name": "name",
           "type": "request",
           "request": {
             "id": "9018342c-daee-4891-a6b2-8c34508fb836",
-            "name": "2",
+            "name": "name",
             "method": "GET",
             "url": "https://httpbin.org/get",
             "headers": [
@@ -77,6 +77,6 @@
   ],
   "meta": {
     "appVersion": "0.1.15",
-    "lastUpdatedAt": 1773787857338
+    "lastUpdatedAt": 1773796592083
   }
 }
