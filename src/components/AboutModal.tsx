@@ -115,16 +115,18 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
         hasFivedollarsFolder: info.has_fivedollars_folder,
         hasCollectionsFile: info.has_collections_file,
       });
+
       addKnownRepo(info.path);
+
       setGitSyncStatus({
         lastSyncedAt: gitSyncStatus?.lastSyncedAt ?? null,
         lastAction: gitSyncStatus?.lastAction ?? null,
         errorMessage: undefined,
       });
+
       const branches = await invoke<{ current: string; all: string[] }>("list_git_branches", { repoPath: info.path });
       setGitBranches(branches);
     } catch (e) {
-      console.error(e);
       setGitError((e as Error).message ?? String(e));
     } finally {
       setGitLoading(false);
@@ -226,21 +228,23 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
 
   const handleLoadFromRepo = async () => {
     if (!isTauri() || !gitRepo) return;
+    
     setGitConfirmAction(null);
     setGitLoading(true);
     setGitError(null);
+
     try {
       const raw = await invoke<string>("read_git_collections", { repoPath: gitRepo.path });
       const { collections: repoCollections } = parseCollectionsFromGit(raw);
-      // Salva no perfil syncedCollections sem tocar no perfil offline.
+
       setSyncedCollections(repoCollections);
       setGitSyncStatus({
         lastSyncedAt: Date.now(),
         lastAction: "loaded_from_repo",
         errorMessage: undefined,
       });
+
     } catch (e) {
-      console.error(e);
       setGitError((e as Error).message ?? String(e));
       setGitSyncStatus({
         lastSyncedAt: gitSyncStatus?.lastSyncedAt ?? null,
@@ -513,28 +517,28 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                           disabled={collectionsMode === "offline"}
                           title="Trabalhar com suas collections locais (não afetadas pelo sync)"
                         >
-                          Offline
+                          Local
                         </button>
                         <button
                           type="button"
                           className={`git-profile-btn ${collectionsMode === "synced" ? "git-profile-btn-active" : ""}`}
                           onClick={() => setCollectionsMode("synced")}
                           disabled={collectionsMode === "synced" || syncedCollections.length === 0}
-                          title={syncedCollections.length === 0 ? "Carregue as collections do repo primeiro" : "Trabalhar com as collections sincronizadas com o repo"}
+                          title={syncedCollections.length === 0 ? "Carregue as collections do repositorio primeiro" : "Trabalhar com as collections sincronizadas com o repositorio"}
                         >
-                          Sincronizado
+                          Git
                         </button>
                       </div>
                       {collectionsMode === "synced" && (
-                        <span className="git-profile-badge git-profile-badge-synced">● sincronizado</span>
+                        <span className="git-profile-badge git-profile-badge-synced">● git</span>
                       )}
                       {collectionsMode === "offline" && (
-                        <span className="git-profile-badge git-profile-badge-offline">● offline</span>
+                        <span className="git-profile-badge git-profile-badge-offline">● local</span>
                       )}
                     </div>
                     {syncedCollections.length === 0 && collectionsMode === "offline" && (
                       <p style={{ fontSize: "12px", color: "var(--text-muted, #888)", margin: "4px 0 12px" }}>
-                        Carregue as collections do repo para habilitar o perfil Sincronizado.
+                        Carregue as collections do repo para habilitar o perfil Git.
                       </p>
                     )}
 
@@ -630,14 +634,14 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 onClose={() => setGitConfirmAction(null)}
               >
                 <p style={{ margin: "0 0 8px" }}>
-                  As collections do repositório serão carregadas para o perfil <strong>Sincronizado</strong>.
+                  As collections do repositório serão carregadas para o perfil <strong>Git</strong>.
                 </p>
                 <p style={{ margin: "0 0 8px" }}>
-                  Seu perfil <strong>Offline</strong> não será afetado.
+                  Seu perfil <strong>Local</strong> não será afetado.
                 </p>
                 {collectionsMode === "synced" && (
                   <p style={{ margin: "0", color: "var(--color-warning, #e5a020)" }}>
-                    ⚠ Você está no perfil Sincronizado — as collections ativas serão substituídas.
+                    ⚠ Você está no perfil Git — as collections ativas serão substituídas.
                   </p>
                 )}
               </ConfirmModal>
@@ -651,7 +655,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 onClose={() => setGitConfirmAction(null)}
               >
                 <p style={{ margin: "0 0 8px" }}>
-                  As collections do perfil <strong>{collectionsMode === "synced" ? "Sincronizado" : "Offline"}</strong> serão escritas em{" "}
+                  As collections do perfil <strong>{collectionsMode === "synced" ? "Git" : "Local"}</strong> serão escritas em{" "}
                   <code>.fivedollars/collections.json</code> no repositório vinculado.
                 </p>
                 <p style={{ margin: "0" }}>
@@ -668,7 +672,7 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
                 onClose={() => setGitConfirmAction(null)}
               >
                 <p style={{ margin: "0 0 8px" }}>
-                  As collections do perfil <strong>{collectionsMode === "synced" ? "Sincronizado" : "Offline"}</strong> serão salvas em{" "}
+                  As collections do perfil <strong>{collectionsMode === "synced" ? "Git" : "Local"}</strong> serão salvas em{" "}
                   <code>.fivedollars/collections.json</code> e um commit será criado. Apenas esse arquivo será incluído no commit.
                 </p>
                 <label style={{ display: "block", margin: "12px 0 4px", fontSize: "13px", fontWeight: 600 }}>
