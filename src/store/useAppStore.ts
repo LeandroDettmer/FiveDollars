@@ -678,26 +678,58 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   addCollection: (collection) => {
-    set((state) => ({ collections: [collection, ...state.collections] }));
+    set((state) => {
+      const nextCollections = [collection, ...state.collections];
+      if (state.collectionsMode === "synced") {
+        return {
+          collections: nextCollections,
+          syncedCollections: [collection, ...state.syncedCollections],
+        };
+      }
+      return { collections: nextCollections };
+    });
     persist(get());
   },
 
   removeCollection: (id) => {
-    set((state) => ({ collections: state.collections.filter((c) => c.id !== id) }));
+    set((state) => {
+      const nextCollections = state.collections.filter((c) => c.id !== id);
+      if (state.collectionsMode === "synced") {
+        return {
+          collections: nextCollections,
+          syncedCollections: state.syncedCollections.filter((c) => c.id !== id),
+        };
+      }
+      return { collections: nextCollections };
+    });
     persist(get());
   },
 
   updateCollection: (id, patch) => {
-    set((state) => ({
-      collections: state.collections.map((c) =>
+    set((state) => {
+      const nextCollections = state.collections.map((c) =>
         c.id === id ? { ...c, ...patch } : c
-      ),
-    }));
+      );
+      if (state.collectionsMode === "synced") {
+        return {
+          collections: nextCollections,
+          syncedCollections: state.syncedCollections.map((c) =>
+            c.id === id ? { ...c, ...patch } : c
+          ),
+        };
+      }
+      return { collections: nextCollections };
+    });
     persist(get());
   },
 
   reorderCollections: (collections) => {
-    set({ collections });
+    set((state) => {
+      if (state.collectionsMode === "synced") {
+        return { collections, syncedCollections: collections };
+      }
+      return { collections };
+    });
     persist(get());
   },
 
