@@ -173,7 +173,7 @@ interface AppState {
   addKnownRepo: (path: string) => void;
   /** Remove um path da lista de repos conhecidos. */
   removeKnownRepo: (path: string) => void;
-  clearState: () => void;
+  clearTempsStates: () => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -598,7 +598,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     persist(get());
   },
 
-  clearState: () => {
+  clearTempsStates: () => {
     set({
       history: [],
       pinnedTabs: [],
@@ -612,7 +612,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setCollectionsMode: (mode) => {
-    get().clearState();
+    get().clearTempsStates();
 
     const s = get();
     if (s.collectionsMode === mode) return;
@@ -631,7 +631,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         collections: s.offlineCollections,
       });
     }
-    
+
     persist(get());
   },
 
