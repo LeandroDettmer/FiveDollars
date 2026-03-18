@@ -9,7 +9,10 @@ import {
   moveNodeRelativeTo,
   renameNodeAtPath,
   getPathByNodeId,
+  getNodeAtPath,
   getRequestsFromFolder,
+  cloneNodeWithNewIds,
+  insertNodeAfterPath,
   type NodePath,
 } from "@/lib/collectionTreeUtils";
 
@@ -24,6 +27,7 @@ type TreeAction =
   | "move-up"
   | "move-down"
   | "rename"
+  | "duplicate"
   | "delete"
   | "run";
 
@@ -329,6 +333,18 @@ export function CollectionTree({
       case "rename":
         if (node.id) setEditingNodeId(node.id);
         break;
+      case "duplicate":
+        if (path !== null) {
+          const original = getNodeAtPath(nodes, path);
+          if (original) {
+            const copy = cloneNodeWithNewIds(original);
+            const suffix = t("tree.duplicateSuffix");
+            copy.name = `${original.name} ${suffix}`;
+            if (copy.type === "request") copy.request.name = copy.name;
+            next = insertNodeAfterPath(nodes, path, copy);
+          }
+        }
+        break;
       case "delete":
         if (path !== null) {
           next = removeNodeAtPath(nodes, path);
@@ -445,6 +461,9 @@ export function CollectionTree({
                 </button>
                 <button type="button" onClick={() => runAction("rename")}>
                   {t("sidebar.rename")}
+                </button>
+                <button type="button" onClick={() => runAction("duplicate")}>
+                  {t("tree.duplicate")}
                 </button>
                 <button type="button" onClick={() => runAction("delete")} className="context-menu-danger">
                   {t("common.remove")}

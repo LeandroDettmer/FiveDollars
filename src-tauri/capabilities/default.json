@@ -4,6 +4,11 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-set-size",
+    "core:window:allow-set-position",
+    "core:window:allow-inner-size",
+    "core:window:allow-outer-position",
+    "core:window:allow-scale-factor",
     "dialog:allow-save",
     "dialog:allow-open",
     "updater:default",

@@ -346,7 +346,7 @@ export function updateRequestInNodes(
 }
 
 /** Clona um nó (pasta ou request) atribuindo novos IDs. */
-function cloneNodeWithNewIds(node: CollectionNode): CollectionNode {
+export function cloneNodeWithNewIds(node: CollectionNode): CollectionNode {
   if (node.type === "folder") {
     return {
       id: genId(),
@@ -365,6 +365,21 @@ function cloneNodeWithNewIds(node: CollectionNode): CollectionNode {
     type: "request",
     request: newRequest,
   };
+}
+
+/** Insere um nó imediatamente após o nó no path dado. */
+export function insertNodeAfterPath(nodes: CollectionNode[], path: NodePath, newNode: CollectionNode): CollectionNode[] {
+  const root = cloneNodes(nodes);
+  if (path.length === 1) {
+    root.splice(path[0] + 1, 0, newNode);
+    return root;
+  }
+  const parentPath = path.slice(0, -1);
+  const index = path[path.length - 1];
+  const parent = getNodeAtPath(root, parentPath);
+  if (!parent || parent.type !== "folder") return nodes;
+  parent.children.splice(index + 1, 0, newNode);
+  return root;
 }
 
 /** Duplica uma collection com novos IDs (collection e todos os nós/requisições). */

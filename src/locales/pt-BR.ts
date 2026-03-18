@@ -70,6 +70,8 @@ export const ptBR: Record<TranslationKeys, string> = {
   "tree.run": "Executar pasta",
   "tree.moveUp": "Mover para cima",
   "tree.moveDown": "Mover para baixo",
+  "tree.duplicate": "Duplicar",
+  "tree.duplicateSuffix": "(cópia)",
 
   "request.urlPlaceholder": "URL (use {{baseUrl}} e :id para path params)",
   "request.send": "Enviar",

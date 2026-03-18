@@ -73,6 +73,8 @@ export const en = {
   "tree.run": "Run",
   "tree.moveUp": "Move up",
   "tree.moveDown": "Move down",
+  "tree.duplicate": "Duplicate",
+  "tree.duplicateSuffix": "(copy)",
 
   // Request panel
   "request.urlPlaceholder": "URL (use {{baseUrl}} and :id for path params)",

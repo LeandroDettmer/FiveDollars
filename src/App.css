@@ -1,5 +1,9 @@
 /* FiveDollars - Tema dark (estilo VS Code / Obsidian) */
 
+html {
+  transition: zoom 0.15s ease;
+}
+
 :root {
   --bg-primary: #1e1e1e;
   --bg-secondary: #252526;
@@ -211,7 +215,6 @@ body {
 }
 
 .tab-bar-tab--pinned {
-  border-bottom-color: var(--text-muted);
   opacity: 0.9;
 }
 

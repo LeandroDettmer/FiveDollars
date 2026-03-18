@@ -10,11 +10,15 @@ import { useT } from "@/lib/i18n";
 import type { RunnerTab } from "@/types";
 import { Main } from "./components/Main";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
+import { useZoom } from "@/lib/useZoom";
+import { useWindowState } from "@/lib/useWindowState";
 import "./App.css";
 
 function App() {
   const { t } = useT();
   const { setStateFromPersisted, tabs, activeTabId } = useAppStore();
+  useZoom();
+  useWindowState();
 
   useEffect(() => {
     loadAppData().then(setStateFromPersisted);
