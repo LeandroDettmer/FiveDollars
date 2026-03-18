@@ -609,6 +609,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       scriptLogs: [],
       sendingRequest: false,
     });
+    persist(get());
   },
 
   setCollectionsMode: (mode) => {
