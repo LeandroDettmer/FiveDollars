@@ -9,40 +9,35 @@
     {
       "id": "ad50720a-626b-4d59-a063-a58feb574157",
       "name": "SYNC",
-      "items": []
+      "items": [
+        {
+          "id": "a482d8b2-1084-4a2b-a67a-8d0c453a0c9d",
+          "name": "New folder",
+          "type": "folder",
+          "children": [
+            {
+              "id": "8da42fa4-d1c6-4cb5-a046-1476f20a1963",
+              "name": "New request",
+              "type": "request",
+              "request": {
+                "id": "8da42fa4-d1c6-4cb5-a046-1476f20a1963",
+                "name": "New request",
+                "method": "GET",
+                "url": "",
+                "headers": [],
+                "queryParams": [],
+                "bodyType": "none",
+                "pathParams": []
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "7c717bf4-2a86-48f8-9be2-5f26fe17534e",
       "name": "teste",
       "items": [
-        {
-          "id": "9018342c-daee-4891-a6b2-8c34508fb836",
-          "name": "name",
-          "type": "request",
-          "request": {
-            "id": "9018342c-daee-4891-a6b2-8c34508fb836",
-            "name": "name",
-            "method": "GET",
-            "url": "https://httpbin.org/get",
-            "headers": [
-              {
-                "id": "29659591-793f-4a8c-a65a-09e8e3cdb4d6",
-                "key": "",
-                "value": "",
-                "enabled": true
-              }
-            ],
-            "queryParams": [
-              {
-                "id": "0e96ed22-c1e2-4dfd-9d2d-3095fb24ca56",
-                "key": "",
-                "value": "",
-                "enabled": true
-              }
-            ],
-            "bodyType": "none"
-          }
-        },
         {
           "id": "99e0257d-33c8-4cd6-83b8-a32834de5fcf",
           "name": "1",
@@ -71,12 +66,40 @@
             "bodyType": "none",
             "pathParams": []
           }
+        },
+        {
+          "id": "9018342c-daee-4891-a6b2-8c34508fb836",
+          "name": "name",
+          "type": "request",
+          "request": {
+            "id": "9018342c-daee-4891-a6b2-8c34508fb836",
+            "name": "name",
+            "method": "GET",
+            "url": "https://httpbin.org/get",
+            "headers": [
+              {
+                "id": "29659591-793f-4a8c-a65a-09e8e3cdb4d6",
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "queryParams": [
+              {
+                "id": "0e96ed22-c1e2-4dfd-9d2d-3095fb24ca56",
+                "key": "",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "bodyType": "none"
+          }
         }
       ]
     }
   ],
   "meta": {
     "appVersion": "0.1.15",
-    "lastUpdatedAt": 1773796785909
+    "lastUpdatedAt": 1773869586030
   }
 }

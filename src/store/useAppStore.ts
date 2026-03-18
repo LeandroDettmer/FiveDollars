@@ -173,6 +173,7 @@ interface AppState {
   addKnownRepo: (path: string) => void;
   /** Remove um path da lista de repos conhecidos. */
   removeKnownRepo: (path: string) => void;
+  clearState: () => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -597,7 +598,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     persist(get());
   },
 
+  clearState: () => {
+    set({
+      history: [],
+      pinnedTabs: [],
+      tabs: [],
+      activeTabId: null,
+      currentRequest: null,
+      lastResponse: null,
+      scriptLogs: [],
+      sendingRequest: false,
+    });
+  },
+
   setCollectionsMode: (mode) => {
+    get().clearState();
+
     const s = get();
     if (s.collectionsMode === mode) return;
     if (mode === "synced") {
@@ -606,8 +622,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         collectionsMode: "synced",
         offlineCollections: s.collections,
         collections: s.syncedCollections,
-        pinnedTabs: [],
-        tabs: [],
       });
     } else {
       // Salva o conjunto atual como synced, ativa o offline
@@ -615,10 +629,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         collectionsMode: "offline",
         syncedCollections: s.collections,
         collections: s.offlineCollections,
-        pinnedTabs: [],
-        tabs: [],
       });
     }
+    
     persist(get());
   },
 
