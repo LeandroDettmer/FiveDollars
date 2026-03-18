@@ -2,11 +2,6 @@
   "version": 1,
   "collections": [
     {
-      "id": "30e0ef0d-874b-4cda-b6ee-3d80d97e872b",
-      "name": "New collection",
-      "items": []
-    },
-    {
       "id": "ad50720a-626b-4d59-a063-a58feb574157",
       "name": "SYNC",
       "items": [
@@ -16,16 +11,30 @@
           "type": "folder",
           "children": [
             {
-              "id": "8da42fa4-d1c6-4cb5-a046-1476f20a1963",
-              "name": "New request",
+              "id": "873f55e7-1f26-49b4-84d8-3bbf33e472ee",
+              "name": "https://httpbin.org/get",
               "type": "request",
               "request": {
-                "id": "8da42fa4-d1c6-4cb5-a046-1476f20a1963",
-                "name": "New request",
+                "id": "873f55e7-1f26-49b4-84d8-3bbf33e472ee",
+                "name": "https://httpbin.org/get",
                 "method": "GET",
-                "url": "",
-                "headers": [],
-                "queryParams": [],
+                "url": "https://httpbin.org/get",
+                "headers": [
+                  {
+                    "id": "8b3319c9-b1ce-4d01-aa8e-263c07136f6e",
+                    "key": "",
+                    "value": "",
+                    "enabled": true
+                  }
+                ],
+                "queryParams": [
+                  {
+                    "id": "26a5a8a0-c98f-498b-af4f-e766fddd1224",
+                    "key": "",
+                    "value": "",
+                    "enabled": true
+                  }
+                ],
                 "bodyType": "none",
                 "pathParams": []
               }
@@ -100,6 +109,6 @@
   ],
   "meta": {
     "appVersion": "0.1.15",
-    "lastUpdatedAt": 1773869586030
+    "lastUpdatedAt": 1773869744544
   }
 }
