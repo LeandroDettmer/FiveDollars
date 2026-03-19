@@ -105,7 +105,7 @@ export function WorkspaceSelector() {
                     >
                       {w.name}
                     </button>
-                    {workspaces.length > 1 && (
+                    {workspaces.length > 0 && (
                       <div className="workspace-dropdown-row-actions" ref={menuOpenId === w.id ? menuRef : null}>
                         <button
                           type="button"
