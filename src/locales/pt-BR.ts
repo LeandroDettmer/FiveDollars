@@ -14,6 +14,7 @@ export const ptBR: Record<TranslationKeys, string> = {
   "about.tabExport": "Exportar dados",
   "about.tabUpdates": "Atualizações",
   "about.tabLanguage": "Idioma",
+  "about.tabBackups": "Backups",
   "about.checkUpdates": "Verificar atualizações",
   "about.checking": "Verificando…",
   "about.downloading": "Baixando…",
@@ -195,6 +196,22 @@ export const ptBR: Record<TranslationKeys, string> = {
   "import.invalidYaml": "Arquivo YAML inválido ou vazio.",
   "import.invalidJson": "Arquivo JSON inválido.",
   "import.unknownFormat": "Formato não reconhecido. Use: (1) Backup FiveDollars (arquivo exportado em Configurações → Exportar dados), (2) Postman (JSON) ou (3) Insomnia (JSON/YAML).",
+
+  "backups.hintDesktop":
+    "Um snapshot completo é salvo automaticamente uma vez por dia ao abrir o app. Os arquivos ficam na pasta de dados do aplicativo (separada de importações e atualizações).",
+  "backups.hintWeb":
+    "Os backups ficam no armazenamento do navegador em uma chave dedicada (não é afetado por importar arquivo). Mantém-se até 10 backups manuais.",
+  "backups.createNow": "Criar backup agora",
+  "backups.loading": "Carregando…",
+  "backups.empty": "Nenhum backup ainda.",
+  "backups.listLabel": "Backups salvos",
+  "backups.restore": "Restaurar",
+  "backups.delete": "Apagar",
+  "backups.restoreTitle": "Restaurar backup?",
+  "backups.restoreMessage":
+    "Isso substitui collections, ambientes, histórico e configurações relacionadas pelo conteúdo de “{file}”. Não dá para desfazer.",
+  "backups.deleteTitle": "Apagar backup?",
+  "backups.deleteMessage": "Apagar permanentemente “{file}”?",
 
   "updater.desktopOnly": "Atualização só está disponível na versão desktop.",
 };

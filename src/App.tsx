@@ -6,6 +6,7 @@ import { ResizableMainArea } from "@/components/ResizableMainArea";
 import { TabBar } from "@/components/TabBar";
 import { useAppStore } from "@/store/useAppStore";
 import { loadAppData } from "@/lib/persistence";
+import { runDailyAutoBackupIfNeeded } from "@/lib/appBackups";
 import { useT } from "@/lib/i18n";
 import type { RunnerTab } from "@/types";
 import { Main } from "./components/Main";
@@ -17,7 +18,10 @@ function App() {
   const { setStateFromPersisted, tabs, activeTabId } = useAppStore();
 
   useEffect(() => {
-    loadAppData().then(setStateFromPersisted);
+    loadAppData().then((data) => {
+      setStateFromPersisted(data);
+      void runDailyAutoBackupIfNeeded();
+    });
   }, [setStateFromPersisted]);
 
   const activeTab = activeTabId ? tabs.find((t) => t.id === activeTabId) : null;

@@ -7,7 +7,7 @@ function isTauri(): boolean {
   return typeof window !== "undefined" && !!(window as unknown as { __TAURI__?: unknown }).__TAURI__;
 }
 
-function parsePersistedData(raw: string | null): PersistedData {
+export function parsePersistedData(raw: string | null): PersistedData {
   const defaultData: PersistedData = {
     collections: [],
     environments: [],

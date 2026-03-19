@@ -5,6 +5,7 @@ import { useT } from "@/lib/i18n";
 import { useAppStore } from "@/store/useAppStore";
 import { ConfirmModal } from "./ConfirmModal";
 import { Export } from "./Export";
+import { BackupsPanel } from "./BackupsPanel";
 
 const APP_AUTHOR = "Leandro Dettmer";
 
@@ -13,7 +14,7 @@ interface AboutModalProps {
   version?: string;
 }
 
-type TabId = "author" | "export" | "updateTab" | "language";
+type TabId = "author" | "export" | "backups" | "updateTab" | "language";
 
 export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const { t } = useT();
@@ -88,6 +89,13 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
             >
               {t("about.tabExport")}
             </button>
+            <button
+              type="button"
+              className={`about-modal-tab ${activeTab === "backups" ? "about-modal-tab-active" : ""}`}
+              onClick={() => setActiveTab("backups")}
+            >
+              {t("about.tabBackups")}
+            </button>
             {isTauri() && (
               <button
                 type="button"
@@ -125,6 +133,9 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
             )}
             {activeTab === "export" && (
               <Export />
+            )}
+            {activeTab === "backups" && (
+              <BackupsPanel />
             )}
             {activeTab === "updateTab" && isTauri() && (
               <div className="about-author-panel">

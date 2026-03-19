@@ -14,6 +14,7 @@ export const en = {
   "about.tabExport": "Export data",
   "about.tabUpdates": "Updates",
   "about.tabLanguage": "Language",
+  "about.tabBackups": "Backups",
   "about.checkUpdates": "Check for updates",
   "about.checking": "Checking…",
   "about.downloading": "Downloading…",
@@ -208,6 +209,23 @@ export const en = {
   "import.invalidYaml": "Invalid or empty YAML file.",
   "import.invalidJson": "Invalid JSON file.",
   "import.unknownFormat": "Unrecognized format. Use: (1) FiveDollars backup (file exported in Settings → Export data), (2) Postman (JSON) or (3) Insomnia (JSON/YAML).",
+
+  // Backups (Settings → Backups)
+  "backups.hintDesktop":
+    "A full snapshot is saved automatically once per day when you open the app. Files live in the app data folder (separate from imports and updates).",
+  "backups.hintWeb":
+    "Backups are stored in browser storage under a dedicated key (not affected by file import). Up to 10 manual backups are kept.",
+  "backups.createNow": "Create backup now",
+  "backups.loading": "Loading…",
+  "backups.empty": "No backups yet.",
+  "backups.listLabel": "Saved backups",
+  "backups.restore": "Restore",
+  "backups.delete": "Delete",
+  "backups.restoreTitle": "Restore backup?",
+  "backups.restoreMessage":
+    "This replaces your current collections, environments, history and related settings with the contents of “{file}”. This cannot be undone.",
+  "backups.deleteTitle": "Delete backup?",
+  "backups.deleteMessage": "Permanently delete “{file}”?",
 
   // Updater (used in lib)
   "updater.desktopOnly": "Updates are only available in the desktop version.",
