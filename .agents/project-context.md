@@ -23,7 +23,7 @@ src/
                   EnvironmentEditor, RunnerPanel, BodyEditor, WorkspaceSelector, GitTab, etc.
   store/          useAppStore.ts (estado global)
   lib/            http.ts, resolveEnv.ts, importCollection.ts, persistence.ts,
-                  i18n.ts, useClickOutside.ts, gitCollections.ts, ...
+                  i18n.ts, useClickOutside.ts, gitWorkspace.ts, ...
   types/          index.ts, persisted.ts, workspace.ts
   locales/        en.ts, pt-BR.ts (i18n)
   App.css         Tema dark estilo VS Code

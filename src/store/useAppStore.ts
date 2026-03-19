@@ -43,6 +43,9 @@ type PersistState = {
   collectionsMode?: "offline" | "synced";
   offlineCollections?: Collection[];
   syncedCollections?: Collection[];
+  offlineEnvironments?: Environment[];
+  syncedEnvironments?: Environment[];
+  gitSyncIncludeEnvironments?: boolean;
   knownRepoPaths?: string[];
 };
 
@@ -68,6 +71,9 @@ function buildActiveWorkspaceSnapshot(state: PersistState): WorkspaceData {
     collectionsMode: state.collectionsMode ?? "offline",
     offlineCollections: state.offlineCollections ?? [],
     syncedCollections: state.syncedCollections ?? [],
+    offlineEnvironments: state.offlineEnvironments ?? [],
+    syncedEnvironments: state.syncedEnvironments ?? [],
+    gitSyncIncludeEnvironments: state.gitSyncIncludeEnvironments ?? false,
     gitRepo: state.gitRepo ?? null,
     gitSyncStatus: state.gitSyncStatus ?? null,
     knownRepoPaths: state.knownRepoPaths ?? [],
@@ -131,6 +137,12 @@ interface AppState {
   offlineCollections: Collection[];
   /** Snapshot das collections do perfil sincronizado com o repo Git. */
   syncedCollections: Collection[];
+  /** Ambientes do perfil Local. */
+  offlineEnvironments: Environment[];
+  /** Ambientes do perfil Git. */
+  syncedEnvironments: Environment[];
+  /** Incluir environments ao salvar no repositório (.fivedollars/workspace.json). */
+  gitSyncIncludeEnvironments: boolean;
   /** Lista de caminhos de raiz de repositórios conhecidos (para seletor repo/branch). */
   knownRepoPaths: string[];
   getActiveWorkspace: () => WorkspaceData | null;
@@ -200,6 +212,9 @@ interface AppState {
   setCollectionsMode: (mode: "offline" | "synced") => void;
   /** Atualiza o snapshot syncedCollections sem alterar o modo ativo. */
   setSyncedCollections: (collections: Collection[]) => void;
+  /** Atualiza ambientes do perfil Git; opcionalmente redefine o ambiente ativo por id. */
+  setSyncedEnvironments: (environments: Environment[], currentEnvId?: string | null) => void;
+  setGitSyncIncludeEnvironments: (value: boolean) => void;
   setKnownRepoPaths: (paths: string[]) => void;
   /** Adiciona um path à lista de repos conhecidos (evita duplicata). */
   addKnownRepo: (path: string) => void;
@@ -227,12 +242,40 @@ function getInitialWorkspaces(): { list: WorkspaceData[]; activeId: string } {
   return { list: [defaultWorkspaceData(id, "Principal")], activeId: id };
 }
 
+function normalizeWorkspaceEnvironments(w: WorkspaceData): {
+  offlineEnvironments: Environment[];
+  syncedEnvironments: Environment[];
+} {
+  const hasSplit =
+    (Array.isArray(w.offlineEnvironments) && w.offlineEnvironments.length > 0) ||
+    (Array.isArray(w.syncedEnvironments) && w.syncedEnvironments.length > 0);
+  if (hasSplit) {
+    return {
+      offlineEnvironments: Array.isArray(w.offlineEnvironments) ? w.offlineEnvironments : [],
+      syncedEnvironments: Array.isArray(w.syncedEnvironments) ? w.syncedEnvironments : [],
+    };
+  }
+  return {
+    offlineEnvironments: [...w.environments],
+    syncedEnvironments: [],
+  };
+}
+
+function resolveEnvById(envs: Environment[], id: string | null | undefined): Environment | null {
+  if (typeof id === "string") {
+    const found = envs.find((e) => e.id === id);
+    if (found) return found;
+  }
+  return envs[0] ?? null;
+}
+
 function applyWorkspaceToFlatState(
   _state: AppState,
   w: WorkspaceData,
   set: (partial: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void
 ) {
-  const currentEnv = w.environments.find((e) => e.id === w.currentEnvId) ?? null;
+  const { offlineEnvironments, syncedEnvironments } = normalizeWorkspaceEnvironments(w);
+  const currentEnv = w.environments.find((e) => e.id === w.currentEnvId) ?? resolveEnvById(w.environments, w.currentEnvId);
   set({
     collections: w.collections,
     environments: w.environments,
@@ -243,6 +286,9 @@ function applyWorkspaceToFlatState(
     collectionsMode: w.collectionsMode,
     offlineCollections: w.offlineCollections,
     syncedCollections: w.syncedCollections,
+    offlineEnvironments,
+    syncedEnvironments,
+    gitSyncIncludeEnvironments: w.gitSyncIncludeEnvironments ?? false,
     knownRepoPaths: w.knownRepoPaths,
   });
 }
@@ -274,6 +320,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   collectionsMode: initialWorkspace.collectionsMode,
   offlineCollections: initialWorkspace.offlineCollections,
   syncedCollections: initialWorkspace.syncedCollections,
+  offlineEnvironments: initialWorkspace.offlineEnvironments,
+  syncedEnvironments: initialWorkspace.syncedEnvironments,
+  gitSyncIncludeEnvironments: initialWorkspace.gitSyncIncludeEnvironments ?? false,
   knownRepoPaths: initialWorkspace.knownRepoPaths,
 
   getActiveWorkspace: () => {
@@ -693,15 +742,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       const list = currentPath && !knownRepoPaths.includes(currentPath)
         ? [currentPath, ...knownRepoPaths]
         : knownRepoPaths;
+      const legEnv = Array.isArray(data.environments) ? data.environments : [];
       const migrated: WorkspaceData = {
         id,
         name: "Principal",
         collections: Array.isArray(data.collections) ? data.collections : [],
-        environments: Array.isArray(data.environments) ? data.environments : [],
+        environments: legEnv,
         currentEnvId: typeof data.currentEnvId === "string" ? data.currentEnvId : null,
         collectionsMode: data.collectionsMode === "synced" ? "synced" : "offline",
         offlineCollections: Array.isArray(data.offlineCollections) ? data.offlineCollections : [],
         syncedCollections: Array.isArray(data.syncedCollections) ? data.syncedCollections : [],
+        offlineEnvironments: legEnv,
+        syncedEnvironments: [],
+        gitSyncIncludeEnvironments: false,
         gitRepo: data.gitRepo ?? null,
         gitSyncStatus: data.gitSyncStatus ?? null,
         knownRepoPaths: list,
@@ -791,6 +844,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         ...w,
         environments: [],
         currentEnvId: null,
+        offlineEnvironments: [],
+        syncedEnvironments: [],
       }));
     }
     return {
@@ -822,7 +877,13 @@ export const useAppStore = create<AppState>((set, get) => ({
           ? (data.workspaces!.find((w) => w.id === sourceWorkspaceId) ?? data.workspaces![0])
           : data.workspaces![0];
       const newId = generateId();
-      const newWorkspace: WorkspaceData = { ...single, id: newId };
+      const newWorkspace: WorkspaceData = {
+        ...single,
+        id: newId,
+        offlineEnvironments: single.offlineEnvironments ?? [...single.environments],
+        syncedEnvironments: single.syncedEnvironments ?? [],
+        gitSyncIncludeEnvironments: single.gitSyncIncludeEnvironments ?? false,
+      };
       const s = get();
       set({
         workspaces: [...s.workspaces, newWorkspace],
@@ -863,12 +924,23 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (activeId == null) return;
       const currentEnv = backupEnvironments.find((e) => e.id === backupCurrentEnvId) ?? backupEnvironments[0] ?? null;
       const nextWorkspaces = s.workspaces.map((w) =>
-        w.id === activeId ? { ...w, environments: backupEnvironments, currentEnvId: backupCurrentEnvId } : w
+        w.id === activeId
+          ? {
+              ...w,
+              environments: backupEnvironments,
+              currentEnvId: backupCurrentEnvId,
+              offlineEnvironments: s.collectionsMode === "offline" ? backupEnvironments : w.offlineEnvironments,
+              syncedEnvironments: s.collectionsMode === "synced" ? backupEnvironments : w.syncedEnvironments,
+            }
+          : w
       );
       set({
         workspaces: nextWorkspaces,
         environments: backupEnvironments,
         currentEnv: currentEnv,
+        ...(s.collectionsMode === "synced"
+          ? { syncedEnvironments: backupEnvironments }
+          : { offlineEnvironments: backupEnvironments }),
       });
     }
     if (options.git && (backupGitRepo != null || backupGitSyncStatus != null || backupKnownRepoPaths.length > 0)) {
@@ -901,18 +973,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     const s = get();
     if (s.collectionsMode === mode) return;
     if (mode === "synced") {
-      // Salva o conjunto atual como offline, ativa o synced
       set({
         collectionsMode: "synced",
         offlineCollections: s.collections,
+        offlineEnvironments: s.environments,
         collections: s.syncedCollections,
+        environments: s.syncedEnvironments,
+        currentEnv: resolveEnvById(s.syncedEnvironments, s.currentEnv?.id),
       });
     } else {
-      // Salva o conjunto atual como synced, ativa o offline
       set({
         collectionsMode: "offline",
         syncedCollections: s.collections,
+        syncedEnvironments: s.environments,
         collections: s.offlineCollections,
+        environments: s.offlineEnvironments,
+        currentEnv: resolveEnvById(s.offlineEnvironments, s.currentEnv?.id),
       });
     }
 
@@ -922,11 +998,27 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSyncedCollections: (collections) => {
     const s = get();
     if (s.collectionsMode === "synced") {
-      // Se já está em modo synced, atualiza também o conjunto ativo
       set({ syncedCollections: collections, collections });
     } else {
       set({ syncedCollections: collections });
     }
+    persist(get());
+  },
+
+  setSyncedEnvironments: (environments, currentEnvId) => {
+    const s = get();
+    const id = currentEnvId !== undefined ? currentEnvId : s.currentEnv?.id ?? null;
+    const currentEnv = resolveEnvById(environments, id);
+    if (s.collectionsMode === "synced") {
+      set({ syncedEnvironments: environments, environments, currentEnv });
+    } else {
+      set({ syncedEnvironments: environments });
+    }
+    persist(get());
+  },
+
+  setGitSyncIncludeEnvironments: (value) => {
+    set({ gitSyncIncludeEnvironments: value });
     persist(get());
   },
 
@@ -956,7 +1048,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setEnvironments: (environments) => {
-    set({ environments });
+    set((state) => {
+      if (state.collectionsMode === "synced") {
+        return { environments, syncedEnvironments: environments };
+      }
+      return { environments, offlineEnvironments: environments };
+    });
     persist(get());
   },
 
@@ -1069,29 +1166,39 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   addEnvironment: (env) => {
     const newEnv: Environment = { ...env, id: generateId() };
-    set((state) => ({ environments: [newEnv, ...state.environments] }));
+    set((state) => {
+      const next = [newEnv, ...state.environments];
+      if (state.collectionsMode === "synced") {
+        return { environments: next, syncedEnvironments: next };
+      }
+      return { environments: next, offlineEnvironments: next };
+    });
     persist(get());
     return newEnv;
   },
 
   updateEnvironment: (id, patch) => {
-    set((state) => ({
-      environments: state.environments.map((e) =>
-        e.id === id ? { ...e, ...patch } : e
-      ),
-      currentEnv:
-        state.currentEnv?.id === id
-          ? { ...state.currentEnv, ...patch }
-          : state.currentEnv,
-    }));
+    set((state) => {
+      const next = state.environments.map((e) => (e.id === id ? { ...e, ...patch } : e));
+      const currentEnv =
+        state.currentEnv?.id === id ? { ...state.currentEnv, ...patch } : state.currentEnv;
+      if (state.collectionsMode === "synced") {
+        return { environments: next, syncedEnvironments: next, currentEnv };
+      }
+      return { environments: next, offlineEnvironments: next, currentEnv };
+    });
     persist(get());
   },
 
   removeEnvironment: (id) => {
-    set((state) => ({
-      environments: state.environments.filter((e) => e.id !== id),
-      currentEnv: state.currentEnv?.id === id ? null : state.currentEnv,
-    }));
+    set((state) => {
+      const next = state.environments.filter((e) => e.id !== id);
+      const currentEnv = state.currentEnv?.id === id ? null : state.currentEnv;
+      if (state.collectionsMode === "synced") {
+        return { environments: next, syncedEnvironments: next, currentEnv };
+      }
+      return { environments: next, offlineEnvironments: next, currentEnv };
+    });
     persist(get());
   },
 

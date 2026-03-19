@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { PersistedData } from "@/types/persisted";
-import type { WorkspaceData } from "@/types";
+import type { Environment, WorkspaceData } from "@/types";
 
 const WEB_STORAGE_KEY = "FiveDollars_app_data";
 
@@ -12,16 +12,58 @@ function parseWorkspace(raw: unknown): WorkspaceData | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   if (typeof o.id !== "string" || typeof o.name !== "string") return null;
+  const collections = Array.isArray(o.collections) ? o.collections : [];
+  const environments = Array.isArray(o.environments) ? o.environments : [];
+  const offlineColl = Array.isArray(o.offlineCollections) ? o.offlineCollections : [];
+  const syncedColl = Array.isArray(o.syncedCollections) ? o.syncedCollections : [];
+  const offKey = Object.prototype.hasOwnProperty.call(o, "offlineEnvironments");
+  const synKey = Object.prototype.hasOwnProperty.call(o, "syncedEnvironments");
+  let offlineEnvironments: Environment[];
+  let syncedEnvironments: Environment[];
+  if (offKey || synKey) {
+    const off = Array.isArray(o.offlineEnvironments) ? o.offlineEnvironments : [];
+    const syn = Array.isArray(o.syncedEnvironments) ? o.syncedEnvironments : [];
+    if (off.length === 0 && syn.length === 0 && environments.length > 0) {
+      offlineEnvironments = environments;
+      syncedEnvironments = [];
+    } else {
+      offlineEnvironments = off;
+      syncedEnvironments = syn;
+    }
+  } else {
+    offlineEnvironments = environments;
+    syncedEnvironments = [];
+  }
+
+  const gitRepoRaw = (o.gitRepo as PersistedData["gitRepo"]) ?? null;
+  const gitRepo =
+    gitRepoRaw && typeof gitRepoRaw === "object"
+      ? {
+          ...gitRepoRaw,
+          hasSyncFile:
+            (gitRepoRaw as { hasSyncFile?: boolean }).hasSyncFile ??
+            (gitRepoRaw as { hasCollectionsFile?: boolean }).hasCollectionsFile ??
+            false,
+          hasCollectionsFile:
+            (gitRepoRaw as { hasCollectionsFile?: boolean }).hasCollectionsFile ??
+            (gitRepoRaw as { hasSyncFile?: boolean }).hasSyncFile ??
+            false,
+        }
+      : null;
+
   return {
     id: o.id,
     name: o.name,
-    collections: Array.isArray(o.collections) ? o.collections : [],
-    environments: Array.isArray(o.environments) ? o.environments : [],
+    collections: collections,
+    environments: environments,
     currentEnvId: typeof o.currentEnvId === "string" ? o.currentEnvId : null,
     collectionsMode: o.collectionsMode === "synced" ? "synced" : "offline",
-    offlineCollections: Array.isArray(o.offlineCollections) ? o.offlineCollections : [],
-    syncedCollections: Array.isArray(o.syncedCollections) ? o.syncedCollections : [],
-    gitRepo: (o.gitRepo as PersistedData["gitRepo"]) ?? null,
+    offlineCollections: offlineColl.length ? offlineColl : collections,
+    syncedCollections: syncedColl,
+    offlineEnvironments,
+    syncedEnvironments,
+    gitSyncIncludeEnvironments: o.gitSyncIncludeEnvironments === true,
+    gitRepo,
     gitSyncStatus: (o.gitSyncStatus as PersistedData["gitSyncStatus"]) ?? null,
     knownRepoPaths: Array.isArray(o.knownRepoPaths)
       ? (o.knownRepoPaths as string[]).filter((p): p is string => typeof p === "string")

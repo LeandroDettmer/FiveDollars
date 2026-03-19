@@ -24,6 +24,9 @@ pub struct GitRepoInfo {
     pub branch: String,
     pub is_clean: bool,
     pub has_fivedollars_folder: bool,
+    /// `true` se existir `workspace.json` ou o legado `collections.json`.
+    pub has_sync_file: bool,
+    /// Alias legado para o frontend: mesmo valor que `has_sync_file`.
     pub has_collections_file: bool,
 }
 
@@ -81,15 +84,17 @@ pub fn detect_git_repo(path: Option<String>) -> Result<GitRepoInfo, String> {
 
     let fivedollars_folder = repo_path.join(".fivedollars");
     let has_fivedollars_folder = fivedollars_folder.is_dir();
+    let workspace_file = fivedollars_folder.join("workspace.json");
     let collections_file = fivedollars_folder.join("collections.json");
-    let has_collections_file = collections_file.is_file();
+    let has_sync_file = workspace_file.is_file() || collections_file.is_file();
 
     Ok(GitRepoInfo {
         path: repo_path.to_string_lossy().to_string(),
         branch,
         is_clean,
         has_fivedollars_folder,
-        has_collections_file,
+        has_sync_file,
+        has_collections_file: has_sync_file,
     })
 }
 
@@ -147,12 +152,21 @@ pub fn read_git_collections(repo_path: String) -> Result<String, String> {
     if !repo.join(".git").exists() {
         return Err("Caminho informado não é um repositório Git (sem .git)".to_string());
     }
-    let collections_path = repo.join(".fivedollars").join("collections.json");
-    if !collections_path.exists() {
-        return Err("Arquivo .fivedollars/collections.json não encontrado".to_string());
-    }
+    let folder = repo.join(".fivedollars");
+    let workspace_path = folder.join("workspace.json");
+    let legacy_path = folder.join("collections.json");
+    let path = if workspace_path.is_file() {
+        workspace_path
+    } else if legacy_path.is_file() {
+        legacy_path
+    } else {
+        return Err(
+            "Nenhum arquivo .fivedollars/workspace.json ou .fivedollars/collections.json encontrado"
+                .to_string(),
+        );
+    };
 
-    fs::read_to_string(&collections_path).map_err(|e| e.to_string())
+    fs::read_to_string(&path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -166,8 +180,8 @@ pub fn write_git_collections(repo_path: String, payload: String) -> Result<(), S
     if !folder.exists() {
         fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
     }
-    let collections_path = folder.join("collections.json");
-    fs::write(&collections_path, payload).map_err(|e| e.to_string())
+    let workspace_path = folder.join("workspace.json");
+    fs::write(&workspace_path, payload).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -177,19 +191,17 @@ pub fn git_commit_collections(repo_path: String, message: Option<String>) -> Res
         return Err("Caminho informado não é um repositório Git (sem .git)".to_string());
     }
 
-    let collections_rel = ".fivedollars/collections.json";
+    let workspace_rel = ".fivedollars/workspace.json";
 
-    // git add
-    run_git(&repo, &["add", collections_rel])?;
+    run_git(&repo, &["add", workspace_rel])?;
 
-    // Verificar se há algo para commitar
-    let status_output = run_git(&repo, &["status", "--porcelain", collections_rel])?;
+    let status_output = run_git(&repo, &["status", "--porcelain", workspace_rel])?;
     if status_output.is_empty() {
-        // Nada para commitar, sair silenciosamente.
         return Ok(());
     }
 
-    let commit_msg = message.unwrap_or_else(|| "chore(fivedollars): update collections".to_string());
+    let commit_msg =
+        message.unwrap_or_else(|| "chore(fivedollars): update workspace data".to_string());
     run_git(&repo, &["commit", "-m", &commit_msg])?;
 
     Ok(())

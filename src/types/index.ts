@@ -185,7 +185,9 @@ export interface GitRepoInfo {
   isClean: boolean;
   /** true se a pasta .fivedollars existir na raiz do repo. */
   hasFivedollarsFolder: boolean;
-  /** true se o arquivo .fivedollars/collections.json existir. */
+  /** true se existir workspace.json ou collections.json legado. */
+  hasSyncFile: boolean;
+  /** @deprecated Use hasSyncFile. Mantido para compat com dados persistidos antigos. */
   hasCollectionsFile: boolean;
 }
 

@@ -37,8 +37,8 @@ export function Main() {
     }
   });
 
-  useKeyDown(["c"], (e) => {
-    if (e.ctrlKey || e.metaKey) {
+  useKeyDown(["j"], (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === "j")) {
       e.preventDefault();
       handleCreateCollection();
     }
@@ -84,7 +84,7 @@ export function Main() {
           }}>
             <span className="material-symbols-outlined app-empty-action-icon" aria-hidden>add</span>
             {t("main.createCollection")}
-            <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘C ·  Ctrl+C</span>
+            <span style={{ opacity: 0.5, fontSize: "0.8em", marginLeft: "8px" }}>⌘J ·  Ctrl+J</span>
           </button>
 
           <button type="button" className="app-empty-action" onClick={() => {

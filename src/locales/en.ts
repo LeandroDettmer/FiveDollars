@@ -269,7 +269,13 @@ export const en = {
   "git.repoClean": "(clean)",
   "git.repoUncommitted": "(with changes)",
   "git.noFivedollarsFolder": "This repository does not have a .fivedollars folder yet; it will be created when you save.",
-  "git.noCollectionsFile": "There is no collections.json in the repo; loading is not available until there is one. It will be created when you save.",
+  "git.noCollectionsFile": "There is no sync file in the repo yet; loading is not available until there is one. It will be created when you save.",
+  "git.noSyncFile":
+    "There is no .fivedollars/workspace.json (or legacy collections.json); load is disabled until a file exists. It will be created when you save.",
+  "git.includeEnvironments": "Include environments in repository file (secrets may be committed)",
+  "git.includeEnvironmentsWarning":
+    "Environment variables often contain tokens or passwords. Only enable this if the repository is private and your team agrees.",
+  "git.confirmSaveEnvironments": "Environments from the active profile will be included in this save.",
   "git.readyToSync": "Ready to sync (load/save).",
   "git.activeProfile": "Active profile:",
   "git.profileLocal": "Local",
@@ -306,7 +312,7 @@ export const en = {
   "git.confirmSaveCommitP1Middle": "profile collections will be saved to",
   "git.confirmSaveCommitP1After": "and a commit will be created. Only this file will be included in the commit.",
   "git.commitMessageLabel": "Commit message",
-  "git.commitMessagePlaceholder": "chore: update collections",
+  "git.commitMessagePlaceholder": "chore: update fivedollars workspace",
   "git.commitHooksHint": "In repositories with hooks (e.g.: Husky), use the format required by the project or the hook may fail.",
 } as const;
 

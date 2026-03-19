@@ -17,6 +17,12 @@ export interface WorkspaceData {
   collectionsMode: "offline" | "synced";
   offlineCollections: Collection[];
   syncedCollections: Collection[];
+  /** Ambientes do perfil Local (espelha offlineCollections). */
+  offlineEnvironments: Environment[];
+  /** Ambientes do perfil Git (espelha syncedCollections). */
+  syncedEnvironments: Environment[];
+  /** Se true, salvar/carregar environments no arquivo do repo (opcional). */
+  gitSyncIncludeEnvironments?: boolean;
   gitRepo: GitRepoInfo | null;
   gitSyncStatus: GitSyncStatus | null;
   knownRepoPaths: string[];

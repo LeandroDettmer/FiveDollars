@@ -253,7 +253,13 @@ export const ptBR: Record<TranslationKeys, string> = {
   "git.repoClean": "(clean)",
   "git.repoUncommitted": "(com mudanças)",
   "git.noFivedollarsFolder": "Este repositório ainda não tem pasta .fivedollars; será criada ao salvar.",
-  "git.noCollectionsFile": "Não há collections.json no repo; carregar não disponível até haver um. Será criado ao salvar.",
+  "git.noCollectionsFile": "Ainda não há arquivo de sync no repo; carregar só fica disponível quando existir um. Será criado ao salvar.",
+  "git.noSyncFile":
+    "Não há .fivedollars/workspace.json (nem collections.json legado); carregar fica desativado até existir arquivo. Será criado ao salvar.",
+  "git.includeEnvironments": "Incluir environments no arquivo do repositório (segredos podem ir pro Git)",
+  "git.includeEnvironmentsWarning":
+    "Variáveis de ambiente costumam ter tokens ou senhas. Só ative se o repositório for privado e o time concordar.",
+  "git.confirmSaveEnvironments": "Os environments do perfil ativo serão incluídos neste salvamento.",
   "git.readyToSync": "Pronto para syncar (carregar/salvar).",
   "git.activeProfile": "Perfil ativo:",
   "git.profileLocal": "Local",
@@ -290,6 +296,6 @@ export const ptBR: Record<TranslationKeys, string> = {
   "git.confirmSaveCommitP1Middle": "serão salvas em",
   "git.confirmSaveCommitP1After": "e um commit será criado. Apenas esse arquivo será incluído no commit.",
   "git.commitMessageLabel": "Mensagem do commit",
-  "git.commitMessagePlaceholder": "chore: update collections",
+  "git.commitMessagePlaceholder": "chore: atualizar workspace fivedollars",
   "git.commitHooksHint": "Em repositórios com hooks (ex.: Husky), use o formato exigido pelo projeto ou o hook pode falhar.",
 };
