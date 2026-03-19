@@ -638,6 +638,46 @@ body {
   flex-shrink: 0;
 }
 
+.sidebar-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sidebar-footer-git-switch {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sidebar-footer-git-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-footer-git-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--bg-primary);
+}
+
+.sidebar-footer-git-btn--active {
+  background: var(--accent);
+  color: #fff;
+  cursor: default;
+}
+
+.sidebar-footer-git-btn:disabled:not(.sidebar-footer-git-btn--active) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .sidebar-about-btn {
   padding: 8px 12px;
   font-size: 12px;
@@ -774,9 +814,183 @@ body {
   margin: 0 0 8px 0;
 }
 
+.sidebar-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .sidebar-search-wrap {
   position: relative;
   margin-bottom: 8px;
+}
+
+/* Workspace selector (canto superior direito da sidebar) */
+.workspace-selector-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.workspace-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  max-width: 140px;
+}
+
+.workspace-selector-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.workspace-selector-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-selector-chevron {
+  font-size: 14px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.workspace-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 180px;
+  max-width: 240px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  padding: 4px 0;
+}
+
+.workspace-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+.workspace-dropdown-item {
+  flex: 1;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.workspace-dropdown-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.workspace-dropdown-item--active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.workspace-dropdown-new {
+  color: var(--accent);
+}
+
+.workspace-dropdown-hr {
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.workspace-dropdown-row-actions {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.workspace-dropdown-menu-trigger {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspace-dropdown-menu-trigger:hover {
+  color: var(--text);
+  background: var(--bg-tertiary);
+}
+
+.workspace-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 2px;
+  min-width: 120px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 101;
+  padding: 4px 0;
+}
+
+.workspace-dropdown-menu button {
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.workspace-dropdown-menu button:hover {
+  background: var(--bg-tertiary);
+}
+
+.workspace-dropdown-danger {
+  color: var(--error) !important;
+}
+
+.workspace-dropdown-rename-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.workspace-dropdown-rename-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .sidebar-search-input {

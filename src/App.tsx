@@ -14,6 +14,9 @@ import { useZoom } from "@/lib/useZoom";
 import { useWindowState } from "@/lib/useWindowState";
 import "./App.css";
 
+/** Uma única carga dos dados persistidos por sessão (sobrevive a remount/Strict Mode). */
+let hasLoadedPersistedThisSession = false;
+
 function App() {
   const { t } = useT();
   const { setStateFromPersisted, tabs, activeTabId } = useAppStore();
@@ -21,6 +24,11 @@ function App() {
   useWindowState();
 
   useEffect(() => {
+    // Carrega do disco apenas uma vez por sessão para não sobrescrever o estado
+    // (ex.: após importar collection no perfil Git, um re-run do effect não deve
+    // recarregar dados antigos e perder o modo synced).
+    if (hasLoadedPersistedThisSession) return;
+    hasLoadedPersistedThisSession = true;
     loadAppData().then(setStateFromPersisted);
   }, [setStateFromPersisted]);
 

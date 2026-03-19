@@ -67,6 +67,12 @@ export const en = {
   "sidebar.noRequestsYet": "No requests yet.",
   "sidebar.historyLogsTitle": "Click to see logs for this request",
   "sidebar.historyLogsCount": "{count} log(s)",
+  "sidebar.workspace": "Workspace",
+  "sidebar.newWorkspace": "New workspace",
+  "sidebar.removeWorkspace": "Remove workspace",
+  "sidebar.removeWorkspaceTitle": "Remove workspace",
+  "sidebar.removeWorkspaceMessage": "Remove \"{name}\"? Collections and environments in this workspace will be lost.",
+  "sidebar.workspaceActive": "Active workspace",
 
   // Collection tree
   "tree.newSubfolder": "New subfolder",

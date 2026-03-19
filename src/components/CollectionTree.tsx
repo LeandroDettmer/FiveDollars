@@ -74,6 +74,7 @@ function NodeItem({
   };
 
   const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
     e.dataTransfer.setData(DRAG_NODE_ID_KEY, node.id);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -260,6 +261,7 @@ export function CollectionTree({
   onRequestRemoved,
   defaultFolderOpen = false,
   currentRequestId = null,
+  onDropInTree,
 }: {
   collectionId: string;
   nodes: CollectionNode[];
@@ -271,6 +273,8 @@ export function CollectionTree({
   onRequestRemoved?: (requestId: string) => void;
   defaultFolderOpen?: boolean;
   currentRequestId?: string | null;
+  /** Chamado quando um drop é feito na árvore (mover rota/pasta), para o painel limpar estado de drag do bloco. */
+  onDropInTree?: () => void;
 }) {
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -377,13 +381,19 @@ export function CollectionTree({
     const targetFolderPath = getPathByNodeId(nodes, targetFolderId);
     if (sourcePath === null || targetFolderPath === null) return;
     const next = moveNodeToFolder(nodes, sourcePath, targetFolderPath);
-    if (next !== nodes) onUpdateItems(next);
+    if (next !== nodes) {
+      onUpdateItems(next);
+      onDropInTree?.();
+    }
   };
 
   const handleReorderNode = (sourceNodeId: string, targetNodeId: string, position: "before" | "after") => {
     if (!onUpdateItems) return;
     const next = moveNodeRelativeTo(nodes, sourceNodeId, targetNodeId, position);
-    if (next !== nodes) onUpdateItems(next);
+    if (next !== nodes) {
+      onUpdateItems(next);
+      onDropInTree?.();
+    }
   };
 
   if (nodes.length === 0) return null;

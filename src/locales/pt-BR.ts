@@ -65,6 +65,12 @@ export const ptBR: Record<TranslationKeys, string> = {
   "sidebar.noRequestsYet": "Nenhuma requisição ainda.",
   "sidebar.historyLogsTitle": "Clique para ver os logs desta requisição",
   "sidebar.historyLogsCount": "{count} log(s)",
+  "sidebar.workspace": "Workspace",
+  "sidebar.newWorkspace": "Novo workspace",
+  "sidebar.removeWorkspace": "Remover workspace",
+  "sidebar.removeWorkspaceTitle": "Remover workspace",
+  "sidebar.removeWorkspaceMessage": "Remover \"{name}\"? As collections e ambientes deste workspace serão perdidos.",
+  "sidebar.workspaceActive": "Workspace ativo",
 
   "tree.newSubfolder": "Nova subpasta",
   "tree.run": "Executar pasta",

@@ -15,8 +15,10 @@ import type {
   PinnedTabData,
   GitRepoInfo,
   GitSyncStatus,
+  WorkspaceData,
 } from "@/types";
 import type { PersistedData } from "@/types/persisted";
+import { defaultWorkspaceData } from "@/types/persisted";
 import { saveAppData } from "@/lib/persistence";
 import {
   updateRequestInNodes,
@@ -27,21 +29,25 @@ import {
 import { generateId } from "@/lib/id";
 import { getDefaultNewRequestName, type Locale } from "@/lib/i18n";
 
-function persist(state: {
+type PersistState = {
+  workspaces: WorkspaceData[];
+  activeWorkspaceId: string | null;
   collections: Collection[];
   environments: Environment[];
   currentEnv: Environment | null;
   history: HistoryEntry[];
   locale?: string;
   tabs?: Tab[];
-  pinnedTabs: PinnedTabData[];
   gitRepo?: GitRepoInfo | null;
   gitSyncStatus?: GitSyncStatus | null;
   collectionsMode?: "offline" | "synced";
   offlineCollections?: Collection[];
   syncedCollections?: Collection[];
   knownRepoPaths?: string[];
-}) {
+};
+
+/** Monta o snapshot do workspace ativo a partir do estado plano (para persist e ao trocar de workspace). */
+function buildActiveWorkspaceSnapshot(state: PersistState): WorkspaceData {
   const pinnedTabs: PinnedTabData[] = (state.tabs ?? [])
     .filter((t): t is RequestTab => t.pinned === true && t.type === "request" && !t.isTemp)
     .map((t) => ({
@@ -52,19 +58,36 @@ function persist(state: {
       url: t.url,
     }));
 
-  const data: PersistedData = {
+  const activeId = state.activeWorkspaceId;
+  return {
+    id: activeId ?? "",
+    name: state.workspaces.find((w) => w.id === activeId)?.name ?? "Principal",
     collections: state.collections,
     environments: state.environments,
     currentEnvId: state.currentEnv?.id ?? null,
-    history: state.history,
-    locale: (state.locale ?? "en") as Locale,
-    pinnedTabs,
-    gitRepo: state.gitRepo ?? null,
-    gitSyncStatus: state.gitSyncStatus ?? null,
     collectionsMode: state.collectionsMode ?? "offline",
     offlineCollections: state.offlineCollections ?? [],
     syncedCollections: state.syncedCollections ?? [],
+    gitRepo: state.gitRepo ?? null,
+    gitSyncStatus: state.gitSyncStatus ?? null,
     knownRepoPaths: state.knownRepoPaths ?? [],
+    history: state.history,
+    pinnedTabs,
+  };
+}
+
+function persist(state: PersistState) {
+  const activeId = state.activeWorkspaceId;
+  const activeWorkspaceSnapshot = buildActiveWorkspaceSnapshot(state);
+
+  const nextWorkspaces = activeId
+    ? state.workspaces.map((w) => (w.id === activeId ? activeWorkspaceSnapshot : w))
+    : state.workspaces;
+
+  const data: PersistedData = {
+    workspaces: nextWorkspaces,
+    activeWorkspaceId: state.activeWorkspaceId,
+    locale: (state.locale ?? "en") as Locale,
   };
   saveAppData(data);
 }
@@ -77,6 +100,10 @@ export interface TabRequestCache {
 }
 
 interface AppState {
+  /** Lista de workspaces; estado ativo (collections, environments, etc.) é o do workspace ativo. */
+  workspaces: WorkspaceData[];
+  /** ID do workspace ativo. */
+  activeWorkspaceId: string | null;
   currentEnv: Environment | null;
   environments: Environment[];
   collections: Collection[];
@@ -106,6 +133,11 @@ interface AppState {
   syncedCollections: Collection[];
   /** Lista de caminhos de raiz de repositórios conhecidos (para seletor repo/branch). */
   knownRepoPaths: string[];
+  getActiveWorkspace: () => WorkspaceData | null;
+  addWorkspace: (name?: string) => WorkspaceData;
+  removeWorkspace: (id: string) => void;
+  switchWorkspace: (id: string) => void;
+  updateWorkspace: (id: string, patch: Partial<Pick<WorkspaceData, "name">>) => void;
   openTab: (tab: Tab) => void;
   closeTab: (tabId: string) => void;
   /** Fecha todas as abas que exibem a requisição com o id dado (ex.: ao remover da árvore). */
@@ -182,15 +214,44 @@ const emptyTabCache = (): TabRequestCache => ({
   sendingRequest: false,
 });
 
+function getInitialWorkspaces(): { list: WorkspaceData[]; activeId: string } {
+  const id = generateId();
+  return { list: [defaultWorkspaceData(id, "Principal")], activeId: id };
+}
+
+function applyWorkspaceToFlatState(
+  _state: AppState,
+  w: WorkspaceData,
+  set: (partial: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void
+) {
+  const currentEnv = w.environments.find((e) => e.id === w.currentEnvId) ?? null;
+  set({
+    collections: w.collections,
+    environments: w.environments,
+    currentEnv,
+    history: w.history,
+    gitRepo: w.gitRepo,
+    gitSyncStatus: w.gitSyncStatus,
+    collectionsMode: w.collectionsMode,
+    offlineCollections: w.offlineCollections,
+    syncedCollections: w.syncedCollections,
+    knownRepoPaths: w.knownRepoPaths,
+  });
+}
+
+const initial = getInitialWorkspaces();
+const initialWorkspace = initial.list[0]!;
 export const useAppStore = create<AppState>((set, get) => ({
-  currentEnv: null,
-  environments: [],
-  collections: [],
+  workspaces: initial.list,
+  activeWorkspaceId: initial.activeId,
+  currentEnv: initialWorkspace.environments.find((e) => e.id === initialWorkspace.currentEnvId) ?? null,
+  environments: initialWorkspace.environments,
+  collections: initialWorkspace.collections,
   currentRequest: null,
   lastResponse: null,
   scriptLogs: [],
   selectedHistoryEntryId: null,
-  history: [],
+  history: initialWorkspace.history,
   runnerHistory: [],
   tabs: [],
   activeTabId: null,
@@ -199,13 +260,92 @@ export const useAppStore = create<AppState>((set, get) => ({
   runnerPanelPendingConfig: null,
   runnerPanelRun: null,
   locale: "en",
-  pinnedTabs: [],
-  gitRepo: null,
-  gitSyncStatus: null,
-  collectionsMode: "offline",
-  offlineCollections: [],
-  syncedCollections: [],
-  knownRepoPaths: [],
+  pinnedTabs: initialWorkspace.pinnedTabs,
+  gitRepo: initialWorkspace.gitRepo,
+  gitSyncStatus: initialWorkspace.gitSyncStatus,
+  collectionsMode: initialWorkspace.collectionsMode,
+  offlineCollections: initialWorkspace.offlineCollections,
+  syncedCollections: initialWorkspace.syncedCollections,
+  knownRepoPaths: initialWorkspace.knownRepoPaths,
+
+  getActiveWorkspace: () => {
+    const { workspaces, activeWorkspaceId } = get();
+    if (!activeWorkspaceId) return workspaces[0] ?? null;
+    return workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0] ?? null;
+  },
+
+  addWorkspace: (name) => {
+    const id = generateId();
+    const ws = get().workspaces;
+    const defaultName = name ?? `Workspace ${ws.length + 1}`;
+    const newWorkspace = defaultWorkspaceData(id, defaultName);
+    set({ workspaces: [...ws, newWorkspace] });
+    persist(get());
+    return newWorkspace;
+  },
+
+  removeWorkspace: (id) => {
+    const s = get();
+    if (s.workspaces.length <= 1) return;
+    const isRemovingActive = s.activeWorkspaceId === id;
+    let nextWorkspaces: WorkspaceData[];
+    let nextActiveId = s.activeWorkspaceId;
+    if (isRemovingActive) {
+      nextWorkspaces = s.workspaces.filter((w) => w.id !== id);
+      nextActiveId = nextWorkspaces[0]?.id ?? null;
+    } else {
+      // Salva o workspace ativo atual no array antes de remover o outro
+      const activeSnapshot = buildActiveWorkspaceSnapshot(s);
+      nextWorkspaces = s.workspaces
+        .map((w) => (w.id === s.activeWorkspaceId ? activeSnapshot : w))
+        .filter((w) => w.id !== id);
+    }
+    set({ workspaces: nextWorkspaces, activeWorkspaceId: nextActiveId });
+    if (isRemovingActive && nextWorkspaces[0]) {
+      applyWorkspaceToFlatState(get(), nextWorkspaces[0], set);
+      set({
+        tabs: [],
+        activeTabId: null,
+        currentRequest: null,
+        lastResponse: null,
+        scriptLogs: [],
+        selectedHistoryEntryId: null,
+        tempRequests: {},
+      });
+    }
+    persist(get());
+  },
+
+  switchWorkspace: (id) => {
+    const s = get();
+    if (s.activeWorkspaceId === id) return;
+    const targetWorkspace = s.workspaces.find((x) => x.id === id);
+    if (!targetWorkspace) return;
+    // Salva o workspace que estamos saindo no array (repo Git, modo synced, collections, etc.)
+    const leavingSnapshot = buildActiveWorkspaceSnapshot(s);
+    const nextWorkspaces = s.workspaces.map((w) =>
+      w.id === s.activeWorkspaceId ? leavingSnapshot : w
+    );
+    set({ workspaces: nextWorkspaces, activeWorkspaceId: id });
+    applyWorkspaceToFlatState(get(), targetWorkspace, set);
+    set({
+      tabs: [],
+      activeTabId: null,
+      currentRequest: null,
+      lastResponse: null,
+      scriptLogs: [],
+      selectedHistoryEntryId: null,
+      tempRequests: {},
+    });
+    persist(get());
+  },
+
+  updateWorkspace: (id, patch) => {
+    set((s) => ({
+      workspaces: s.workspaces.map((w) => (w.id === id ? { ...w, ...patch } : w)),
+    }));
+    persist(get());
+  },
 
   setLocale: (locale) => {
     set({ locale });
@@ -530,32 +670,50 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setStateFromPersisted: (data) => {
-    const actualStoreState = get();
+    let workspaces: WorkspaceData[];
+    let activeWorkspaceId: string;
 
+    if (data.workspaces?.length) {
+      workspaces = data.workspaces;
+      activeWorkspaceId = data.activeWorkspaceId ?? data.workspaces[0]!.id;
+    } else {
+      const id = generateId();
+      const knownRepoPaths = Array.isArray(data.knownRepoPaths)
+        ? data.knownRepoPaths
+        : [];
+      const currentPath = data.gitRepo?.path;
+      const list = currentPath && !knownRepoPaths.includes(currentPath)
+        ? [currentPath, ...knownRepoPaths]
+        : knownRepoPaths;
+      const migrated: WorkspaceData = {
+        id,
+        name: "Principal",
+        collections: Array.isArray(data.collections) ? data.collections : [],
+        environments: Array.isArray(data.environments) ? data.environments : [],
+        currentEnvId: typeof data.currentEnvId === "string" ? data.currentEnvId : null,
+        collectionsMode: data.collectionsMode === "synced" ? "synced" : "offline",
+        offlineCollections: Array.isArray(data.offlineCollections) ? data.offlineCollections : [],
+        syncedCollections: Array.isArray(data.syncedCollections) ? data.syncedCollections : [],
+        gitRepo: data.gitRepo ?? null,
+        gitSyncStatus: data.gitSyncStatus ?? null,
+        knownRepoPaths: list,
+        history: Array.isArray(data.history) ? data.history : [],
+        pinnedTabs: Array.isArray(data.pinnedTabs) ? data.pinnedTabs : [],
+      };
+      workspaces = [migrated];
+      activeWorkspaceId = id;
+    }
+
+    const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0]!;
     set({
-      collections: data?.collections || actualStoreState.collections,
-      environments: data?.environments || actualStoreState.environments,
-      currentEnv:
-        data?.environments?.find?.((e) => e.id === data?.currentEnvId) ?? actualStoreState.currentEnv,
-      history: data?.history || actualStoreState.history,
+      workspaces,
+      activeWorkspaceId,
       locale: (data?.locale ?? "en") as Locale,
-      pinnedTabs: data?.pinnedTabs ?? [],
-      gitRepo: data?.gitRepo ?? null,
-      gitSyncStatus: data?.gitSyncStatus ?? null,
-      collectionsMode: data?.collectionsMode ?? "offline",
-      offlineCollections: data?.offlineCollections ?? [],
-      syncedCollections: data?.syncedCollections ?? [],
-      knownRepoPaths: (() => {
-        const list = data?.knownRepoPaths ?? [];
-        const currentPath = data?.gitRepo?.path;
-        if (currentPath && !list.includes(currentPath)) return [currentPath, ...list];
-        return list;
-      })(),
     });
+    applyWorkspaceToFlatState(get(), activeWorkspace, set);
 
     const restoredCollections = get().collections;
-
-    const pinnedTabsData = data?.pinnedTabs ?? [];
+    const pinnedTabsData = activeWorkspace.pinnedTabs ?? [];
 
     if (pinnedTabsData.length > 0) {
       const restoredTabs: RequestTab[] = pinnedTabsData
@@ -576,7 +734,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({
           tabs: restoredTabs,
           activeTabId: firstTab.id,
-          currentRequest: firstRequest,
+          currentRequest: firstRequest ?? null,
           tabRequestCache: restoredTabs.reduce<Record<string, { lastResponse: null; scriptLogs: []; sendingRequest: false }>>(
             (acc, t) => ({ ...acc, [t.id]: { lastResponse: null, scriptLogs: [], sendingRequest: false } }),
             {}
@@ -751,13 +909,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateRequestInCollection: (requestId, request) => {
-    set((state) => ({
-      collections: state.collections.map((c) => {
+    set((state) => {
+      const nextCollections = state.collections.map((c) => {
         const newItems = updateRequestInNodes(c.items, requestId, request);
         return newItems !== c.items ? { ...c, items: newItems } : c;
-      }),
-    }));
-
+      });
+      if (state.collectionsMode === "synced") {
+        const nextSynced = state.syncedCollections.map((c) => {
+          const newItems = updateRequestInNodes(c.items, requestId, request);
+          return newItems !== c.items ? { ...c, items: newItems } : c;
+        });
+        return { collections: nextCollections, syncedCollections: nextSynced };
+      }
+      return { collections: nextCollections };
+    });
     persist(get());
     get().refreshTabs();
   },

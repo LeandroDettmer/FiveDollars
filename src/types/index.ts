@@ -198,3 +198,5 @@ export interface GitSyncStatus {
   /** Mensagem de erro, se a última operação falhou. */
   errorMessage?: string;
 }
+
+export type { WorkspaceData } from "./workspace";

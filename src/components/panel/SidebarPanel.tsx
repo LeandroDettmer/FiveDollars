@@ -4,6 +4,7 @@ import { CollectionTree } from "../CollectionTree";
 import { EnvironmentEditor, ENV_COLORS } from "../EnvironmentEditor";
 import { ConfirmModal } from "../ConfirmModal";
 import { AboutModal } from "../AboutModal";
+import { WorkspaceSelector } from "../WorkspaceSelector";
 import { HttpMethodBadge } from "../HttpMethodBadge";
 import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
@@ -40,6 +41,10 @@ export function SidebarPanel() {
     getCollectionForRequest,
     setTempRequest,
     closeTabsByRequestId,
+    gitRepo,
+    collectionsMode,
+    setCollectionsMode,
+    syncedCollections,
   } = useAppStore();
   const { t } = useT();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +63,11 @@ export function SidebarPanel() {
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const collectionMenuRef = useRef<HTMLDivElement>(null);
   const hasInitializedCollectionsRef = useRef(false);
-  useClickOutside(collectionMenuRef, () => setCollectionMenuOpenId(null), !!collectionMenuOpenId);
+  useClickOutside(collectionMenuRef, () => {
+    setCollectionMenuOpenId(null);
+    setDraggingCollId(null);
+    setDragOverCollId(null);
+  }, !!collectionMenuOpenId);
 
   const [draggingCollId, setDraggingCollId] = useState<string | null>(null);
   const [dragOverCollId, setDragOverCollId] = useState<string | null>(null);
@@ -196,6 +205,8 @@ export function SidebarPanel() {
 
   const handleAddRequestToCollection = (coll: Collection, folderPath?: NodePath) => {
     setCollectionMenuOpenId(null);
+    setDraggingCollId(null);
+    setDragOverCollId(null);
     const newRequest = createNewRequest();
     const newItems = addRequestToNodes(coll.items, folderPath ?? [], newRequest);
     updateCollection(coll.id, { items: newItems });
@@ -216,6 +227,8 @@ export function SidebarPanel() {
 
   const handleAddFolderToCollection = (coll: Collection) => {
     setCollectionMenuOpenId(null);
+    setDraggingCollId(null);
+    setDragOverCollId(null);
     const newItems = addFolderToNodes(coll.items, [], t("sidebar.newFolder"));
     updateCollection(coll.id, { items: newItems });
     setCollapsedCollectionIds((prev) => {
@@ -227,6 +240,8 @@ export function SidebarPanel() {
 
   const handleRenameCollection = (coll: Collection) => {
     setCollectionMenuOpenId(null);
+    setDraggingCollId(null);
+    setDragOverCollId(null);
     setRenamingCollectionId(coll.id);
     setRenamingCollectionName(coll.name);
   };
@@ -240,6 +255,8 @@ export function SidebarPanel() {
 
   const handleDuplicateCollection = (coll: Collection) => {
     setCollectionMenuOpenId(null);
+    setDraggingCollId(null);
+    setDragOverCollId(null);
     const copy = duplicateCollection(coll);
     addCollection(copy);
     setCollapsedCollectionIds((prev) => {
@@ -251,6 +268,8 @@ export function SidebarPanel() {
 
   const handleRemoveCollection = (coll: Collection) => {
     setCollectionMenuOpenId(null);
+    setDraggingCollId(null);
+    setDragOverCollId(null);
     setCollectionToRemove({ id: coll.id, name: coll.name });
   };
 
@@ -320,8 +339,7 @@ export function SidebarPanel() {
         <section className="sidebar-section">
           {(
             <>
-              <div className="sidebar-search-wrap">
-
+              <div className="sidebar-actions-row">
                 <div className="sidebar-collection-actions">
                   <button
                     type="button"
@@ -335,56 +353,59 @@ export function SidebarPanel() {
                     {t("sidebar.import")}
                   </button>
                 </div>
+                <WorkspaceSelector />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <input
-                  type="search"
-                  className="sidebar-search-input"
-                  placeholder={t("sidebar.searchPlaceholder")}
-                  value={collectionSearch}
-                  onChange={(e) => setCollectionSearch(e.target.value)}
-                  aria-label={t("sidebar.searchAriaLabel")}
-                >
-                </input>
-                {collectionSearch.length > 0 && (
+              <div className="sidebar-search-wrap">
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <input
+                    type="search"
+                    className="sidebar-search-input"
+                    placeholder={t("sidebar.searchPlaceholder")}
+                    value={collectionSearch}
+                    onChange={(e) => setCollectionSearch(e.target.value)}
+                    aria-label={t("sidebar.searchAriaLabel")}
+                  >
+                  </input>
+                  {collectionSearch.length > 0 && (
+                    <button
+                      type="button"
+                      className="sidebar-search-clear"
+                      onClick={() => setCollectionSearch("")}
+                      aria-label={t("sidebar.clearSearch")}
+                      title={t("sidebar.clearSearch")}
+                    >
+                      ×
+                    </button>
+                  )}
+
+                </div>
+                <div className="sidebar-folder-actions">
                   <button
                     type="button"
-                    className="sidebar-search-clear"
-                    onClick={() => setCollectionSearch("")}
-                    aria-label={t("sidebar.clearSearch")}
-                    title={t("sidebar.clearSearch")}
+                    className="sidebar-folder-action-btn"
+                    onClick={() => {
+                      setFoldersExpanded(false);
+                      setCollapsedCollections(true);
+                      setFolderViewKey((k) => k + 1);
+                    }}
+                    title={t("sidebar.collapseAllFolders")}
                   >
-                    ×
+                    {t("sidebar.collapseAll")}
                   </button>
-                )}
-
-              </div>
-              <div className="sidebar-folder-actions">
-                <button
-                  type="button"
-                  className="sidebar-folder-action-btn"
-                  onClick={() => {
-                    setFoldersExpanded(false);
-                    setCollapsedCollections(true);
-                    setFolderViewKey((k) => k + 1);
-                  }}
-                  title={t("sidebar.collapseAllFolders")}
-                >
-                  {t("sidebar.collapseAll")}
-                </button>
-                <button
-                  type="button"
-                  className="sidebar-folder-action-btn"
-                  onClick={() => {
-                    setFoldersExpanded(true);
-                    setCollapsedCollectionIds(new Set());
-                    setCollapsedCollections(false);
-                    setFolderViewKey((k) => k + 1);
-                  }}
-                  title={t("sidebar.expandAllFolders")}
-                >
-                  {t("sidebar.expandAll")}
-                </button>
+                  <button
+                    type="button"
+                    className="sidebar-folder-action-btn"
+                    onClick={() => {
+                      setFoldersExpanded(true);
+                      setCollapsedCollectionIds(new Set());
+                      setCollapsedCollections(false);
+                      setFolderViewKey((k) => k + 1);
+                    }}
+                    title={t("sidebar.expandAllFolders")}
+                  >
+                    {t("sidebar.expandAll")}
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -558,6 +579,10 @@ export function SidebarPanel() {
                               }
                             }}
                             onAddRequestToCollection={(coll, folderPath?: NodePath) => handleAddRequestToCollection(coll, folderPath ?? [])}
+                            onDropInTree={() => {
+                              setDraggingCollId(null);
+                              setDragOverCollId(null);
+                            }}
                           />
                         )}
                       </div>
@@ -723,14 +748,39 @@ export function SidebarPanel() {
       </div>
 
       <section className="sidebar-section sidebar-footer" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
-        <button
-          type="button"
-          className="sidebar-about-btn"
-          onClick={() => setAboutModalOpen(true)}
-          title={t("sidebar.aboutButton")}
-        >
-          <span className="material-icons sidebar-about-btn-icon" aria-hidden>settings</span>
-        </button>
+        <div className="sidebar-footer-row">
+          <button
+            type="button"
+            className="sidebar-about-btn"
+            onClick={() => setAboutModalOpen(true)}
+            title={t("sidebar.aboutButton")}
+          >
+            <span className="material-icons sidebar-about-btn-icon" aria-hidden>settings</span>
+          </button>
+
+          {gitRepo && (
+            <div className="sidebar-footer-git-switch" role="group" aria-label={t("git.activeProfile")}>
+              <button
+                type="button"
+                className={`sidebar-footer-git-btn ${collectionsMode === "offline" ? "sidebar-footer-git-btn--active" : ""}`}
+                onClick={() => setCollectionsMode("offline")}
+                disabled={collectionsMode === "offline"}
+                title={t("git.profileLocalTitle")}
+              >
+                {t("git.profileLocal")}
+              </button>
+              <button
+                type="button"
+                className={`sidebar-footer-git-btn ${collectionsMode === "synced" ? "sidebar-footer-git-btn--active" : ""}`}
+                onClick={() => setCollectionsMode("synced")}
+                disabled={collectionsMode === "synced" || syncedCollections.length === 0}
+                title={syncedCollections.length === 0 ? t("git.profileGitTitleDisabled") : t("git.profileGitTitle")}
+              >
+                {t("git.profileGit")}
+              </button>
+            </div>
+          )}
+        </div>
       </section>
 
       {editingEnv && (
