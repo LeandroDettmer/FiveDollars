@@ -9,7 +9,7 @@ import {
   parseBackupPayloadToPersisted,
   type AppBackupListItem,
 } from "@/lib/appBackups";
-import { isTauri } from "@/lib/updater";
+import { getAppVersion, isTauri } from "@/lib/updater";
 import { ConfirmModal } from "./ConfirmModal";
 
 function formatBytes(n: number): string {
@@ -24,8 +24,16 @@ export function BackupsPanel() {
   const [items, setItems] = useState<AppBackupListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [restoreTarget, setRestoreTarget] = useState<string | null>(null);
+  const [currentAppVersion, setCurrentAppVersion] = useState<string | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<{
+    fileName: string;
+    appVersion?: string;
+  } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  useEffect(() => {
+    void getAppVersion().then(setCurrentAppVersion);
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -54,9 +62,10 @@ export function BackupsPanel() {
 
   const handleConfirmRestore = async () => {
     if (!restoreTarget) return;
+    const { fileName } = restoreTarget;
     setBusy(true);
     try {
-      const raw = await readAppBackup(restoreTarget);
+      const raw = await readAppBackup(fileName);
       const data = parseBackupPayloadToPersisted(raw);
       setStateFromPersisted(data);
       setRestoreTarget(null);
@@ -107,7 +116,11 @@ export function BackupsPanel() {
               <div className="backups-list-meta">
                 <span className="backups-list-name">{b.fileName}</span>
                 <span className="backups-list-sub">
-                  {new Date(b.modifiedUnix * 1000).toLocaleString()} · {formatBytes(b.sizeBytes)}
+                  {new Date(b.modifiedUnix * 1000).toLocaleString()}
+                  {b.appVersion ?
+                    ` · ${t("backups.listRowVersion", { version: b.appVersion })}`
+                  : ` · ${t("backups.versionNotRecorded")}`}{" "}
+                  · {formatBytes(b.sizeBytes)}
                 </span>
               </div>
               <div className="backups-list-actions">
@@ -115,7 +128,9 @@ export function BackupsPanel() {
                   type="button"
                   className="btn-secondary"
                   disabled={busy}
-                  onClick={() => setRestoreTarget(b.fileName)}
+                  onClick={() =>
+                    setRestoreTarget({ fileName: b.fileName, appVersion: b.appVersion })
+                  }
                 >
                   {t("backups.restore")}
                 </button>
@@ -135,12 +150,28 @@ export function BackupsPanel() {
       {restoreTarget && (
         <ConfirmModal
           title={t("backups.restoreTitle")}
-          message={t("backups.restoreMessage", { file: restoreTarget })}
+          message={t("backups.restoreMessage", { file: restoreTarget.fileName })}
           confirmLabel={t("backups.restore")}
           danger
           onConfirm={() => void handleConfirmRestore()}
           onClose={() => setRestoreTarget(null)}
-        />
+        >
+          {!restoreTarget.appVersion && (
+            <p className="backups-restore-version-warning" role="alert">
+              {t("backups.restoreVersionUnknown")}
+            </p>
+          )}
+          {restoreTarget.appVersion &&
+            currentAppVersion != null &&
+            restoreTarget.appVersion !== currentAppVersion && (
+              <p className="backups-restore-version-warning" role="alert">
+                {t("backups.restoreVersionMismatch", {
+                  backupVersion: restoreTarget.appVersion,
+                  currentVersion: currentAppVersion,
+                })}
+              </p>
+            )}
+        </ConfirmModal>
       )}
       {deleteTarget && (
         <ConfirmModal

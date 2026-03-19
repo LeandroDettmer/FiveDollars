@@ -3308,6 +3308,17 @@ body {
   color: var(--text-muted);
 }
 
+.backups-restore-version-warning {
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 6px;
+}
+
 .backups-list-actions {
   display: flex;
   flex-shrink: 0;

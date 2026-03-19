@@ -31,7 +31,7 @@ function parseWorkspace(raw: unknown): WorkspaceData | null {
   };
 }
 
-function parsePersistedData(raw: string | null): PersistedData {
+export function parsePersistedData(raw: string | null): PersistedData {
   const defaultData: PersistedData = { locale: "en" };
   if (!raw) return defaultData;
   try {

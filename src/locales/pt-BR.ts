@@ -231,6 +231,12 @@ export const ptBR: Record<TranslationKeys, string> = {
     "Isso substitui collections, ambientes, histórico e configurações relacionadas pelo conteúdo de “{file}”. Não dá para desfazer.",
   "backups.deleteTitle": "Apagar backup?",
   "backups.deleteMessage": "Apagar permanentemente “{file}”?",
+  "backups.listRowVersion": "app v{version}",
+  "backups.versionNotRecorded": "versão não registrada",
+  "backups.restoreVersionUnknown":
+    "Este backup não indica qual versão do app o gerou. Restaurar pode causar conflitos ou comportamento inesperado após atualizações.",
+  "backups.restoreVersionMismatch":
+    "Este backup foi feito na versão {backupVersion} do app; a versão atual é {currentVersion}. Restaurar dados de outra versão pode causar conflitos ou comportamento inesperado.",
 
   "updater.desktopOnly": "Atualização só está disponível na versão desktop.",
 

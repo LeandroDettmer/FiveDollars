@@ -164,7 +164,7 @@ pub fn run() {
             git_sync::git_checkout_branch,
             git_sync::read_git_collections,
             git_sync::write_git_collections,
-            git_sync::git_commit_collections
+            git_sync::git_commit_collections,
             list_app_backups,
             write_app_backup,
             read_app_backup,

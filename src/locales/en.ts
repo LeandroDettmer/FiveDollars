@@ -245,6 +245,12 @@ export const en = {
     "This replaces your current collections, environments, history and related settings with the contents of “{file}”. This cannot be undone.",
   "backups.deleteTitle": "Delete backup?",
   "backups.deleteMessage": "Permanently delete “{file}”?",
+  "backups.listRowVersion": "app v{version}",
+  "backups.versionNotRecorded": "version not recorded",
+  "backups.restoreVersionUnknown":
+    "This backup does not record which app version created it. Restoring may cause conflicts or unexpected behavior after updates.",
+  "backups.restoreVersionMismatch":
+    "This backup was created with app version {backupVersion}; the current version is {currentVersion}. Restoring data from another version may cause conflicts or unexpected behavior.",
 
   // Updater (used in lib)
   "updater.desktopOnly": "Updates are only available in the desktop version.",
