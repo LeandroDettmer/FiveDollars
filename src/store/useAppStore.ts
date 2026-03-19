@@ -145,6 +145,9 @@ interface AppState {
   gitSyncIncludeEnvironments: boolean;
   /** Lista de caminhos de raiz de repositórios conhecidos (para seletor repo/branch). */
   knownRepoPaths: string[];
+  /** Versão nova reportada pelo updater (desktop); null se não há atualização ou não verificado. Não persiste. */
+  availableUpdateVersion: string | null;
+  setAvailableUpdateVersion: (version: string | null) => void;
   getActiveWorkspace: () => WorkspaceData | null;
   addWorkspace: (name?: string) => WorkspaceData;
   removeWorkspace: (id: string) => void;
@@ -324,6 +327,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   syncedEnvironments: initialWorkspace.syncedEnvironments,
   gitSyncIncludeEnvironments: initialWorkspace.gitSyncIncludeEnvironments ?? false,
   knownRepoPaths: initialWorkspace.knownRepoPaths,
+  availableUpdateVersion: null,
+
+  setAvailableUpdateVersion: (version) => set({ availableUpdateVersion: version }),
 
   getActiveWorkspace: () => {
     const { workspaces, activeWorkspaceId } = get();

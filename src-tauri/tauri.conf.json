@@ -26,7 +26,9 @@
         "minWidth": 800,
         "minHeight": 600,
         "dragDropEnabled": false,
-        "center": true
+        "center": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {
@@ -55,8 +57,8 @@
     "android": {
       "minSdkVersion": 21
     },
-    "longDescription": "API Client | Desktop | Web open-source focado em performance e privacidade.",
-    "shortDescription": "API Client | Desktop | Web",
+    "longDescription": "API Client open-source focado em performance e privacidade.",
+    "shortDescription": "API Client",
     "category": "DeveloperTool"
   }
 }

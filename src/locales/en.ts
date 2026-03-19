@@ -5,7 +5,7 @@
 export const en = {
   // App
   "app.title": "FiveDollars",
-  "app.subtitle": "API Client | Desktop | Web",
+  "app.subtitle": "API Client",
 
   // About modal
   "about.title": "Settings",
@@ -57,6 +57,7 @@ export const en = {
   "sidebar.newEnvironment": "New environment",
   "sidebar.envHint": "Click + to create an environment. Use {{name}} in requests.",
   "sidebar.aboutButton": "About and export data",
+  "sidebar.updateAvailableHint": "Update available — v{version}",
   "sidebar.removeCollectionTitle": "Remove collection",
   "sidebar.removeCollectionMessage": "Are you sure you want to remove \"{name}\"? This cannot be undone.",
   "sidebar.clearSearch": "Clear search",

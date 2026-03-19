@@ -28,7 +28,7 @@ src/
 
 - **`main.tsx`** — Monta o `App` em `#root` com `React.StrictMode`.
 - **`App.tsx`** — Carrega dados persistidos na inicialização (`loadAppData` → `setStateFromPersisted`). Renderiza:
-  - Header fixo ("FiveDollars — API Client | Desktop | Web")
+  - Header fixo ("FiveDollars — API Client")
   - **ResizableSidebar** com **Sidebar** (collections, ambientes, histórico, sobre)
   - **TabBar** (abas de requisição e de runner)
   - Conteúdo da aba ativa:

@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { WorkspaceSelector } from "@/components/WorkspaceSelector";
+import { AboutModal } from "@/components/AboutModal";
 import { SidebarPanel } from "@/components/panel/SidebarPanel";
 import { ResizableSidebar } from "@/components/ResizableSidebar";
 import { RunnerPanel } from "@/components/panel/RunnerPanel";
@@ -11,6 +13,7 @@ import { useT } from "@/lib/i18n";
 import type { RunnerTab } from "@/types";
 import { Main } from "./components/Main";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
+import { isTauri, checkForUpdate } from "@/lib/updater";
 import { useZoom } from "@/lib/useZoom";
 import { useWindowState } from "@/lib/useWindowState";
 import "./App.css";
@@ -20,9 +23,33 @@ let hasLoadedPersistedThisSession = false;
 
 function App() {
   const { t } = useT();
-  const { setStateFromPersisted, tabs, activeTabId } = useAppStore();
+  const { setStateFromPersisted, tabs, activeTabId, setAvailableUpdateVersion, availableUpdateVersion } =
+    useAppStore();
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   useZoom();
   useWindowState();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("platform-tauri", "platform-macos", "platform-web");
+    if (isTauri()) {
+      root.classList.add("platform-tauri");
+      if (navigator.userAgent.includes("Mac")) {
+        root.classList.add("platform-macos");
+      }
+    } else {
+      root.classList.add("platform-web");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    void checkForUpdate().then((status) => {
+      if (status.status === "available" && status.version) {
+        setAvailableUpdateVersion(status.version);
+      }
+    });
+  }, [setAvailableUpdateVersion]);
 
   useEffect(() => {
     // Carrega do disco apenas uma vez por sessão para não sobrescrever o estado
@@ -42,7 +69,31 @@ function App() {
   return (
     <>
       <header className="app-header" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
-        {t("app.title")} <span>— {t("app.subtitle")}</span>
+        <div className="app-header-inner">
+          <div className="app-header-drag app-header-drag--lead" data-tauri-drag-region>
+            <span className="app-header-title">{t("app.title")}</span>
+            <span className="app-header-subtitle">— {t("app.subtitle")}</span>
+          </div>
+          <WorkspaceSelector variant="titlebar" />
+          <div className="app-header-drag app-header-drag--fill" data-tauri-drag-region aria-hidden="true" />
+          <div className="app-header-settings-wrap">
+            <button
+              type="button"
+              className={`app-header-settings-btn${availableUpdateVersion ? " app-header-settings-btn--update-pending" : ""}`}
+              onClick={() => setAboutModalOpen(true)}
+              title={
+                availableUpdateVersion
+                  ? t("sidebar.updateAvailableHint", { version: availableUpdateVersion })
+                  : t("sidebar.aboutButton")
+              }
+              aria-label={t("sidebar.aboutButton")}
+            >
+              <span className="material-icons app-header-settings-icon" aria-hidden>
+                settings
+              </span>
+            </button>
+          </div>
+        </div>
       </header>
       <div className="app-layout">
         <ResizableSidebar className="sidebar">
@@ -79,6 +130,8 @@ function App() {
           </div>
         </div>
       </div>
+
+      {aboutModalOpen && <AboutModal onClose={() => setAboutModalOpen(false)} />}
     </>
   );
 }

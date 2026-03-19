@@ -21,6 +21,8 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   const { t } = useT();
   const locale = useAppStore((s) => s.locale ?? "en");
   const setLocale = useAppStore((s) => s.setLocale);
+  const setAvailableUpdateVersion = useAppStore((s) => s.setAvailableUpdateVersion);
+  const availableUpdateVersion = useAppStore((s) => s.availableUpdateVersion);
   const [activeTab, setActiveTab] = useState<TabId>("author");
   const [version, setVersion] = useState(versionProp ?? "0.1.0");
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
@@ -40,7 +42,10 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
       const result = await checkForUpdate();
       setUpdateStatus(result);
       if (result.status === "available") {
+        if (result.version) setAvailableUpdateVersion(result.version);
         setConfirmModalOpen(true);
+      } else if (result.status === "none") {
+        setAvailableUpdateVersion(null);
       }
     } catch {
       setUpdateStatus({ status: "error", message: t("about.updateCheckFailed") });
@@ -106,7 +111,9 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
             {isTauri() && (
               <button
                 type="button"
-                className={`about-modal-tab ${activeTab === "updateTab" ? "about-modal-tab-active" : ""}`}
+                className={`about-modal-tab${activeTab === "updateTab" ? " about-modal-tab-active" : ""}${
+                  availableUpdateVersion ? " about-modal-tab--update-pending" : ""
+                }`}
                 onClick={() => setActiveTab("updateTab")}
               >
                 {t("about.tabUpdates")}

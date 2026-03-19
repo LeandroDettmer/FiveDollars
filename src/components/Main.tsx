@@ -4,30 +4,18 @@ import { useAppStore } from "@/store/useAppStore";
 import { useT } from "@/lib/i18n";
 import { Collection } from "@/types";
 import { generateId } from "@/lib/id";
-import { isTauri, checkForUpdate, getAppVersion } from "@/lib/updater";
+import { getAppVersion } from "@/lib/updater";
 import { useKeyDown } from "@/lib/useKeyDown";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 export function Main() {
   const { t } = useT();
   const [version, setVersion] = useState("");
-  const [newUpdateAvailable, setNewUpdateAvailable] = useState<string | null>(null);
+  const availableUpdateVersion = useAppStore((s) => s.availableUpdateVersion);
   const { addCollection, openNewTempRequest } = useAppStore();
 
   useEffect(() => {
     getAppVersion().then(setVersion);
-
-    if (isTauri()) {
-      checkForUpdate()
-        .then((updateStatus) => {
-          if (updateStatus?.status === "available") {
-            setNewUpdateAvailable(updateStatus?.version ?? "");
-          }
-        })
-        .catch(() => {
-          // Erro já convertido em UpdateStatus em updater.ts; fallback silencioso se algo escapar
-        });
-    }
   }, []);
 
   useKeyDown(["n"], (e) => {
@@ -71,12 +59,12 @@ export function Main() {
         <div>
           <img style={{ width: "12vh", borderRadius: "24px" }} src={cropAppIcon} alt="logo" />
           <p>{t("main.version")}: v{version}</p>
-          {newUpdateAvailable && newUpdateAvailable !== "" &&
+          {availableUpdateVersion && availableUpdateVersion !== "" && (
             <>
-              <p>{t("main.newVersionAvailable", { version: newUpdateAvailable })}</p>
+              <p>{t("main.newVersionAvailable", { version: availableUpdateVersion })}</p>
               <p>{t("main.goToSettingsUpdates")}</p>
             </>
-          }
+          )}
         </div>
         <div className="app-empty-actions">
           <button type="button" className="app-empty-action" onClick={() => {

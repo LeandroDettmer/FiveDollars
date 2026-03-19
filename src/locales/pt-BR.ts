@@ -6,7 +6,7 @@ import type { TranslationKeys } from "./en";
 
 export const ptBR: Record<TranslationKeys, string> = {
   "app.title": "FiveDollars",
-  "app.subtitle": "Cliente de API | Desktop | Web",
+  "app.subtitle": "Cliente de API",
 
   "about.title": "Configurações",
   "about.close": "Fechar",
@@ -55,6 +55,7 @@ export const ptBR: Record<TranslationKeys, string> = {
   "sidebar.newEnvironment": "Novo ambiente",
   "sidebar.envHint": "Clique em + para criar um ambiente. Use {{nome}} nas requisições.",
   "sidebar.aboutButton": "Sobre e exportar dados",
+  "sidebar.updateAvailableHint": "Atualização disponível — v{version}",
   "sidebar.removeCollectionTitle": "Remover collection",
   "sidebar.removeCollectionMessage": "Tem certeza que deseja remover \"{name}\"? Esta ação não pode ser desfeita.",
   "sidebar.clearSearch": "Limpar busca",

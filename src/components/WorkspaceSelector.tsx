@@ -6,7 +6,7 @@ import { ConfirmModal } from "./ConfirmModal";
 import type { WorkspaceData } from "@/types";
 import { noAutoTextProps } from "@/lib/utils";
 
-export function WorkspaceSelector() {
+export function WorkspaceSelector({ variant = "sidebar" }: { variant?: "sidebar" | "titlebar" }) {
   const { t } = useT();
   const workspaces = useAppStore((s) => s.workspaces);
   const activeWorkspaceId = useAppStore((s) => s.activeWorkspaceId);
@@ -61,12 +61,17 @@ export function WorkspaceSelector() {
     setToRemove(w);
   };
 
+  const isTitlebar = variant === "titlebar";
+
   return (
     <>
-      <div className="workspace-selector-wrap" ref={dropdownRef}>
+      <div
+        className={`workspace-selector-wrap${isTitlebar ? " workspace-selector-wrap--titlebar" : ""}`}
+        ref={dropdownRef}
+      >
         <button
           type="button"
-          className="workspace-selector-btn"
+          className={`workspace-selector-btn${isTitlebar ? " workspace-selector-btn--titlebar" : ""}`}
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-haspopup="listbox"

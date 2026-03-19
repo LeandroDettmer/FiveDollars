@@ -79,6 +79,14 @@ Methods: GET, POST, PUT, PATCH, DELETE. Support for headers, query params, path 
 
 ---
 
+
+### Common errors
+
+- *"FiveDollars is damaged"*  
+  Run in Terminal: `xattr -cr /Applications/FiveDollars.app`
+
+---
+
 # For developers
 
 ## Prerequisites
@@ -198,8 +206,3 @@ After running `npm run patch` (or `unpatch`), commit the changes before creating
 - **`App.css`** – dark theme (VS Code style), column layout
 
 ---
-
-### Common errors
-
-- *"FiveDollars is damaged"*  
-  Run in Terminal: `xattr -cr /Applications/FiveDollars.app`

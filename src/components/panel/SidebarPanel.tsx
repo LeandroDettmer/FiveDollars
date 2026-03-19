@@ -3,8 +3,6 @@ import { useAppStore } from "@/store/useAppStore";
 import { CollectionTree } from "../CollectionTree";
 import { EnvironmentEditor, ENV_COLORS } from "../EnvironmentEditor";
 import { ConfirmModal } from "../ConfirmModal";
-import { AboutModal } from "../AboutModal";
-import { WorkspaceSelector } from "../WorkspaceSelector";
 import { HttpMethodBadge } from "../HttpMethodBadge";
 import { importCollectionFromText } from "@/lib/importCollection";
 import { addRequestToNodes, addFolderToNodes, duplicateCollection } from "@/lib/collectionTreeUtils";
@@ -61,7 +59,6 @@ export function SidebarPanel() {
   const [collectionMenuOpenId, setCollectionMenuOpenId] = useState<string | null>(null);
   const [renamingCollectionId, setRenamingCollectionId] = useState<string | null>(null);
   const [renamingCollectionName, setRenamingCollectionName] = useState("");
-  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [pendingBackupImport, setPendingBackupImport] = useState<PersistedData | null>(null);
   const [backupImportOptions, setBackupImportOptions] = useState({ selectedWorkspace: false, collections: false, environments: false, git: false });
   const [selectedBackupWorkspaceId, setSelectedBackupWorkspaceId] = useState<string | null>(null);
@@ -360,7 +357,7 @@ export function SidebarPanel() {
         <section className="sidebar-section">
           {(
             <>
-              <div className="sidebar-actions-row">
+              <div className="sidebar-actions-row sidebar-actions-row--collections-only">
                 <div className="sidebar-collection-actions">
                   <button
                     type="button"
@@ -374,7 +371,6 @@ export function SidebarPanel() {
                     {t("sidebar.import")}
                   </button>
                 </div>
-                <WorkspaceSelector />
               </div>
               <div className="sidebar-search-wrap">
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -770,18 +766,9 @@ export function SidebarPanel() {
         </section>
       </div>
 
-      <section className="sidebar-section sidebar-footer" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
-        <div className="sidebar-footer-row">
-          <button
-            type="button"
-            className="sidebar-about-btn"
-            onClick={() => setAboutModalOpen(true)}
-            title={t("sidebar.aboutButton")}
-          >
-            <span className="material-icons sidebar-about-btn-icon" aria-hidden>settings</span>
-          </button>
-
-          {gitRepo && (
+      {gitRepo && (
+        <section className="sidebar-section sidebar-footer" onMouseDown={preventRightClickSelect} onContextMenu={preventContextMenu}>
+          <div className="sidebar-footer-row">
             <div className="sidebar-footer-git-switch" role="group" aria-label={t("git.activeProfile")}>
               <button
                 type="button"
@@ -802,9 +789,9 @@ export function SidebarPanel() {
                 {t("git.profileGit")}
               </button>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {editingEnv && (
         <EnvironmentEditor
@@ -823,10 +810,6 @@ export function SidebarPanel() {
           onConfirm={() => removeCollection(collectionToRemove.id)}
           onClose={() => setCollectionToRemove(null)}
         />
-      )}
-
-      {aboutModalOpen && (
-        <AboutModal onClose={() => setAboutModalOpen(false)} />
       )}
 
       {pendingBackupImport && (

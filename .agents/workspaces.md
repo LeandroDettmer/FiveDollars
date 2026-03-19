@@ -23,9 +23,10 @@ Cada **workspace** é um “perfil” completo: suas próprias collections, envi
 
 ## UI
 
-- **WorkspaceSelector** (`src/components/WorkspaceSelector.tsx`): botão com nome do workspace ativo no canto **superior direito** da sidebar. Dropdown: lista (clique = trocar), renomear (⋯ → Renomear), remover (⋯ → Remover workspace; só se houver mais de um), “+ Novo workspace”. Confirmação antes de remover.
-- **SidebarPanel** (`src/components/panel/SidebarPanel.tsx`): primeira linha é `sidebar-actions-row` — à esquerda “New collection” e “Import”, à direita `<WorkspaceSelector />`.
-- **Estilos:** em `App.css`: `.sidebar-actions-row`, `.workspace-selector-*`, `.workspace-dropdown-*`.
+- **Barra superior** (`App.tsx`): `WorkspaceSelector variant="titlebar"` ao lado do título do app; botão de **settings** abre `AboutModal`. No macOS (Tauri Overlay), alinhado à área da barra de título.
+- **WorkspaceSelector** (`src/components/WorkspaceSelector.tsx`): dropdown — trocar workspace, renomear (⋯), remover (confirmação), “+ Novo workspace”.
+- **SidebarPanel** (`src/components/panel/SidebarPanel.tsx`): `sidebar-actions-row` — “New collection” e “Import”. Rodapé da sidebar: toggle **Local / Git** só quando `gitRepo` existe.
+- **Estilos:** `App.css`: `.app-header-*`, `.workspace-selector-*`, `.workspace-dropdown-*`, `.sidebar-footer-git-*`.
 - **i18n:** chaves `sidebar.workspace`, `sidebar.newWorkspace`, `sidebar.removeWorkspace`, `sidebar.removeWorkspaceTitle`, `sidebar.removeWorkspaceMessage`, `sidebar.workspaceActive` (en + pt-BR).
 
 ## Git por workspace
