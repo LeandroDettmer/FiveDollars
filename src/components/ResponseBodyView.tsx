@@ -4,6 +4,7 @@ import { loadLanguage } from "@uiw/codemirror-extensions-langs";
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
 import { keymap } from "@codemirror/view";
 import { search, openSearchPanel, searchKeymap, closeSearchPanel } from "@codemirror/search";
+import { editorNoSmartTextAttrs } from "@/lib/codemirrorNoSmartText";
 import { useT } from "@/lib/i18n";
 import { useKeyDown } from "@/lib/useKeyDown";
 
@@ -58,8 +59,8 @@ export function ResponseBodyView({ content, isJson, className }: ResponseBodyVie
     if (isJson) {
       const jsonLang = loadLanguage("json");
       const list = jsonLang
-        ? [jsonLang, search({ top: true }), keymap.of([...searchKeymap])]
-        : [search({ top: true }), keymap.of([...searchKeymap])];
+        ? [editorNoSmartTextAttrs, jsonLang, search({ top: true }), keymap.of([...searchKeymap])]
+        : [editorNoSmartTextAttrs, search({ top: true }), keymap.of([...searchKeymap])];
       return list;
     }
     return [];

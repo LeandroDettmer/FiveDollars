@@ -5,6 +5,7 @@ import { vscodeDark } from "@uiw/codemirror-theme-vscode";
 import { linter, lintGutter } from "@codemirror/lint";
 import type { Extension } from "@codemirror/state";
 import { jsonLintSource } from "@/lib/jsonLint";
+import { editorNoSmartTextAttrs } from "@/lib/codemirrorNoSmartText";
 
 const DEFAULT_HEIGHT = 300;
 const MIN_HEIGHT = 120;
@@ -57,14 +58,14 @@ export function BodyEditor({ value, onChange, mode, placeholder, className, resi
   }, [dragging, onPointerMove, onPointerUp]);
 
   const extensions = useMemo((): Extension[] => {
+    const list: Extension[] = [editorNoSmartTextAttrs];
     if (mode === "json") {
       const jsonLang = loadLanguage("json");
-      const list: Extension[] = jsonLang ? [jsonLang] : [];
+      if (jsonLang) list.push(jsonLang);
       list.push(linter(jsonLintSource, { delay: 400 }));
       list.push(lintGutter());
-      return list;
     }
-    return [];
+    return list;
   }, [mode]);
 
   return (

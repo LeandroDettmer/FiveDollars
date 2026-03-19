@@ -7,6 +7,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { serializeWorkspaceForGit, parseWorkspaceFromGit } from "@/lib/gitWorkspace";
 import type { GitRepoInfo } from "@/types";
 import { ConfirmModal } from "./ConfirmModal";
+import { noAutoTextProps } from "@/lib/utils";
 
 type GitConfirmAction = "load" | "save" | "saveAndCommit";
 
@@ -414,6 +415,7 @@ export function GitTab({ isActive, version }: GitTabProps) {
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
             placeholder={t("git.commitMessagePlaceholder")}
+            {...noAutoTextProps}
             rows={3}
             style={{
               width: "100%",

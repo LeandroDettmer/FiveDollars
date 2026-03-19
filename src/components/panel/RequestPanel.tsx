@@ -14,7 +14,7 @@ import { VariableHighlightInput } from "@/components/VariableHighlightInput";
 import type { HttpMethod, RequestConfig, KeyValue } from "@/types";
 import { useKeyDown } from "@/lib/useKeyDown";
 import { useT, getDefaultNewRequestName, type Locale } from "@/lib/i18n";
-import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
+import { noAutoTextProps, preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 
 const METHODS: HttpMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
@@ -417,6 +417,7 @@ export function RequestPanel() {
                 <input
                   placeholder={t("common.key")}
                   value={req.queryParams.find((q) => q.id === row.id)?.key ?? ""}
+                  {...noAutoTextProps}
                   onChange={(e) => {
                     handleQueryParamChange(e, row, "key");
                   }}
@@ -425,6 +426,7 @@ export function RequestPanel() {
                 <input
                   placeholder={t("common.value")}
                   value={req.queryParams.find((q) => q.id === row.id)?.value ?? ""}
+                  {...noAutoTextProps}
                   onChange={(e) => {
                     handleQueryParamChange(e, row, "value");
                   }}
@@ -454,11 +456,13 @@ export function RequestPanel() {
                       <input
                         placeholder={t("common.name")}
                         value={row.key}
+                        {...noAutoTextProps}
                         onChange={(e) => updateRow("pathParams", row.id, { key: e.target.value })}
                       />
                       <input
                         placeholder={t("common.value")}
                         value={row.value}
+                        {...noAutoTextProps}
                         onChange={(e) => updateRow("pathParams", row.id, { value: e.target.value })}
                       />
                       <button type="button" onClick={() => removeRow("pathParams", row.id)}>−</button>
@@ -670,7 +674,7 @@ export function RequestPanel() {
                   value={req.preRequestScript ?? ""}
                   onChange={(e) => update({ preRequestScript: e.target.value })}
                   placeholder={t("request.scriptPrePlaceholder")}
-                  spellCheck={false}
+                  {...noAutoTextProps}
                   rows={6}
                 />
               </>
@@ -685,7 +689,7 @@ export function RequestPanel() {
                   value={req.postResponseScript ?? ""}
                   onChange={(e) => update({ postResponseScript: e.target.value })}
                   placeholder={t("request.scriptPostPlaceholder")}
-                  spellCheck={false}
+                  {...noAutoTextProps}
                   rows={6}
                 />
               </>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Environment } from "@/types";
 import { useAppStore } from "@/store/useAppStore";
 import { useT } from "@/lib/i18n";
+import { noAutoTextProps } from "@/lib/utils";
 
 /** Primeira opção = sem cor (""), depois paleta predefinida */
 const ENV_COLORS = [
@@ -144,7 +145,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="ex: _local"
-              autoCapitalize="off"
+              {...noAutoTextProps}
             />
           </div>
           <div className="env-editor-color">
@@ -247,6 +248,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
                         value={row.key}
                         onChange={(e) => updateVar(index, "key", e.target.value)}
                         placeholder="ex: baseUrl"
+                        {...noAutoTextProps}
                       />
                     </td>
                     <td>
@@ -255,6 +257,7 @@ export function EnvironmentEditor({ env, onClose }: EnvironmentEditorProps) {
                         value={row.value}
                         onChange={(e) => updateVar(index, "value", e.target.value)}
                         placeholder="valor"
+                        {...noAutoTextProps}
                       />
                     </td>
                     <td>

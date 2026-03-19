@@ -19,6 +19,7 @@ import {
 import { useAppStore } from "@/store/useAppStore";
 import { useT } from "@/lib/i18n";
 import { HttpMethodBadge } from "./HttpMethodBadge";
+import { noAutoTextProps } from "@/lib/utils";
 
 type TreeAction =
   | "new-folder"
@@ -167,6 +168,7 @@ function NodeItem({
                   if (e.key === "Escape") onRename(node.id, node.name);
                 }}
                 onClick={(e) => e.stopPropagation()}
+                {...noAutoTextProps}
                 autoFocus
               />
             ) : (
@@ -233,6 +235,7 @@ function NodeItem({
               if (e.key === "Escape") onRename(node.id, node.name);
             }}
             onClick={(e) => e.stopPropagation()}
+            {...noAutoTextProps}
             autoFocus
           />
         ) : (

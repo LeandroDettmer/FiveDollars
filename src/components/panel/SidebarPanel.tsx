@@ -13,7 +13,7 @@ import { generateId } from "@/lib/id";
 import { useT } from "@/lib/i18n";
 import type { Collection, Environment, RequestConfig } from "@/types";
 import type { PersistedData } from "@/types/persisted";
-import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
+import { noAutoTextProps, preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 import {
   type NodePath,
 } from "@/lib/collectionTreeUtils";
@@ -385,6 +385,7 @@ export function SidebarPanel() {
                     value={collectionSearch}
                     onChange={(e) => setCollectionSearch(e.target.value)}
                     aria-label={t("sidebar.searchAriaLabel")}
+                    {...noAutoTextProps}
                   >
                   </input>
                   {collectionSearch.length > 0 && (
@@ -521,6 +522,7 @@ export function SidebarPanel() {
                                   }
                                 }}
                                 onClick={(e) => e.stopPropagation()}
+                                {...noAutoTextProps}
                                 autoFocus
                               />
                             ) : (

@@ -1,5 +1,6 @@
 import { useRef, type ComponentPropsWithoutRef } from "react";
 import { parseVariableParts } from "@/components/VariablePreview";
+import { noAutoTextProps } from "@/lib/utils";
 
 interface VariableHighlightInputProps extends Omit<ComponentPropsWithoutRef<"input">, "value" | "onChange"> {
   value: string;
@@ -49,6 +50,7 @@ export function VariableHighlightInput({
         )}
         <input
           type="text"
+          {...noAutoTextProps}
           className={`variable-highlight-input__input ${hasVariables ? "variable-highlight-input__input--transparent" : ""} ${className}`.trim()}
           value={value}
           onChange={(e) => onChange(e.target.value)}

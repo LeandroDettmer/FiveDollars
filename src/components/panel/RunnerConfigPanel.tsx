@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { HttpMethodBadge } from "../HttpMethodBadge";
 import { useT } from "@/lib/i18n";
 import type { RequestConfig, RunnerConfigFormState } from "@/types";
+import { noAutoTextProps } from "@/lib/utils";
 
 /** Converte JSON do arquivo em array de objetos (variáveis por iteração). */
 function parseDataFile(text: string): Record<string, string>[] | null {
@@ -211,6 +212,7 @@ export function RunnerConfigPanel({
                 value={iterations}
                 onChange={(e) => setIterations(parseInt(e.target.value, 10) || 1)}
                 disabled={dataFileRows != null && dataFileRows.length > 0}
+                {...noAutoTextProps}
               />
             </label>
           </div>
@@ -222,6 +224,7 @@ export function RunnerConfigPanel({
                 min={0}
                 value={delayMs}
                 onChange={(e) => setDelayMs(parseInt(e.target.value, 10) || 0)}
+                {...noAutoTextProps}
               />
             </label>
           </div>

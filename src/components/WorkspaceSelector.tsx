@@ -4,6 +4,7 @@ import { useT } from "@/lib/i18n";
 import { useClickOutside } from "@/lib/useClickOutside";
 import { ConfirmModal } from "./ConfirmModal";
 import type { WorkspaceData } from "@/types";
+import { noAutoTextProps } from "@/lib/utils";
 
 export function WorkspaceSelector() {
   const { t } = useT();
@@ -93,6 +94,7 @@ export function WorkspaceSelector() {
                         setRenameValue("");
                       }
                     }}
+                    {...noAutoTextProps}
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                   />
