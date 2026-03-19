@@ -76,6 +76,9 @@ export function RequestPanel() {
   useEffect(() => {
     if (req.method === "GET" && requestTab !== "params") setRequestTab("params");
     if (req.method === "POST" && requestTab !== "body") setRequestTab("body");
+    if (req.method === "PUT" && requestTab !== "body") setRequestTab("body");
+    if (req.method === "PATCH" && requestTab !== "body") setRequestTab("body");
+    if (req.method === "DELETE" && requestTab !== "body") setRequestTab("body");
   }, [req.method]);
 
   useEffect(() => {
