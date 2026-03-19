@@ -165,6 +165,8 @@ export const en = {
   "export.postmanV21": "Export Postman v2.1",
   "export.modalMessage": "Select the data you want to export.",
   "export.backupDesc": "FiveDollars backup — collections, environments and history. Use for backup or to import later in the app.",
+  "export.includeEnvironments": "Include environments",
+  "export.includeEnvironmentsDesc": "Environments may contain sensitive data (tokens, passwords). Uncheck to exclude them from the backup.",
   "export.postmanDesc": "Postman v2.1 — exports the first collection in Postman format. Use in Postman or other tools.",
 
   // Save request modal
@@ -216,6 +218,14 @@ export const en = {
   "import.invalidYaml": "Invalid or empty YAML file.",
   "import.invalidJson": "Invalid JSON file.",
   "import.unknownFormat": "Unrecognized format. Use: (1) FiveDollars backup (file exported in Settings → Export data), (2) Postman (JSON) or (3) Insomnia (JSON/YAML).",
+  "import.backupTitle": "Import backup",
+  "import.backupMessage": "Keep current data and choose what to import from the backup:",
+  "import.backupOptionSelectedWorkspace": "Import selected workspace",
+  "import.backupOptionCollections": "Collections",
+  "import.backupOptionEnvironments": "Environments",
+  "import.backupOptionGit": "Git (repo, sync)",
+  "import.backupFromWorkspace": "From workspace:",
+  "import.backupImport": "Import",
 
   // Updater (used in lib)
   "updater.desktopOnly": "Updates are only available in the desktop version.",

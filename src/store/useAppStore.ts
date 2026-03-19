@@ -206,6 +206,14 @@ interface AppState {
   /** Remove um path da lista de repos conhecidos. */
   removeKnownRepo: (path: string) => void;
   clearTempsStates: () => void;
+  /** Retorna o payload que seria persistido (para export/backup). options.includeEnvironments=false omite environments (dados sensíveis). */
+  getPersistedSnapshot: (options?: { includeEnvironments?: boolean }) => PersistedData;
+  /** Aplica importação de backup de forma seletiva. sourceWorkspaceId: workspace do backup selecionado no dropdown; ao importar "workspace selecionado", só esse workspace é adicionado. */
+  applyBackupImport: (
+    options: { selectedWorkspace?: boolean; collections?: boolean; environments?: boolean; git?: boolean },
+    data: PersistedData,
+    sourceWorkspaceId?: string | null
+  ) => void;
 }
 
 const emptyTabCache = (): TabRequestCache => ({
@@ -768,6 +776,123 @@ export const useAppStore = create<AppState>((set, get) => ({
       sendingRequest: false,
     });
     persist(get());
+  },
+
+  getPersistedSnapshot: (options) => {
+    const state = get();
+    const activeId = state.activeWorkspaceId;
+    const snapshot = buildActiveWorkspaceSnapshot(state);
+    let nextWorkspaces = activeId
+      ? state.workspaces.map((w) => (w.id === activeId ? snapshot : w))
+      : state.workspaces;
+    const includeEnvironments = options?.includeEnvironments !== false;
+    if (!includeEnvironments) {
+      nextWorkspaces = nextWorkspaces.map((w) => ({
+        ...w,
+        environments: [],
+        currentEnvId: null,
+      }));
+    }
+    return {
+      workspaces: nextWorkspaces,
+      activeWorkspaceId: state.activeWorkspaceId,
+      locale: (state.locale ?? "en") as Locale,
+    };
+  },
+
+  applyBackupImport: (options, data, sourceWorkspaceId) => {
+    const hasWorkspaces = data.workspaces?.length;
+    const backupActive = hasWorkspaces
+      ? (data.workspaces!.find((w) => w.id === data.activeWorkspaceId) ?? data.workspaces![0])
+      : null;
+    const backupSource =
+      hasWorkspaces && sourceWorkspaceId != null
+        ? (data.workspaces!.find((w) => w.id === sourceWorkspaceId) ?? backupActive)
+        : backupActive;
+    const backupCollections = backupSource?.collections ?? (Array.isArray(data.collections) ? data.collections : []);
+    const backupEnvironments = backupSource?.environments ?? (Array.isArray(data.environments) ? data.environments : []);
+    const backupCurrentEnvId = backupSource?.currentEnvId ?? (typeof data.currentEnvId === "string" ? data.currentEnvId : null);
+    const backupGitRepo = backupSource?.gitRepo ?? data.gitRepo ?? null;
+    const backupGitSyncStatus = backupSource?.gitSyncStatus ?? data.gitSyncStatus ?? null;
+    const backupKnownRepoPaths = backupSource?.knownRepoPaths ?? (Array.isArray(data.knownRepoPaths) ? data.knownRepoPaths : []);
+
+    if (options.selectedWorkspace && hasWorkspaces) {
+      const single =
+        sourceWorkspaceId != null
+          ? (data.workspaces!.find((w) => w.id === sourceWorkspaceId) ?? data.workspaces![0])
+          : data.workspaces![0];
+      const newId = generateId();
+      const newWorkspace: WorkspaceData = { ...single, id: newId };
+      const s = get();
+      set({
+        workspaces: [...s.workspaces, newWorkspace],
+        activeWorkspaceId: newId,
+      });
+      applyWorkspaceToFlatState(get(), newWorkspace, set);
+      set({
+        tabs: [],
+        activeTabId: null,
+        currentRequest: null,
+        lastResponse: null,
+        scriptLogs: [],
+        selectedHistoryEntryId: null,
+        tempRequests: {},
+      });
+    }
+    if (options.collections) {
+      const s = get();
+      const activeId = s.activeWorkspaceId;
+      if (activeId == null) return;
+      const nextWorkspaces = s.workspaces.map((w) =>
+        w.id === activeId
+          ? {
+              ...w,
+              collections: backupCollections,
+              offlineCollections: s.collectionsMode === "offline" ? backupCollections : w.offlineCollections,
+              syncedCollections: s.collectionsMode === "synced" ? backupCollections : w.syncedCollections,
+            }
+          : w
+      );
+      set({ workspaces: nextWorkspaces, collections: backupCollections });
+      if (get().collectionsMode === "synced") set({ syncedCollections: backupCollections });
+      else set({ offlineCollections: backupCollections });
+    }
+    if (options.environments) {
+      const s = get();
+      const activeId = s.activeWorkspaceId;
+      if (activeId == null) return;
+      const currentEnv = backupEnvironments.find((e) => e.id === backupCurrentEnvId) ?? backupEnvironments[0] ?? null;
+      const nextWorkspaces = s.workspaces.map((w) =>
+        w.id === activeId ? { ...w, environments: backupEnvironments, currentEnvId: backupCurrentEnvId } : w
+      );
+      set({
+        workspaces: nextWorkspaces,
+        environments: backupEnvironments,
+        currentEnv: currentEnv,
+      });
+    }
+    if (options.git && (backupGitRepo != null || backupGitSyncStatus != null || backupKnownRepoPaths.length > 0)) {
+      const s = get();
+      const activeId = s.activeWorkspaceId;
+      if (activeId == null) return;
+      const nextWorkspaces = s.workspaces.map((w) =>
+        w.id === activeId
+          ? {
+              ...w,
+              gitRepo: backupGitRepo,
+              gitSyncStatus: backupGitSyncStatus,
+              knownRepoPaths: backupKnownRepoPaths,
+            }
+          : w
+      );
+      set({
+        workspaces: nextWorkspaces,
+        gitRepo: backupGitRepo,
+        gitSyncStatus: backupGitSyncStatus,
+        knownRepoPaths: backupKnownRepoPaths,
+      });
+    }
+    if (options.selectedWorkspace || options.collections || options.environments || options.git) persist(get());
   },
 
   setCollectionsMode: (mode) => {

@@ -12,6 +12,7 @@ import { useClickOutside } from "@/lib/useClickOutside";
 import { generateId } from "@/lib/id";
 import { useT } from "@/lib/i18n";
 import type { Collection, Environment, RequestConfig } from "@/types";
+import type { PersistedData } from "@/types/persisted";
 import { preventRightClickSelect, preventContextMenu } from "@/lib/utils";
 import {
   type NodePath,
@@ -36,7 +37,7 @@ export function SidebarPanel() {
     clearHistory,
     setSelectedHistoryEntryId,
     selectedHistoryEntryId,
-    setStateFromPersisted,
+    applyBackupImport,
     setLastResponse,
     getCollectionForRequest,
     setTempRequest,
@@ -61,6 +62,9 @@ export function SidebarPanel() {
   const [renamingCollectionId, setRenamingCollectionId] = useState<string | null>(null);
   const [renamingCollectionName, setRenamingCollectionName] = useState("");
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [pendingBackupImport, setPendingBackupImport] = useState<PersistedData | null>(null);
+  const [backupImportOptions, setBackupImportOptions] = useState({ selectedWorkspace: false, collections: false, environments: false, git: false });
+  const [selectedBackupWorkspaceId, setSelectedBackupWorkspaceId] = useState<string | null>(null);
   const collectionMenuRef = useRef<HTMLDivElement>(null);
   const hasInitializedCollectionsRef = useRef(false);
   useClickOutside(collectionMenuRef, () => {
@@ -303,7 +307,10 @@ export function SidebarPanel() {
         const text = String(reader.result ?? "");
         const result = importCollectionFromText(text, file.name);
         if (result.type === "backup") {
-          setStateFromPersisted(result.data);
+          setPendingBackupImport(result.data);
+          setBackupImportOptions({ selectedWorkspace: false, collections: false, environments: false, git: false });
+          const firstId = result.data.workspaces?.[0]?.id ?? null;
+          setSelectedBackupWorkspaceId(firstId);
         } else {
           addCollection(result.collection);
         }
@@ -312,6 +319,20 @@ export function SidebarPanel() {
       }
     };
     reader.readAsText(file, "utf-8");
+  };
+
+  const handleBackupImportConfirm = () => {
+    if (!pendingBackupImport) return;
+    const opts = {
+      selectedWorkspace: backupImportOptions.selectedWorkspace,
+      collections: backupImportOptions.collections,
+      environments: backupImportOptions.environments,
+      git: backupImportOptions.git,
+    };
+    if (opts.selectedWorkspace || opts.collections || opts.environments || opts.git) {
+      applyBackupImport(opts, pendingBackupImport, selectedBackupWorkspaceId);
+    }
+    setPendingBackupImport(null);
   };
 
   const handleAddEnvironment = () => {
@@ -804,6 +825,72 @@ export function SidebarPanel() {
 
       {aboutModalOpen && (
         <AboutModal onClose={() => setAboutModalOpen(false)} />
+      )}
+
+      {pendingBackupImport && (
+        <ConfirmModal
+          title={t("import.backupTitle")}
+          message={t("import.backupMessage")}
+          confirmLabel={t("import.backupImport")}
+          cancelLabel={t("common.cancel")}
+          confirmDisabled={!backupImportOptions.selectedWorkspace && !backupImportOptions.collections && !backupImportOptions.environments && !backupImportOptions.git}
+          onConfirm={handleBackupImportConfirm}
+          onClose={() => setPendingBackupImport(null)}
+        >
+          <div className="import-backup-options">
+            {pendingBackupImport.workspaces && pendingBackupImport.workspaces.length > 0 && (
+              <div className="import-backup-workspace-select">
+                <label htmlFor="import-backup-workspace">{t("import.backupFromWorkspace")}</label>
+                <select
+                  id="import-backup-workspace"
+                  className="import-backup-select"
+                  value={selectedBackupWorkspaceId ?? pendingBackupImport.workspaces[0]?.id ?? ""}
+                  onChange={(e) => setSelectedBackupWorkspaceId(e.target.value || null)}
+                >
+                  {pendingBackupImport.workspaces.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {pendingBackupImport.workspaces && pendingBackupImport.workspaces.length > 0 && (
+              <label className="import-backup-option">
+                <input
+                  type="checkbox"
+                  checked={backupImportOptions.selectedWorkspace}
+                  onChange={(e) => setBackupImportOptions((o) => ({ ...o, selectedWorkspace: e.target.checked }))}
+                />
+                <span>{t("import.backupOptionSelectedWorkspace")}</span>
+              </label>
+            )}
+            <label className="import-backup-option">
+              <input
+                type="checkbox"
+                checked={backupImportOptions.collections}
+                onChange={(e) => setBackupImportOptions((o) => ({ ...o, collections: e.target.checked }))}
+              />
+              <span>{t("import.backupOptionCollections")}</span>
+            </label>
+            <label className="import-backup-option">
+              <input
+                type="checkbox"
+                checked={backupImportOptions.environments}
+                onChange={(e) => setBackupImportOptions((o) => ({ ...o, environments: e.target.checked }))}
+              />
+              <span>{t("import.backupOptionEnvironments")}</span>
+            </label>
+            <label className="import-backup-option">
+              <input
+                type="checkbox"
+                checked={backupImportOptions.git}
+                onChange={(e) => setBackupImportOptions((o) => ({ ...o, git: e.target.checked }))}
+              />
+              <span>{t("import.backupOptionGit")}</span>
+            </label>
+          </div>
+        </ConfirmModal>
       )}
     </>
   );

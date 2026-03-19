@@ -157,6 +157,8 @@ export const ptBR: Record<TranslationKeys, string> = {
   "export.postmanV21": "Exportar Postman v2.1",
   "export.modalMessage": "Selecione os dados que você deseja exportar.",
   "export.backupDesc": "Backup FiveDollars — collections, ambientes e histórico. Use para backup ou para importar depois no app.",
+  "export.includeEnvironments": "Incluir environments",
+  "export.includeEnvironmentsDesc": "Ambientes podem conter dados sensíveis (tokens, senhas). Desmarque para não exportá-los.",
   "export.postmanDesc": "Postman v2.1 — exporta a primeira collection em formato Postman. Use no Postman ou em outras ferramentas.",
 
   "saveRequest.title": "Salvar requisição",
@@ -203,6 +205,14 @@ export const ptBR: Record<TranslationKeys, string> = {
   "import.invalidYaml": "Arquivo YAML inválido ou vazio.",
   "import.invalidJson": "Arquivo JSON inválido.",
   "import.unknownFormat": "Formato não reconhecido. Use: (1) Backup FiveDollars (arquivo exportado em Configurações → Exportar dados), (2) Postman (JSON) ou (3) Insomnia (JSON/YAML).",
+  "import.backupTitle": "Importar backup",
+  "import.backupMessage": "Manter dados atuais e escolher o que importar do backup:",
+  "import.backupOptionSelectedWorkspace": "Importar workspace selecionado",
+  "import.backupOptionCollections": "Collections",
+  "import.backupOptionEnvironments": "Environments",
+  "import.backupOptionGit": "Git (repo, sync)",
+  "import.backupFromWorkspace": "Do workspace:",
+  "import.backupImport": "Importar",
 
   "updater.desktopOnly": "Atualização só está disponível na versão desktop.",
 

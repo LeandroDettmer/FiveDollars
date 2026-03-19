@@ -3172,6 +3172,47 @@ body {
   margin: 0;
 }
 
+.import-backup-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.import-backup-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.import-backup-option input {
+  margin: 0;
+}
+
+.import-backup-workspace-select {
+  margin-bottom: 12px;
+}
+
+.import-backup-workspace-select label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.import-backup-select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: var(--bg-tertiary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
 .about-export-panel {
   display: flex;
   flex-direction: column;
@@ -3207,6 +3248,27 @@ body {
 
 .about-export-option-desc strong {
   color: var(--text);
+}
+
+.about-export-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  margin: 8px 0 4px 0;
+}
+
+.about-export-checkbox input {
+  margin: 0;
+}
+
+.about-export-option-hint {
+  margin: 0 0 10px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .modal-content.runner-modal {

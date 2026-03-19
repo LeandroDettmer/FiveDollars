@@ -30,7 +30,9 @@ function isInsomniaDoc(obj: unknown): obj is InsomniaCollectionDoc {
 /** Backup exportado pelo FiveDollars (Sobre → Exportar dados). */
 function isFiveDollarsBackup(obj: unknown): obj is PersistedData & { _exportVersion?: number } {
   const o = obj as Record<string, unknown>;
-
+  if (o?._exportVersion === 3 || (Array.isArray(o?.workspaces) && o.workspaces.length > 0)) {
+    return true;
+  }
   if (o?._exportVersion === 1) {
     return (
       Array.isArray(o?.collections) &&
@@ -39,8 +41,6 @@ function isFiveDollarsBackup(obj: unknown): obj is PersistedData & { _exportVers
       Array.isArray(o?.history)
     );
   }
-
-  //actually version 2
   return (
     Array.isArray(o?.collections) ||
     Array.isArray(o?.environments) ||
@@ -80,10 +80,16 @@ export function importCollectionFromText(text: string, filename: string): Import
 
   if (isFiveDollarsBackup(obj)) {
     const data: PersistedData = {
-      collections: obj.collections,
-      environments: obj.environments,
-      currentEnvId: obj.currentEnvId,
-      history: obj.history,
+      ...(Array.isArray(obj.workspaces) && { workspaces: obj.workspaces }),
+      ...(obj.activeWorkspaceId != null && { activeWorkspaceId: obj.activeWorkspaceId }),
+      ...(typeof obj.locale === "string" && { locale: obj.locale }),
+      ...(Array.isArray(obj.collections) && { collections: obj.collections }),
+      ...(Array.isArray(obj.environments) && { environments: obj.environments }),
+      ...(obj.currentEnvId != null && { currentEnvId: obj.currentEnvId }),
+      ...(Array.isArray(obj.history) && { history: obj.history }),
+      ...(obj.gitRepo != null && { gitRepo: obj.gitRepo as PersistedData["gitRepo"] }),
+      ...(obj.gitSyncStatus != null && { gitSyncStatus: obj.gitSyncStatus as PersistedData["gitSyncStatus"] }),
+      ...(Array.isArray(obj.knownRepoPaths) && { knownRepoPaths: obj.knownRepoPaths as string[] }),
     };
     return { type: "backup", data, format: "fivedollars-backup" };
   }
