@@ -33,10 +33,15 @@ Todos são invocados pelo frontend com `invoke("nome_do_comando", { ... })`.
 | **load_app_data** | — | `Result<String, String>` | Lê o arquivo de dados do app (`data.json` no diretório `app_data_dir`). Retorna `"{}"` se o arquivo não existir. |
 | **save_app_data** | `payload: String` (JSON) | `Result<(), String>` | Cria o diretório de dados se necessário e grava `payload` em `data.json`. |
 | **write_backup_file** | `path: String`, `payload: String` | `Result<(), String>` | Grava `payload` no arquivo em `path` (caminho escolhido pelo usuário no diálogo "Salvar como"). Cria diretórios pais se necessário. |
+| **list_app_backups** | — | `Result<Vec<AppBackupEntry>, String>` | Lista arquivos `.json` em `app_data_dir/backups/` (nome seguro apenas), ordenados por data de modificação (mais recente primeiro). |
+| **write_app_backup** | `fileName: String`, `payload: String` | `Result<(), String>` | Grava backup interno em `backups/<fileName>` após validar o nome (apenas `[a-zA-Z0-9._-]+.json`, sem path). |
+| **read_app_backup** | `fileName: String` | `Result<String, String>` | Lê o conteúdo textual do backup interno. |
+| **delete_app_backup** | `fileName: String` | `Result<(), String>` | Remove o arquivo de backup interno, se existir. |
 
 ### Caminho dos dados
 
 - **data_path(app)** — Retorna `app.path().app_data_dir().join("data.json")`. O `app_data_dir` é o diretório de dados do aplicativo no SO (ex.: macOS: `~/Library/Application Support/com.fivedollars.app`).
+- **backups_dir_path(app)** — `app_data_dir.join("backups")`. Backups automáticos e manuais do app ficam aqui, **fora** de `data.json`, para não serem apagados por importações (que só regravam `data.json`).
 
 ## Plugins
 
@@ -84,7 +89,8 @@ Apenas chama `tauri_build::build()`, que processa a configuração Tauri e gera 
 - **tauri-plugin-updater** 2
 - **tauri-plugin-process** 2
 - **tauri-build** 2 (build-dependency)
-- **serde_json** 1 (pode ser usada em extensões futuras)
+- **serde** 1 (derive) — serialização dos retornos dos comandos (ex.: lista de backups).
+- **serde_json** 1
 
 ## Mobile
 
@@ -95,7 +101,8 @@ Apenas chama `tauri_build::build()`, que processa a configuração Tauri e gera 
 1. **Inicialização:** frontend chama `load_app_data` → backend lê `data.json` do `app_data_dir` → retorna JSON string → frontend restaura estado (collections, environments, history).
 2. **Salvar:** frontend chama `save_app_data` com JSON → backend grava em `data.json`.
 3. **Backup/Export:** usuário escolhe caminho no diálogo (plugin dialog) → frontend chama `write_backup_file(path, payload)` → backend grava o arquivo.
-4. **HTTP:** frontend usa `@tauri-apps/plugin-http` no ambiente Tauri; as requisições são feitas pelo processo nativo (sem CORS).
+4. **Backups internos (Configurações → Backups):** frontend chama `list_app_backups`, `write_app_backup`, `read_app_backup`, `delete_app_backup` → arquivos em `app_data_dir/backups/`. Um backup automático por dia é disparado após carregar os dados na abertura do app.
+5. **HTTP:** frontend usa `@tauri-apps/plugin-http` no ambiente Tauri; as requisições são feitas pelo processo nativo (sem CORS).
 
 ## Documentação relacionada
 
