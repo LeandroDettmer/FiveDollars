@@ -20,6 +20,7 @@ export const en = {
   "about.restarting": "Restarting…",
   "about.newVersionAvailable": "New version {version} available.",
   "about.upToDate": "You are on the latest version.",
+  "about.updateCheckFailed": "Could not check for updates.",
   "about.updateAvailableTitle": "Update available",
   "about.updateAvailableMessage": "Version {version} is available. Install now?",
   "about.languageTitle": "Language",

@@ -20,6 +20,7 @@ export const ptBR: Record<TranslationKeys, string> = {
   "about.restarting": "Reiniciando…",
   "about.newVersionAvailable": "Nova versão {version} disponível.",
   "about.upToDate": "Você está na versão mais recente.",
+  "about.updateCheckFailed": "Não foi possível verificar atualizações.",
   "about.updateAvailableTitle": "Atualização disponível",
   "about.updateAvailableMessage": "A versão {version} está disponível. Deseja instalar agora?",
   "about.languageTitle": "Idioma",

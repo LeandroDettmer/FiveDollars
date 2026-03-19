@@ -34,14 +34,16 @@ export function AboutModal({ onClose, version: versionProp }: AboutModalProps) {
   }, [versionProp]);
 
   const handleCheckUpdate = async () => {
-    setUpdateStatus({ status: "idle" });
-    const updateStatus = await checkForUpdate();
-    if (updateStatus.status === "available") {
-      setUpdateStatus(updateStatus);
-      setConfirmModalOpen(true);
-    } else if (updateStatus.status === "none") {
-      setUpdateStatus(updateStatus);
-    };
+    setUpdateStatus({ status: "checking" });
+    try {
+      const result = await checkForUpdate();
+      setUpdateStatus(result);
+      if (result.status === "available") {
+        setConfirmModalOpen(true);
+      }
+    } catch {
+      setUpdateStatus({ status: "error", message: t("about.updateCheckFailed") });
+    }
   };
 
   useKeyDown("Escape", onClose);

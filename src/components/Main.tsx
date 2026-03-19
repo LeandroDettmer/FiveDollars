@@ -18,11 +18,15 @@ export function Main() {
     getAppVersion().then(setVersion);
 
     if (isTauri()) {
-      checkForUpdate().then((updateStatus) => {
-        if (updateStatus?.status === "available") {
-          setNewUpdateAvailable(updateStatus?.version ?? "");
-        }
-      });
+      checkForUpdate()
+        .then((updateStatus) => {
+          if (updateStatus?.status === "available") {
+            setNewUpdateAvailable(updateStatus?.version ?? "");
+          }
+        })
+        .catch(() => {
+          // Erro já convertido em UpdateStatus em updater.ts; fallback silencioso se algo escapar
+        });
     }
   }, []);
 

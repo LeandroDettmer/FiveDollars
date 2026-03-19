@@ -35,15 +35,19 @@ export async function checkForUpdate(): Promise<UpdateStatus> {
     const locale = (useAppStore.getState().locale ?? "en") as Locale;
     return { status: "error", message: getMessage(locale, "updater.desktopOnly") };
   }
-  const { check } = await import("@tauri-apps/plugin-updater");
-  const update = await check();
-
-  return {
-    status: update ? "available" : "none",
-    version: update ? update.version : "",
-    body: update ? update.body : undefined,
-    date: update ? update.date : undefined,
-  };
+  try {
+    const { check } = await import("@tauri-apps/plugin-updater");
+    const update = await check();
+    return {
+      status: update ? "available" : "none",
+      version: update ? update.version : "",
+      body: update ? update.body : undefined,
+      date: update ? update.date : undefined,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { status: "error", message };
+  }
 }
 
 export async function checkAndInstallUpdate(
