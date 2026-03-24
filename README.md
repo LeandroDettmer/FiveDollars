@@ -1,8 +1,11 @@
 # FiveDollars API Client
 
 **API Client** for Desktop and Web — an alternative to Postman/Insomnia. HTTP request client built with **React** and **Tauri**. Requests are sent via Tauri's HTTP plugin in the native process, avoiding browser CORS.
+---
+
 [![Downloads (GitHub Releases)](https://img.shields.io/github/downloads/LeandroDettmer/FiveDollars/total)](https://github.com/LeandroDettmer/FiveDollars/releases)
 
+---
 ![FiveDollars interface - Collections, Environments, request and response](docs/images/overview.png)
 
 ---
