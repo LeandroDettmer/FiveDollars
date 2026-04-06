@@ -2,90 +2,13 @@
 
 **FiveDollars** is a desktop and web HTTP API client—an alternative to Postman/Insomnia—built with **React** and **Tauri**. Outgoing requests use Tauri’s HTTP plugin in the native process, so **browser CORS does not apply** to the desktop app the way it would in a pure web client.
 
-**Releases:** [github.com/LeandroDettmer/FiveDollars/releases](https://github.com/LeandroDettmer/FiveDollars/releases)
-
 ---
 
-## Download / installation
+## Download
 
-All download URLs below use **`VERSION` = latest GitHub release** (not a pinned tag). Set it once per shell session:
+**[Open Releases →](https://github.com/LeandroDettmer/FiveDollars/releases)** — pick the latest release, scroll to **Assets**, and download the file for your OS (for example `.dmg` or `.app.tar.gz` on macOS, `.AppImage` / `.deb` on Linux, installer or archive on Windows).
 
-```bash
-# GitHub CLI (recommended) — latest release
-export VERSION="$(gh release view --repo LeandroDettmer/FiveDollars --json tagName -q .tagName)"
-
-# Or: GitHub API + jq (same result: latest tag)
-# export VERSION="$(curl -s https://api.github.com/repos/LeandroDettmer/FiveDollars/releases/latest | jq -r .tag_name)"
-```
-
-To list asset filenames for **that** latest release:
-
-- **GitHub CLI:** `gh release view --repo LeandroDettmer/FiveDollars --json assets -q '.assets[].name'`
-- **Browser:** [Releases](https://github.com/LeandroDettmer/FiveDollars/releases) → open the top release → **Assets**.
-
-Use the exact **ASSET_NAME** from that list in the download URL pattern:
-
-`https://github.com/LeandroDettmer/FiveDollars/releases/download/VERSION/ASSET_NAME`
-
-> **Note:** A given release may only ship some platforms (for example **macOS** often includes `FiveDollars-macos.dmg` and `FiveDollars.app.tar.gz`). Always confirm **Assets** on the release you use before scripting downloads.
-
-### macOS
-
-After exporting `VERSION` at the top of this section:
-
-**Option A — DMG (typical install)**
-
-```bash
-curl -fL -o FiveDollars-macos.dmg \
-  "https://github.com/LeandroDettmer/FiveDollars/releases/download/${VERSION}/FiveDollars-macos.dmg"
-open FiveDollars-macos.dmg
-```
-
-Drag **FiveDollars** into **Applications** (or follow the installer UI).
-
-**Option B — `.app` archive**
-
-```bash
-curl -fL -o FiveDollars.app.tar.gz \
-  "https://github.com/LeandroDettmer/FiveDollars/releases/download/${VERSION}/FiveDollars.app.tar.gz"
-tar -xzf FiveDollars.app.tar.gz
-# Move FiveDollars.app to /Applications if you want a normal install path
-```
-
-**Gatekeeper / “app is damaged”:** if macOS blocks or shows *“FiveDollars is damaged”*, clear quarantine attributes (after copying the app to `/Applications`):
-
-```bash
-xattr -cr /Applications/FiveDollars.app
-```
-
-### Linux
-
-Releases may ship Linux packages under different names over time (for example `.AppImage`, `.deb`, or archives). **Do not guess the filename**—list assets (see above), set `ASSET_NAME`, export `VERSION` as in the first block, then:
-
-```bash
-curl -fL -o "$ASSET_NAME" \
-  "https://github.com/LeandroDettmer/FiveDollars/releases/download/${VERSION}/${ASSET_NAME}"
-```
-
-Install or run according to the asset type (e.g. `chmod +x` for AppImage, `sudo dpkg -i` for `.deb`).
-
-### Windows
-
-If a `.msi`, `.exe`, or portable archive is published, download with PowerShell (always **latest** release; set `ASSET_NAME` from the release assets list):
-
-```powershell
-$VERSION = (Invoke-RestMethod https://api.github.com/repos/LeandroDettmer/FiveDollars/releases/latest).tag_name
-$ASSET_NAME = "REPLACE_WITH_ASSET_FROM_RELEASES_PAGE"
-Invoke-WebRequest -Uri "https://github.com/LeandroDettmer/FiveDollars/releases/download/$VERSION/$ASSET_NAME" -OutFile $ASSET_NAME
-```
-
-Or use **curl.exe** (Windows 10+), resolving latest via PowerShell:
-
-```bat
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "(Invoke-RestMethod https://api.github.com/repos/LeandroDettmer/FiveDollars/releases/latest).tag_name"`) do set VERSION=%%V
-set ASSET_NAME=REPLACE_WITH_ASSET_FROM_RELEASES_PAGE
-curl.exe -fL -o %ASSET_NAME% "https://github.com/LeandroDettmer/FiveDollars/releases/download/%VERSION%/%ASSET_NAME%"
-```
+Install or unpack as usual for that file type. If macOS says the app is damaged or blocked, see **Troubleshooting** below.
 
 ---
 
@@ -147,7 +70,7 @@ Useful for tokens, timestamps, parsing JSON, and chaining variables across reque
 | Issue | What to try |
 |--------|--------------|
 | **“FiveDollars is damaged”** (macOS) | `xattr -cr /Applications/FiveDollars.app` (path may differ if the app lives elsewhere). |
-| **404 on download URL** | Stale `VERSION`, typo in `ASSET_NAME`, or asset removed; re-resolve latest (`gh release view` / `releases/latest` API) and match **Assets** on the [releases](https://github.com/LeandroDettmer/FiveDollars/releases) page. |
+| **Download link fails** | Use the **Assets** on the [latest release](https://github.com/LeandroDettmer/FiveDollars/releases) page; filenames can change between releases. |
 | **CORS** | In the **desktop** app, requests go through Tauri’s native HTTP layer, not the browser’s fetch to arbitrary origins—typical browser CORS restrictions do not apply the same way. (Web build behavior depends on how you host and call APIs.) |
 
 ---
