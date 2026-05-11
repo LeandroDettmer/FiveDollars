@@ -1,4 +1,4 @@
-# FiveDollars
+# FiveDollars API Client
 
 **FiveDollars** is a free, open-source HTTP API client for desktop and web — a fast, lightweight alternative to Postman and Insomnia. Built with **React** and **Tauri**, requests in the desktop app go through Tauri's native HTTP layer, so **browser CORS restrictions don't apply** the way they would in a pure web client.
 
