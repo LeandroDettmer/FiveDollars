@@ -6,6 +6,14 @@
 
 ---
 
+## Try it now
+
+**Web demo:** [app.fivedollars.dev →](https://app.fivedollars.dev/) — try it instantly in your browser, no install required.
+
+Or grab the **desktop app** below for the full experience (native HTTP, no CORS restrictions, auto-updates).
+
+---
+
 ## Download
 
 **[fivedollars.dev/install →](https://fivedollars.dev/install)**
