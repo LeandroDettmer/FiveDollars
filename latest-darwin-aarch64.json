@@ -1,9 +1,9 @@
 {
-  "version": "0.3.5",
+  "version": "0.3.6",
   "platforms": {
     "darwin-aarch64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.3.5/FiveDollars.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDUySXVkTU9xOU1Fb3dCekJXVWJoT3lIVkg3T3VuYW9xd09GTUZXb29nZmQzUHZVWjRoVkVJcThmRW5POE5hYjNEb0M2aXp0M1Rzd2ordFlZRjBzSHc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MjE0NzM4CWZpbGU6Rml2ZURvbGxhcnMuYXBwLnRhci5negpuSHNOdVVHTVJtSFV2emw5ajBLeDRXQ1lhT1dwTkNWYTdLODhzemorc0ZrMHJPWmRlaFFpU0JWdURzdmZrL3lQQzNQdUE5S3c3L1lIdy9QUFhYMXVDZz09Cg=="
+      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.3.6/FiveDollars.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDQrbXhMbzJxTWdXN1l1SEJsaVJleE0rMmttRXUrYkc2aW1pam1kWlRnamRqZURtcjB2VkxTZ1JQWnJTb28rYTV0S3MyV2NRM0IvNnFBSGRMTXh5aXc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MzY0OTMwCWZpbGU6Rml2ZURvbGxhcnMuYXBwLnRhci5negpGT1dISXJlNnFwb3VUNUU2QlhVMlVBYmJNdEhMbDZzNUpuV3VwMXI2eDVsWEZuODBpNndaRHhWMjNVclRLOUJtakk1TU9jSzF5elk5YkUzOHREdnZBdz09Cg=="
     }
   }
 }
