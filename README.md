@@ -1,8 +1,13 @@
+<!--
+  README destinado ao repositório público github.com/LeandroDettmer/FiveDollars.
+  Copia o conteúdo abaixo (sem este comentário) pro README.md daquele repo.
+-->
 
 # FiveDollars API Client
 
 **FiveDollars** is a free, open-source HTTP API client for desktop, web, and your editor — a fast, lightweight alternative to Postman and Insomnia. Built with **React** and **Tauri**, requests in the desktop app go through Tauri's native HTTP layer, so **browser CORS restrictions don't apply** the way they would in a pure web client.
 
+[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/LeandroDettmer.fivedollars?label=VS%20Marketplace&color=2d2d30&labelColor=3c3c3c)](https://marketplace.visualstudio.com/items?itemName=LeandroDettmer.fivedollars)
 [![Open VSX](https://img.shields.io/open-vsx/v/LeandroDettmer/fivedollars?label=Open%20VSX&color=2d2d30&labelColor=3c3c3c)](https://open-vsx.org/extension/LeandroDettmer/fivedollars)
 [![npm — fivedollars-mcp](https://img.shields.io/npm/v/fivedollars-mcp?label=npm%20fivedollars-mcp&color=2d2d30&labelColor=3c3c3c)](https://www.npmjs.com/package/fivedollars-mcp)
 [![Website](https://img.shields.io/badge/website-fivedollars.dev-2d2d30?labelColor=3c3c3c)](https://fivedollars.dev)
@@ -24,7 +29,8 @@ Or grab the **desktop app** or **VSCode extension** below for the full experienc
 | Where | Install | Notes |
 |-------|---------|-------|
 | **Desktop** (macOS / Windows / Linux) | [fivedollars.dev/install](https://fivedollars.dev/install) | Tauri-based native app, auto-updates |
-| **VSCode / Cursor / VSCodium** | `code --install-extension LeandroDettmer.fivedollars` or [Open VSX page](https://open-vsx.org/extension/LeandroDettmer/fivedollars) | Same UI embedded in your editor |
+| **VSCode** | [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=LeandroDettmer.fivedollars) or `code --install-extension LeandroDettmer.fivedollars` | Same UI embedded in your editor |
+| **Cursor / VSCodium / Theia** | [Open VSX page](https://open-vsx.org/extension/LeandroDettmer/fivedollars) or `cursor --install-extension LeandroDettmer.fivedollars` | Same UI embedded in your editor |
 | **Claude / Cursor (AI assistants)** | `npx -y fivedollars-mcp` via your MCP config | Drives saved requests from the chat |
 
 Source code: [github.com/LeandroDettmer/FiveDollars-API-Client](https://github.com/LeandroDettmer/FiveDollars-API-Client) (dev mono-repo).
@@ -57,6 +63,9 @@ The extension embeds the full FiveDollars UI into the editor. HTTP goes through 
 
 Open the Extensions panel, search **FiveDollars**, click **Install**.
 
+- **VSCode** pulls from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=LeandroDettmer.fivedollars).
+- **Cursor / VSCodium / Theia / Gitpod** pull from [Open VSX](https://open-vsx.org/extension/LeandroDettmer/fivedollars).
+
 Or from the command line:
 
 ```bash
@@ -67,7 +76,7 @@ codium --install-extension LeandroDettmer.fivedollars
 
 ### From a `.vsix`
 
-Download the latest `.vsix` from the [Open VSX page](https://open-vsx.org/extension/LeandroDettmer/fivedollars), then:
+Download the latest `.vsix` from either the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=LeandroDettmer.fivedollars) or the [Open VSX page](https://open-vsx.org/extension/LeandroDettmer/fivedollars), then:
 
 ```bash
 code --install-extension fivedollars-<version>.vsix
@@ -216,6 +225,7 @@ Useful for refreshing tokens, stamping timestamps, parsing JSON, and chaining va
 
 - **Download:** [fivedollars.dev/install](https://fivedollars.dev/install)
 - **All releases:** [github.com/LeandroDettmer/FiveDollars/releases](https://github.com/LeandroDettmer/FiveDollars/releases)
+- **VSCode extension (Visual Studio Marketplace):** [marketplace.visualstudio.com/items?itemName=LeandroDettmer.fivedollars](https://marketplace.visualstudio.com/items?itemName=LeandroDettmer.fivedollars)
 - **VSCode extension (Open VSX):** [open-vsx.org/extension/LeandroDettmer/fivedollars](https://open-vsx.org/extension/LeandroDettmer/fivedollars)
 - **MCP server (npm):** [npmjs.com/package/fivedollars-mcp](https://www.npmjs.com/package/fivedollars-mcp)
 - **Source code:** [github.com/LeandroDettmer/FiveDollars-API-Client](https://github.com/LeandroDettmer/FiveDollars-API-Client)
