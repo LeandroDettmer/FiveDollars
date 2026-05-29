@@ -25,7 +25,7 @@ Instead, report privately through one of these channels:
 - **GitHub Security Advisories** (preferred): use the
   [Report a vulnerability](https://github.com/LeandroDettmer/FiveDollars/security/advisories/new)
   button on the repository's Security tab.
-- **Email**: leandro.dettmer@clinicorp.com
+- **Email**: leandroo.dettmer@gmail.com
 
 Please include as much detail as possible:
 
