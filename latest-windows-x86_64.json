@@ -1,9 +1,9 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.2",
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.4.0/FiveDollars-windows.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDdJTnl6VDJRQ1BCYlM5Lzl3L1pEYnNZcU9jeTRBVjE2eDU1TjRBZkpLbGJJSFVoRUVvTEg2ZUMyVkJ3MWlETW5Lek9DcDBaTFBocDFVMnRxV1BPVmdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5NzQ4MDUzCWZpbGU6Rml2ZURvbGxhcnNfMC40LjBfeDY0LXNldHVwLmV4ZQorVitEWVJTRjZvR2VmcjhHSmZKOWxzb3QxZ29nVlIremlWdmRocU1OcDRaRXV1UmVQTWl0c01Kd1FOSlhuVnU0TUxJMUxTSEt2REgwbDNKYzBSckVDdz09Cg=="
+      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.4.2/FiveDollars-windows.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDBPRnZHVjFHYlRTa2prRGV0aE42M2ZwZTl5WXpMbGhpa0lYM1l2aDB0V1ZlK2hMRkVVUzhwRXNiSmZVVUQyZXF4b3hmNTdXS3lPU2pXakZlQWFBQWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwMDEzMTk2CWZpbGU6Rml2ZURvbGxhcnNfMC40LjJfeDY0LXNldHVwLmV4ZQpaOVF2TGN4UWJHWFhJVnozMHl5WktjQVFTalNuZDlzbk0zaE9XckdOSnd6ZWV1dVRGUmMwZGMyaWl3MDJVc25PNDhsQ3pKQ1o3NEE1WUg0MWtqaWJDZz09Cg=="
     }
   }
 }
