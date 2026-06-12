@@ -1,17 +1,9 @@
 {
-  "version": "0.4.4",
+  "version": "0.4.5",
   "platforms": {
     "darwin-aarch64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.4.4/FiveDollars.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDlhUGlZRUxTYVRDdnRHVkdlTkxISVdhdCtuYnRTajVML25kNWNmenNDTzNKNzJhSUVqcFd3d1IrK1N0bFBsVWFwd3NadEVlTEUrM290SHBHVXQvVlFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwODY2NzUzCWZpbGU6Rml2ZURvbGxhcnMuYXBwLnRhci5negpTeUpUQ3pGcUVVajNvSWRuc1RxZlRWeVliSytXKytkc3kydXQwRlRJdG5FekJlVGpja2lqdmlxN250TmNJVkRtaGR1Y2VVTkxQL012NEJFOWNHK3BDUT09Cg=="
-    },
-    "linux-x86_64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.4.4/FiveDollars-linux.deb",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDVCaEpocGY2dVIxbWwrL0dKSXJIRWltc2lwZ0tBRzNWY29rQmgvOE96UkxHbE50QjAwTEQzdVF1RWdmSWZkNGtraW1idFVTUnVPTEs0eStrQ09OdUFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwODY4NTc4CWZpbGU6Rml2ZURvbGxhcnNfMC40LjRfYW1kNjQuZGViCmx2QVJ4ekhHdndqbmp5N1hGYklvMU1Gcytlazhad3A3cUdaMFk0eld6SXRIL3FueTkvbFpiSk52WFlONDBFa1VSTHhnWGN5ajdhanVsdU9DRG9BM0JBPT0K"
-    },
-    "windows-x86_64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.4.4/FiveDollars-windows.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDdvQkVWUG5Nd3A4a29Qb200TFczR2JzY0tNdGJobWtiQnhDSXB0YjVsWTRkdWxvbFk3TloxU1ZPRHNYZ0czeDZjbFRtcW9kVUllbEUwS1NXWTB0MWdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwODY4NjcyCWZpbGU6Rml2ZURvbGxhcnNfMC40LjRfeDY0LXNldHVwLmV4ZQp1NHpEaDlGZ0FZNER6TytvUUxyRW9LK2RZUlpjbW9QM09yNUtwb1BBSUxpUmFmU0gzSWpNME5WMWViYmtxNE0xMWZEYkJuYThZZGVIRGRVNVBGTGtDQT09Cg=="
+      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v0.4.5/FiveDollars.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDI1Tmo1ZUJNcnkzL1l4a1hPdndneW4zQWxCVVJYdlVxcFJLSUJpN3ZNYTN2a2hwSUhCN3B0c3JWWmEyTGlobFltcUdmQUFBWFBGKy9MT3ZqR3BVVlE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgxMjcwMzM0CWZpbGU6Rml2ZURvbGxhcnMuYXBwLnRhci5negozT09sczZ1N1FaSGkrZllGRjVUVGlQalpNWEJoU05JVFNVUHlBU1grOUcwbHpwdEJsQ0dJb0tUa1NjMFRaS3NqSWQzWGZXMHlRUi9JQ054MWpWWkxBQT09Cg=="
     }
   }
 }
