@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="app-icon.png" alt="FiveDollars" width="120" height="120" />
-
-# FiveDollars API Client
+<img src="fivedollars-github-social.png" alt="FiveDollars API Client" width="800" />
 
 **Um cliente de API rápido e gratuito para desktop, web e seu editor.**
 
