@@ -1,5 +1,5 @@
 {
-  "version": "1.0.11",
+  "version": "1.0.10",
   "platforms": {
     "windows-x86_64": {
       "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v1.0.11/FiveDollars-windows.exe",
