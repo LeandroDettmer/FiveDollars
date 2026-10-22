@@ -1,9 +1,9 @@
 {
-  "version": "1.0.10",
+  "version": "1.0.11",
   "platforms": {
     "linux-x86_64": {
-      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v1.0.10/FiveDollars-linux.deb",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDFnbUZxV1NYOWMwblJyRmdzOElYY2lGY3A2WHdBR2YwMXhVelNuWXRsc3dGQ2RWTkxvVDlsWDFHVW5ZUWFSTjBGaE5leittL0MrazRjR0dSZmhmanc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDg4OTQ2CWZpbGU6Rml2ZURvbGxhcnNfMS4wLjEwX2FtZDY0LmRlYgpCRldOQlhZaEN0dDFrck9oY3REM21zckh3TzRsKzdrSm8rQ0tNNFJxR1lUd09pOWVBVXVqV3huTy9xMUQxaUdoQUR1QjgySndlVENGZnVSNVhSckxEUT09Cg=="
+      "url": "https://github.com/LeandroDettmer/FiveDollars/releases/download/v1.0.11/FiveDollars-linux.deb",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSS8ya0FZZ3ZyTDEwRzJxTFRxVE50RTJuckRVbzRNdzk4NkNGU1J2MzVNcXk0V1BtN3loVG8rTDdIQ2tHRmxrRk9vcmR1YUZVdmsrVXJib3R5cCt4eWtGcWhmODBMSVFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzA4MjUyCWZpbGU6Rml2ZURvbGxhcnNfMS4wLjEwX2FtZDY0LmRlYgovc21RSUtQZS9ndzdzTWIwakdqZWZsazdOeHZxK2dqSVpwOUpBQTdqejNLV25wT0dMSFVSVGhVZHFkdFMwby84TEJXazNzdjRqVWNvTUtza21FVnhBdz09Cg=="
     }
   }
 }
