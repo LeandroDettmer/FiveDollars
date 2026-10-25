@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="fivedollars-github-social.png" alt="FiveDollars API Client" width="800" />
-
 <br />
 
 # HTTP · SQL · AI agents. One window, fully local.
